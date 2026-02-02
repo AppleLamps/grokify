@@ -59,9 +59,19 @@ export function openXShareIntent(text: string, url: string): void {
 /**
  * Convert an image URL to a base64 data URL
  * Useful for converting blob URLs or external URLs to uploadable format
+ * Uses a proxy for external URLs to avoid CORS issues
  */
 export async function imageUrlToDataUrl(imageUrl: string): Promise<string> {
-  const response = await fetch(imageUrl);
+  // For external URLs (not blob: or data:), use the proxy to avoid CORS issues
+  let fetchUrl = imageUrl;
+  if (!imageUrl.startsWith('blob:') && !imageUrl.startsWith('data:')) {
+    fetchUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+  }
+
+  const response = await fetch(fetchUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status}`);
+  }
   const blob = await response.blob();
 
   return new Promise((resolve, reject) => {
