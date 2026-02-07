@@ -5,7 +5,7 @@ import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker'
 import { z } from 'zod';
 
 // Grok Imagine Image model
-const IMAGE_MODEL = 'grok-imagine-image';
+const IMAGE_MODEL = 'grok-imagine-image-pro';
 
 // Timeout for image generation (2 minutes)
 const IMAGE_TIMEOUT = 120000;
