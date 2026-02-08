@@ -2,10 +2,8 @@ import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import {
   GrokResponseSchema,
   GrokResponsesApiSchema,
-  GeminiImageResponseSchema,
   extractGrokContent,
   extractGrokResponsesContent,
-  extractGeminiImage,
 } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { VALID_STYLES, STYLE_DISPLAY_NAMES } from './constants';
@@ -59,7 +57,8 @@ const STYLE_PROMPTS: Record<string, string> = {
   fantasy: `Create an epic fantasy RPG style illustration with heroic pose, magical effects, detailed armor or robes, dramatic lighting, and the epic aesthetic of Dungeons & Dragons character art.`,
 };
 
-const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
+const GROK_IMAGE_MODEL = 'grok-imagine-image-pro';
+const GROK_IMAGE_TIMEOUT = 120000;
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 const RETRY_DELAYS_MS = [500, 1500, 3000];
 
@@ -323,81 +322,70 @@ export async function generateImageForBot(
   handle: string,
   style: string
 ): Promise<string> {
-  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
-  if (!openrouterApiKey) throw new Error('OPENROUTER_API_KEY is not configured');
+  const xaiApiKey = process.env.XAI_API_KEY;
+  if (!xaiApiKey) throw new Error('XAI_API_KEY is not configured');
 
   const selectedStyle = STYLE_PROMPTS[style] ? style : 'default';
 
   const attemptGeneration = async (currentPrompt: string, isRetry: boolean): Promise<string> => {
-    console.log(`[Bot] Attempting image generation (retry: ${isRetry})`);
+    console.log(`[Bot] Attempting image generation with Grok Imagine Pro (retry: ${isRetry})`);
 
     const finalPrompt = enhancePrompt(currentPrompt, selectedStyle);
-    const breakerKey = 'openrouter:image';
+    const breakerKey = 'xai:imagine-image';
 
     if (!canProceed(breakerKey)) {
       throw new Error('Image generation service is temporarily unavailable');
     }
 
     const response = await fetchWithRetry(
-      'https://openrouter.ai/api/v1/chat/completions',
+      'https://api.x.ai/v1/images/generations',
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${openrouterApiKey}`,
+          Authorization: `Bearer ${xaiApiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://www.grokify.ai',
-          'X-Title': 'X Account Image Generator',
         },
         body: JSON.stringify({
-          model: IMAGE_MODEL,
-          messages: [{ role: 'user', content: finalPrompt }],
-          modalities: ['image', 'text'],
+          model: GROK_IMAGE_MODEL,
+          prompt: finalPrompt,
+          n: 1,
+          response_format: 'url',
+          aspect_ratio: '1:1',
         }),
       },
-      API_TIMEOUTS.IMAGE_GENERATION
+      GROK_IMAGE_TIMEOUT
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Bot] OpenRouter API error:', response.status, errorText);
-      recordFailure(breakerKey);
-      throw new Error(`OpenRouter API error: ${response.status}`);
-    }
-
-    const rawData = await response.json();
-    const validationResult = GeminiImageResponseSchema.safeParse(rawData);
-
-    if (!validationResult.success) {
-      console.error('[Bot] Invalid Gemini response:', validationResult.error);
+      console.error('[Bot] xAI Image API error:', response.status, errorText.substring(0, 500));
       recordFailure(breakerKey);
 
+      // If not a retry, try with a safer prompt
       if (!isRetry) {
-        console.log('[Bot] Validation failed (likely safety filter) - regenerating prompt');
+        console.log('[Bot] Image generation failed - trying with safer prompt');
         const saferPrompt = await generateSaferPrompt(handle, currentPrompt);
         return attemptGeneration(saferPrompt, true);
       }
-      throw new Error('Invalid response from Gemini API - content may be restricted');
+      throw new Error(`xAI Image API error: ${response.status}`);
     }
 
-    const imageResult = extractGeminiImage(validationResult.data);
+    const rawData = await response.json();
 
-    if (imageResult && 'safetyBlocked' in imageResult) {
-      if (isRetry) {
-        throw new Error('Content blocked by safety filters even after rewrite');
-      }
-      console.log('[Bot] Safety block - regenerating prompt');
-      const saferPrompt = await generateSaferPrompt(handle, currentPrompt);
-      return attemptGeneration(saferPrompt, true);
-    }
-
-    if (!imageResult || !('url' in imageResult)) {
+    if (!rawData.data || !rawData.data[0]?.url) {
       recordFailure(breakerKey);
-      throw new Error('Failed to generate image - no image URL');
+
+      if (!isRetry) {
+        console.log('[Bot] No image URL in response - trying with safer prompt');
+        const saferPrompt = await generateSaferPrompt(handle, currentPrompt);
+        return attemptGeneration(saferPrompt, true);
+      }
+      throw new Error('Failed to generate image - no image URL in response');
     }
 
     recordSuccess(breakerKey);
-    console.log('[Bot] Image generated successfully');
-    return imageResult.url;
+    console.log('[Bot] Image generated successfully with Grok Imagine Pro');
+    return rawData.data[0].url;
   };
 
   return attemptGeneration(prompt, false);
@@ -474,13 +462,17 @@ export async function processMention(mention: XMention): Promise<ProcessMentionR
   // 2. Analyze the target account
   const imagePrompt = await analyzeAccountForBot(targetHandle);
 
-  // 3. Generate the image
-  const imageDataUrl = await generateImageForBot(imagePrompt, targetHandle, style);
+  // 3. Generate the image (returns a URL from Grok Imagine Pro)
+  const imageUrl = await generateImageForBot(imagePrompt, targetHandle, style);
 
-  // 4. Convert data URL to buffer for X upload
-  const base64Data = imageDataUrl.replace(/^data:image\/\w+;base64,/, '');
-  const imageBuffer = Buffer.from(base64Data, 'base64');
-  const mimeType = imageDataUrl.match(/^data:(image\/\w+);/)?.[1] || 'image/png';
+  // 4. Download the image and convert to buffer for X upload
+  console.log(`[Bot] Downloading generated image`);
+  const imageResponse = await fetch(imageUrl);
+  if (!imageResponse.ok) {
+    throw new Error(`Failed to download generated image: ${imageResponse.status}`);
+  }
+  const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+  const mimeType = imageResponse.headers.get('content-type') || 'image/png';
 
   // 5. Upload image to X
   console.log(`[Bot] Uploading media to X`);
@@ -491,5 +483,5 @@ export async function processMention(mention: XMention): Promise<ProcessMentionR
   console.log(`[Bot] Posting reply to tweet ${mention.id}`);
   const replyTweetId = await postReply(mention.id, replyText, mediaId);
 
-  return { replyTweetId, imageUrl: imageDataUrl, targetHandle, style };
+  return { replyTweetId, imageUrl, targetHandle, style };
 }
