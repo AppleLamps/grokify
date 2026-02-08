@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Grok_AI-Powered-orange?style=for-the-badge" alt="Grok AI" />
 </p>
 
-<h1 align="center">𝕏-pressionist</h1>
+<h1 align="center">GROKIFY</h1>
 
 <p align="center">
   <strong>Transform any X timeline into bespoke AI artwork, savage roasts, and intelligence dossiers.</strong>
