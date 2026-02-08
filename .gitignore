@@ -21,6 +21,8 @@ out/
 build
 dist
 
+xai-sdk-python/
+
 # Misc
 .DS_Store
 *.pem
