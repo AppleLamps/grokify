@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         const validStyles = getValidStyleIds();
         const selectedStyle = style && validStyles.includes(style) ? style : undefined;
 
-        // Enhance prompt with style if a style is selected (and it's not 'default' which is MAD Magazine-specific)
+        // Enhance prompt with style if a valid style is selected
         let enhancedPrompt = prompt;
         if (selectedStyle) {
             const stylePrompt = getStylePrompt(selectedStyle);
