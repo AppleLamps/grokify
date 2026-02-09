@@ -83,6 +83,7 @@ export interface XMention {
   authorId: string;
   authorHandle: string;
   mentionedUsernames: string[];
+  photoUrl?: string;
 }
 
 interface XMentionsResponse {
@@ -93,9 +94,13 @@ interface XMentionsResponse {
     entities?: {
       mentions?: Array<{ username: string }>;
     };
+    attachments?: {
+      media_keys?: string[];
+    };
   }>;
   includes?: {
     users?: Array<{ id: string; username: string }>;
+    media?: Array<{ media_key: string; type: string; url?: string; preview_image_url?: string }>;
   };
   meta?: {
     newest_id?: string;
@@ -117,9 +122,10 @@ export async function fetchMentions(sinceId?: string): Promise<XMention[]> {
   const baseUrl = `https://api.x.com/2/users/${userId}/mentions`;
 
   const params: Record<string, string> = {
-    'tweet.fields': 'author_id,created_at,entities',
+    'tweet.fields': 'author_id,created_at,entities,attachments',
     'user.fields': 'username',
-    expansions: 'author_id',
+    'media.fields': 'type,url,preview_image_url',
+    expansions: 'author_id,attachments.media_keys',
     max_results: '20',
   };
   if (sinceId) params.since_id = sinceId;
@@ -153,14 +159,39 @@ export async function fetchMentions(sinceId?: string): Promise<XMention[]> {
     }
   }
 
-  return data.data.map((tweet) => ({
-    id: tweet.id,
-    text: tweet.text,
-    authorId: tweet.author_id,
-    authorHandle: userMap.get(tweet.author_id) || 'unknown',
-    mentionedUsernames:
-      tweet.entities?.mentions?.map((m) => m.username) || [],
-  }));
+  // Build a media_key → photo URL map from includes
+  const mediaMap = new Map<string, string>();
+  if (data.includes?.media) {
+    for (const media of data.includes.media) {
+      if (media.type === 'photo' && media.url) {
+        mediaMap.set(media.media_key, media.url);
+      }
+    }
+  }
+
+  return data.data.map((tweet) => {
+    // Find the first photo attachment URL
+    let photoUrl: string | undefined;
+    if (tweet.attachments?.media_keys) {
+      for (const key of tweet.attachments.media_keys) {
+        const url = mediaMap.get(key);
+        if (url) {
+          photoUrl = url;
+          break;
+        }
+      }
+    }
+
+    return {
+      id: tweet.id,
+      text: tweet.text,
+      authorId: tweet.author_id,
+      authorHandle: userMap.get(tweet.author_id) || 'unknown',
+      mentionedUsernames:
+        tweet.entities?.mentions?.map((m) => m.username) || [],
+      photoUrl,
+    };
+  });
 }
 
 /**
