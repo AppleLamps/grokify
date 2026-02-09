@@ -163,8 +163,8 @@ export async function fetchMentions(sinceId?: string): Promise<XMention[]> {
   const mediaMap = new Map<string, string>();
   if (data.includes?.media) {
     for (const media of data.includes.media) {
-      if (media.type === 'photo' && media.url) {
-        mediaMap.set(media.media_key, media.url);
+      if (media.type === 'photo' && (media.url || media.preview_image_url)) {
+        mediaMap.set(media.media_key, media.url || media.preview_image_url!);
       }
     }
   }

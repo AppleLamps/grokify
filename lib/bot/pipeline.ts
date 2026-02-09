@@ -697,7 +697,7 @@ export async function processMention(mention: XMention): Promise<ProcessMentionR
       mention.id,
       `Attach a photo to get a caricature!\n\nUsage: @${botHandle} caricature [photo]\n\nOr tag someone for profile art:\n@${botHandle} @username [style]\n\ngrokify.ai`
     );
-    throw new Error('Caricature requested but no photo attached - sent help reply');
+    throw new Error('Caricature requested without photo - sent help reply');
   }
 
   if (!targetHandle) {
