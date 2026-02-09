@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 import { getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { getStylePrompt, getValidStyleIds } from '@/lib/style-prompts';
 import { z } from 'zod';
 
 // Grok Imagine Image model
@@ -19,6 +20,8 @@ const ImageRequestSchema = z.object({
     // For image editing - provide either a URL or base64 data
     imageUrl: z.string().optional(),
     imageBase64: z.string().optional(),
+    // Art style to apply to the prompt
+    style: z.string().optional(),
 });
 
 // Response schema for xAI image generation
@@ -51,7 +54,18 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { prompt, n, aspect_ratio, response_format, imageUrl, imageBase64 } = validationResult.data;
+        const { prompt, n, aspect_ratio, response_format, imageUrl, imageBase64, style } = validationResult.data;
+
+        // Validate and apply style to the prompt
+        const validStyles = getValidStyleIds();
+        const selectedStyle = style && validStyles.includes(style) ? style : undefined;
+
+        // Enhance prompt with style if a style is selected (and it's not 'default' which is MAD Magazine-specific)
+        let enhancedPrompt = prompt;
+        if (selectedStyle) {
+            const stylePrompt = getStylePrompt(selectedStyle);
+            enhancedPrompt = `${stylePrompt}\n\n${prompt}`;
+        }
 
         // Check circuit breaker
         if (!canProceed(breakerKey)) {
@@ -76,7 +90,7 @@ export async function POST(req: NextRequest) {
             ? 'https://api.x.ai/v1/images/edits'
             : 'https://api.x.ai/v1/images/generations';
 
-        console.log(`${isEditRequest ? 'Editing' : 'Generating'} ${n} image(s) with Grok Imagine, aspect ratio: ${aspect_ratio}`);
+        console.log(`${isEditRequest ? 'Editing' : 'Generating'} ${n} image(s) with Grok Imagine, aspect ratio: ${aspect_ratio}${selectedStyle ? `, style: ${selectedStyle}` : ''}`);
         if (isEditRequest && imageBase64) {
             console.log(`Image data length: ${imageBase64.length} chars`);
             console.log(`Image data prefix: ${imageBase64.substring(0, 50)}...`);
@@ -85,7 +99,7 @@ export async function POST(req: NextRequest) {
         // Build request body
         const requestBody: Record<string, unknown> = {
             model: IMAGE_MODEL,
-            prompt,
+            prompt: enhancedPrompt,
             response_format, // Request base64 for both generation and edits
         };
 
