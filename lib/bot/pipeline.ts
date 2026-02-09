@@ -2,10 +2,8 @@ import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import {
   GrokResponseSchema,
   GrokResponsesApiSchema,
-  GeminiImageResponseSchema,
   extractGrokContent,
   extractGrokResponsesContent,
-  extractGeminiImage,
 } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { VALID_STYLES, STYLE_DISPLAY_NAMES } from './constants';
@@ -460,8 +458,6 @@ Example output:
 
 Output ONLY the JSON object. No additional text or explanation.`;
 
-const GEMINI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
-
 // ─── Caricature Generation ────────────────────────────────────────────
 
 export async function generateCaricatureForBot(
@@ -469,9 +465,6 @@ export async function generateCaricatureForBot(
 ): Promise<{ comment: string; imageUrl: string }> {
   const xaiApiKey = process.env.XAI_API_KEY;
   if (!xaiApiKey) throw new Error('XAI_API_KEY is not configured');
-
-  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
-  if (!openrouterApiKey) throw new Error('OPENROUTER_API_KEY is not configured');
 
   // 1. Download the photo from the tweet
   console.log('[Bot] Downloading attached photo for caricature');
@@ -564,36 +557,14 @@ export async function generateCaricatureForBot(
     throw new Error('Failed to parse caricature analysis');
   }
 
-  // 3. Generate the caricature image with Gemini using the prompt + original image
-  console.log('[Bot] Generating caricature image with Gemini');
-  const openRouterBreakerKey = 'openrouter:bot-caricature';
-  if (!canProceed(openRouterBreakerKey)) {
+  // 3. Generate the caricature image with Grok Imagine Pro using the prompt
+  console.log('[Bot] Generating caricature image with Grok Imagine Pro');
+  const imagineBreakerKey = 'xai:imagine-image';
+  if (!canProceed(imagineBreakerKey)) {
     throw new Error('Image generation service is temporarily unavailable');
   }
 
-  const geminiResponse = await fetchWithTimeout(
-    'https://openrouter.ai/api/v1/chat/completions',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openrouterApiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://www.grokify.ai',
-        'X-Title': 'Grokify Bot Caricature',
-      },
-      body: JSON.stringify({
-        model: GEMINI_IMAGE_MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: { url: imageDataUrl },
-              },
-              {
-                type: 'text',
-                text: `Create a caricature of the person in this photo. ${analysisResult.prompt}
+  const caricaturePrompt = `${analysisResult.prompt}
 
 IMPORTANT STYLE REQUIREMENTS:
 - Medium: Marker and ink drawing style on white paper
@@ -601,48 +572,45 @@ IMPORTANT STYLE REQUIREMENTS:
 - Exaggerate distinctive features humorously
 - Use thick black outlines with colorful marker fills
 - Keep background plain white or minimal city sketch
-- NO MISSPELLINGS if any text appears`,
-              },
-            ],
-          },
-        ],
-        modalities: ['image', 'text'],
+- NO MISSPELLINGS if any text appears`;
+
+  const imagineResponse = await fetchWithRetry(
+    'https://api.x.ai/v1/images/generations',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${xaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROK_IMAGE_MODEL,
+        prompt: caricaturePrompt,
+        n: 1,
+        response_format: 'url',
+        aspect_ratio: '1:1',
       }),
     },
-    API_TIMEOUTS.IMAGE_GENERATION
+    GROK_IMAGE_TIMEOUT
   );
 
-  if (!geminiResponse.ok) {
-    const errorText = await geminiResponse.text();
-    console.error('[Bot] Gemini caricature API error:', geminiResponse.status, errorText);
-    recordFailure(openRouterBreakerKey);
-    throw new Error(`Gemini caricature generation failed: ${geminiResponse.status}`);
+  if (!imagineResponse.ok) {
+    const errorText = await imagineResponse.text();
+    console.error('[Bot] Grok Imagine caricature API error:', imagineResponse.status, errorText.substring(0, 500));
+    recordFailure(imagineBreakerKey);
+    throw new Error(`Grok Imagine caricature generation failed: ${imagineResponse.status}`);
   }
 
-  const geminiRawData = await geminiResponse.json();
-  const geminiValidation = GeminiImageResponseSchema.safeParse(geminiRawData);
+  const imagineRawData = await imagineResponse.json();
 
-  if (!geminiValidation.success) {
-    console.error('[Bot] Invalid Gemini caricature response:', geminiValidation.error);
-    recordFailure(openRouterBreakerKey);
-    throw new Error('Invalid response from image generator');
+  if (!imagineRawData.data || !imagineRawData.data[0]?.url) {
+    recordFailure(imagineBreakerKey);
+    throw new Error('Failed to generate caricature image - no image URL in response');
   }
 
-  const imageResult = extractGeminiImage(geminiValidation.data);
+  recordSuccess(imagineBreakerKey);
+  console.log('[Bot] Caricature generated successfully with Grok Imagine Pro');
 
-  if (imageResult && 'safetyBlocked' in imageResult) {
-    throw new Error('Caricature image was blocked by safety filters');
-  }
-
-  if (!imageResult || !('url' in imageResult)) {
-    recordFailure(openRouterBreakerKey);
-    throw new Error('Failed to generate caricature image');
-  }
-
-  recordSuccess(openRouterBreakerKey);
-  console.log('[Bot] Caricature generated successfully');
-
-  return { comment: analysisResult.comment, imageUrl: imageResult.url };
+  return { comment: analysisResult.comment, imageUrl: imagineRawData.data[0].url };
 }
 
 // ─── Full Pipeline Orchestration ──────────────────────────────────────
