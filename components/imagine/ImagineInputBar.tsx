@@ -11,9 +11,11 @@ import {
     Upload,
     Loader2,
     ChevronDown,
+    Palette,
 } from 'lucide-react';
 import type { GenerationType, AspectRatio, Folder } from './types';
 import { ASPECT_RATIOS } from './types';
+import { StyleSelectorModal, ART_STYLES } from '@/components/StyleSelectorModal';
 
 interface ImagineInputBarProps {
     isGenerating: boolean;
@@ -27,6 +29,7 @@ interface ImagineInputBarProps {
         videoDuration: number;
         editImageBase64?: string | null;
         editVideoBase64?: string | null;
+        style?: string;
     }) => void;
     onCancel: () => void;
     onSelectFolder: (id: string | null) => void;
@@ -49,6 +52,8 @@ export default function ImagineInputBar({
     const [videoDuration, setVideoDuration] = useState(5);
     const [editImage, setEditImage] = useState<string | null>(null);
     const [editVideo, setEditVideo] = useState<string | null>(null);
+    const [selectedStyle, setSelectedStyle] = useState('default');
+    const [styleModalOpen, setStyleModalOpen] = useState(false);
 
     const [showAspectDropdown, setShowAspectDropdown] = useState(false);
     const [showFolderDropdown, setShowFolderDropdown] = useState(false);
@@ -75,6 +80,7 @@ export default function ImagineInputBar({
             videoDuration,
             editImageBase64: editImage,
             editVideoBase64: editVideo,
+            style: selectedStyle,
         });
     };
 
@@ -188,6 +194,16 @@ export default function ImagineInputBar({
                                 <Video className="w-4 h-4" />
                             </button>
                         </div>
+
+                        {/* Style selector */}
+                        <button
+                            onClick={() => setStyleModalOpen(true)}
+                            className="imagine-input-bar__icon-btn"
+                            title={`Style: ${ART_STYLES.find((s) => s.id === selectedStyle)?.name || 'MAD Magazine'}`}
+                            disabled={isGenerating}
+                        >
+                            <Palette className="w-5 h-5" />
+                        </button>
                     </div>
 
                     {/* Center: Dropdowns */}
@@ -331,6 +347,14 @@ export default function ImagineInputBar({
                     </div>
                 </div>
             </div>
+
+            <StyleSelectorModal
+                open={styleModalOpen}
+                onOpenChange={setStyleModalOpen}
+                selectedStyle={selectedStyle}
+                onSelectStyle={setSelectedStyle}
+                disabled={isGenerating}
+            />
         </div>
     );
 }

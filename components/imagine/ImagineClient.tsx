@@ -36,6 +36,7 @@ export default function ImagineClient() {
             videoDuration: number;
             editImageBase64?: string | null;
             editVideoBase64?: string | null;
+            style?: string;
         }) => {
             if (isGenerating) return;
             setIsGenerating(true);
@@ -118,6 +119,7 @@ export default function ImagineClient() {
                             aspect_ratio: settings.aspectRatio,
                             response_format: 'b64_json',
                             ...(settings.editImageBase64 && { imageBase64: settings.editImageBase64 }),
+                            ...(settings.style && { style: settings.style }),
                         }),
                         signal: abortControllerRef.current.signal,
                     });
