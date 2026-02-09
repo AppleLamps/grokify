@@ -396,6 +396,7 @@ export async function generateImageForBot(
 export interface ParsedMention {
   targetHandle: string | null;
   style: string;
+  isCaricature: boolean;
 }
 
 export function parseMentionText(
@@ -409,12 +410,207 @@ export function parseMentionText(
   );
   const targetHandle = otherMentions.length > 0 ? otherMentions[0] : null;
 
-  // Look for a style keyword in the remaining text
+  // Look for a style keyword or "caricature" in the remaining text
   const cleanedText = text.replace(/@\w+/g, '').trim().toLowerCase();
   const words = cleanedText.split(/\s+/);
+  const isCaricature = words.includes('caricature');
   const style = words.find((w) => VALID_STYLES.has(w)) || 'default';
 
-  return { targetHandle, style };
+  return { targetHandle, style, isCaricature };
+}
+
+// ─── Caricature System Prompt (same as caricature API route) ──────────
+
+const CARICATURE_SYSTEM_PROMPT = `## ROLE
+You are a veteran NYC street caricature artist working in Times Square. You are quick-witted, observant, and skilled at turning a normal portrait into a hilarious, exaggerated cartoon.
+
+## GOAL
+Your ONLY goal is to take a user-uploaded photo of a person and generate a caricature image of them. You must capture their likeness but exaggerate their most distinct features for comedic effect.
+
+## ANALYSIS PROCESS (The "Bridge")
+When a user uploads a photo, perform this analysis silently before generating:
+1. **Identify Distinct Features:** Find the 2-3 features that stand out the most (e.g., big nose, small chin, wild hair, glasses, gap teeth, distinct jawline).
+2. **Exaggerate:** Apply the principle of caricature. If a forehead is slightly large, make it huge. If a smile is wide, make it take up half the face.
+3. **Style Check:** Ensure the description matches the "marker on paper" aesthetic.
+
+## IMAGE GENERATION RULES
+You must ALWAYS generate an image using the following style parameters:
+* **Medium:** Marker and ink drawing on white paper.
+* **Style:** Satirical street caricature, cartoonish, thick lines, exaggerated proportions.
+* **Subject:** Big head, tiny body.
+* **Background:** Plain white or faint city sketch (minimal).
+
+## INTERACTION STYLE
+* Be brief and punchy like a busy street artist.
+* Make a playful, "roasty" comment about the feature you are exaggerating (e.g., "Alright, let's give that chin the attention it deserves!" or "I hope you have a permit for those eyebrows!").
+* **CRITICAL:** Do not ask for permission to generate. Just do the analysis and generate the image immediately.
+
+## OUTPUT FORMAT
+You must output a JSON object with two fields:
+1. "comment": Your playful, roasty one-liner about the feature you're exaggerating
+2. "prompt": The detailed image generation prompt for the caricature
+
+Example output:
+{
+  "comment": "That forehead could host a drive-in movie!",
+  "prompt": "A humorous marker caricature drawing of a person with an enormously exaggerated forehead taking up half their face and tiny squinting eyes. They have a bemused smirk. Big head, tiny body in a casual t-shirt, cartoon style, thick black ink lines, marker coloring, white paper background."
+}
+
+Output ONLY the JSON object. No additional text or explanation.`;
+
+// ─── Caricature Generation ────────────────────────────────────────────
+
+export async function generateCaricatureForBot(
+  photoUrl: string
+): Promise<{ comment: string; imageUrl: string }> {
+  const xaiApiKey = process.env.XAI_API_KEY;
+  if (!xaiApiKey) throw new Error('XAI_API_KEY is not configured');
+
+  // 1. Download the photo from the tweet
+  console.log('[Bot] Downloading attached photo for caricature');
+  const photoResponse = await fetch(photoUrl);
+  if (!photoResponse.ok) {
+    throw new Error(`Failed to download attached photo: ${photoResponse.status}`);
+  }
+  const photoBuffer = Buffer.from(await photoResponse.arrayBuffer());
+  const photoMimeType = photoResponse.headers.get('content-type') || 'image/jpeg';
+  const photoBase64 = photoBuffer.toString('base64');
+  const imageDataUrl = `data:${photoMimeType};base64,${photoBase64}`;
+
+  // 2. Send image to Grok for analysis and prompt generation
+  console.log('[Bot] Analyzing photo with Grok for caricature');
+  const grokBreakerKey = 'xai:bot-caricature';
+  if (!canProceed(grokBreakerKey)) {
+    throw new Error('AI analysis service is temporarily unavailable');
+  }
+
+  const grokResponse = await fetchWithTimeout(
+    'https://api.x.ai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${xaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'grok-4-1-fast',
+        messages: [
+          { role: 'system', content: CARICATURE_SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: { url: imageDataUrl },
+              },
+              {
+                type: 'text',
+                text: 'Create a caricature of this person. Analyze their features and generate the prompt.',
+              },
+            ],
+          },
+        ],
+      }),
+    },
+    API_TIMEOUTS.GROK_ANALYSIS
+  );
+
+  if (!grokResponse.ok) {
+    const errorText = await grokResponse.text();
+    console.error('[Bot] Grok caricature API error:', grokResponse.status, errorText);
+    recordFailure(grokBreakerKey);
+    throw new Error(`Grok caricature analysis failed: ${grokResponse.status}`);
+  }
+
+  const grokRawData = await grokResponse.json();
+  const grokValidation = GrokResponseSchema.safeParse(grokRawData);
+
+  if (!grokValidation.success) {
+    console.error('[Bot] Invalid Grok caricature response:', grokValidation.error);
+    recordFailure(grokBreakerKey);
+    throw new Error('Invalid response from Grok API');
+  }
+
+  const grokContent = extractGrokContent(grokValidation.data);
+  recordSuccess(grokBreakerKey);
+
+  // Parse the JSON response from Grok
+  let analysisResult: { comment: string; prompt: string };
+  try {
+    let jsonContent = grokContent.trim();
+    if (jsonContent.startsWith('```json')) {
+      jsonContent = jsonContent.slice(7);
+    } else if (jsonContent.startsWith('```')) {
+      jsonContent = jsonContent.slice(3);
+    }
+    if (jsonContent.endsWith('```')) {
+      jsonContent = jsonContent.slice(0, -3);
+    }
+    jsonContent = jsonContent.trim();
+
+    analysisResult = JSON.parse(jsonContent);
+    if (!analysisResult.comment || !analysisResult.prompt) {
+      throw new Error('Missing required fields in response');
+    }
+  } catch (parseError) {
+    console.error('[Bot] Failed to parse Grok caricature JSON:', parseError, grokContent);
+    throw new Error('Failed to parse caricature analysis');
+  }
+
+  // 3. Generate the caricature image with Grok Imagine Pro using the prompt
+  console.log('[Bot] Generating caricature image with Grok Imagine Pro');
+  const imagineBreakerKey = 'xai:imagine-image';
+  if (!canProceed(imagineBreakerKey)) {
+    throw new Error('Image generation service is temporarily unavailable');
+  }
+
+  const caricaturePrompt = `${analysisResult.prompt}
+
+IMPORTANT STYLE REQUIREMENTS:
+- Medium: Marker and ink drawing style on white paper
+- Make their head BIG and body tiny
+- Exaggerate distinctive features humorously
+- Use thick black outlines with colorful marker fills
+- Keep background plain white or minimal city sketch
+- NO MISSPELLINGS if any text appears`;
+
+  const imagineResponse = await fetchWithRetry(
+    'https://api.x.ai/v1/images/generations',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${xaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: GROK_IMAGE_MODEL,
+        prompt: caricaturePrompt,
+        n: 1,
+        response_format: 'url',
+        aspect_ratio: '1:1',
+      }),
+    },
+    GROK_IMAGE_TIMEOUT
+  );
+
+  if (!imagineResponse.ok) {
+    const errorText = await imagineResponse.text();
+    console.error('[Bot] Grok Imagine caricature API error:', imagineResponse.status, errorText.substring(0, 500));
+    recordFailure(imagineBreakerKey);
+    throw new Error(`Grok Imagine caricature generation failed: ${imagineResponse.status}`);
+  }
+
+  const imagineRawData = await imagineResponse.json();
+
+  if (!imagineRawData.data || !imagineRawData.data[0]?.url) {
+    recordFailure(imagineBreakerKey);
+    throw new Error('Failed to generate caricature image - no image URL in response');
+  }
+
+  recordSuccess(imagineBreakerKey);
+  console.log('[Bot] Caricature generated successfully with Grok Imagine Pro');
+
+  return { comment: analysisResult.comment, imageUrl: imagineRawData.data[0].url };
 }
 
 // ─── Full Pipeline Orchestration ──────────────────────────────────────
@@ -430,17 +626,53 @@ export async function processMention(mention: XMention): Promise<ProcessMentionR
   const botHandle = process.env.X_BOT_HANDLE || 'GrokifyBot';
 
   // 1. Parse the mention
-  const { targetHandle, style } = parseMentionText(
+  const { targetHandle, style, isCaricature } = parseMentionText(
     mention.text,
     botHandle,
     mention.mentionedUsernames
   );
 
+  // 2. Handle caricature mode: photo attachment + "caricature" keyword
+  if (isCaricature && mention.photoUrl) {
+    console.log(`[Bot] Processing caricature request from @${mention.authorHandle}`);
+
+    const { comment, imageUrl } = await generateCaricatureForBot(mention.photoUrl);
+
+    // Download the caricature image for X upload
+    console.log('[Bot] Downloading caricature image');
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to download caricature image: ${imageResponse.status}`);
+    }
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    const mimeType = imageResponse.headers.get('content-type') || 'image/png';
+
+    // Upload to X
+    console.log('[Bot] Uploading caricature to X');
+    const mediaId = await uploadMedia(imageBuffer, mimeType);
+
+    // Reply with the caricature and the artist's comment
+    const replyText = `${comment}\n\nPowered by grokify.ai`;
+    console.log(`[Bot] Posting caricature reply to tweet ${mention.id}`);
+    const replyTweetId = await postReply(mention.id, replyText, mediaId);
+
+    return { replyTweetId, imageUrl, targetHandle: mention.authorHandle, style: 'caricature' };
+  }
+
+  // 3. If caricature keyword but no photo, send helpful message
+  if (isCaricature && !mention.photoUrl) {
+    await postTextReply(
+      mention.id,
+      `Attach a photo to get a caricature!\n\nUsage: @${botHandle} caricature [photo]\n\nOr tag someone for profile art:\n@${botHandle} @username [style]\n\ngrokify.ai`
+    );
+    throw new Error('Caricature requested without photo - sent help reply');
+  }
+
   if (!targetHandle) {
     // Reply with usage instructions
     await postTextReply(
       mention.id,
-      `Tag someone to get their X profile as art!\n\nUsage: @${botHandle} @username [style]\n\nStyles: anime, cyberpunk, ghibli, pixel, warhol, noir, and more!\nDefault: MAD Magazine\n\ngrokify.ai`
+      `Tag someone to get their X profile as art!\n\nUsage: @${botHandle} @username [style]\n@${botHandle} caricature [photo]\n\nStyles: anime, cyberpunk, ghibli, pixel, warhol, noir, and more!\nDefault: MAD Magazine\n\ngrokify.ai`
     );
     throw new Error('No target handle - sent help reply');
   }
@@ -459,13 +691,13 @@ export async function processMention(mention: XMention): Promise<ProcessMentionR
   const styleName = STYLE_DISPLAY_NAMES[style] || 'MAD Magazine';
   console.log(`[Bot] Processing: @${targetHandle} in ${styleName} style (requested by @${mention.authorHandle})`);
 
-  // 2. Analyze the target account
+  // 4. Analyze the target account
   const imagePrompt = await analyzeAccountForBot(targetHandle);
 
-  // 3. Generate the image (returns a URL from Grok Imagine Pro)
+  // 5. Generate the image (returns a URL from Grok Imagine Pro)
   const imageUrl = await generateImageForBot(imagePrompt, targetHandle, style);
 
-  // 4. Download the image and convert to buffer for X upload
+  // 6. Download the image and convert to buffer for X upload
   console.log(`[Bot] Downloading generated image`);
   const imageResponse = await fetch(imageUrl);
   if (!imageResponse.ok) {
@@ -474,11 +706,11 @@ export async function processMention(mention: XMention): Promise<ProcessMentionR
   const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
   const mimeType = imageResponse.headers.get('content-type') || 'image/png';
 
-  // 5. Upload image to X
+  // 7. Upload image to X
   console.log(`[Bot] Uploading media to X`);
   const mediaId = await uploadMedia(imageBuffer, mimeType);
 
-  // 6. Reply to the tweet
+  // 8. Reply to the tweet
   const replyText = `Here's @${targetHandle}'s X profile as art! (${styleName} style)\n\nPowered by grokify.ai`;
   console.log(`[Bot] Posting reply to tweet ${mention.id}`);
   const replyTweetId = await postReply(mention.id, replyText, mediaId);
