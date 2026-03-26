@@ -21,6 +21,7 @@ import {
   Copy,
   Download,
   RefreshCw,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -1069,7 +1070,15 @@ export default function Home() {
                               BETA
                             </span>
                           </button>
-                          {/* Roast, FBI, OSINT buttons - temporarily hidden */}
+                          {/* FBI Profile Button */}
+                          <button
+                            onClick={handleFbiProfile}
+                            disabled={isBusy}
+                            className="w-full px-4 py-3.5 bg-gradient-to-r from-red-700 to-red-900 text-white font-medium rounded-xl shadow-lg shadow-black/25 hover:shadow-xl hover:shadow-red-500/20 hover:brightness-110 transition-all duration-200 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                          >
+                            <Shield className="w-4 h-4" />
+                            FBI Profile
+                          </button>
                           {/* Caricature Button */}
                           <button
                             onClick={() => setIsCaricatureModalOpen(true)}
