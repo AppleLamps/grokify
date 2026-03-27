@@ -60,3 +60,30 @@ export function getSortedCitations(citations: Map<number, string>): ParsedCitati
     .map(([number, url]) => ({ number, url }))
     .sort((a, b) => a.number - b.number);
 }
+
+/**
+ * Strip all citation markers and their associated URLs from text.
+ * Handles [[n]](url), [[n]] followed by (url), and standalone [[n]] patterns.
+ * Also removes leftover bare parenthesized x.com/twitter.com status URLs.
+ */
+export function stripCitations(text: string): string {
+  let result = text;
+
+  // Remove [[n]](url) with optional whitespace between ]] and (
+  result = result.replace(/\[\[\d+\]\]\s*\(https?:\/\/[^\s)]+\)/g, '');
+
+  // Remove standalone [[n]] markers
+  result = result.replace(/\[\[\d+\]\]/g, '');
+
+  // Remove leftover bare parenthesized x.com/twitter.com status URLs
+  result = result.replace(/\(https?:\/\/(?:x|twitter)\.com\/[^\s)]+\)/g, '');
+
+  // Clean up extra whitespace left behind (collapse multiple spaces, trim lines)
+  result = result.replace(/ {2,}/g, ' ');
+  result = result.replace(/^ +| +$/gm, '');
+
+  // Remove blank lines that may have been left behind (but preserve intentional paragraph breaks)
+  result = result.replace(/\n{3,}/g, '\n\n');
+
+  return result.trim();
+}

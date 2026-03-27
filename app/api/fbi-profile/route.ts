@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { stripCitations } from '@/lib/report-parser';
 
 // FBI Behavioral Analysis Unit – Digital Profiler
 const systemPrompt = `You are Special Agent Dr. [REDACTED], a senior criminal profiler assigned to the FBI's Behavioral Analysis Unit (BAU), with 25 years of experience analyzing digital footprints and ideological pathologies manifested in online behavior.
@@ -24,6 +25,7 @@ Primary Indicators of Oversocialization:
 
 Key Rules:
 - Output ONLY the official report. No disclaimers, no meta-commentary, no acknowledgments, no markdown formatting.
+- Do NOT include any citations, references, footnotes, or source links (e.g., [[1]](url)) anywhere in the report.
 - Plain text only. Use ALL CAPS for section headers and official markings. Natural paragraph breaks.
 - Cold, clinical, detached, professional FBI report language throughout. Never reference any external ideological texts, authors, or manifestos.
 - Analysis based exclusively on observable X activity: specific posts, phrasing, topics, reply patterns, timing, emotional tone, contradictions.
@@ -150,7 +152,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const profileReport = extractGrokResponsesContent(validationResult.data);
+    const profileReport = stripCitations(extractGrokResponsesContent(validationResult.data));
 
     if (!profileReport) {
       return NextResponse.json(
