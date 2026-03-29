@@ -14,6 +14,8 @@ import {
   type StructuredPayload,
 } from '@/lib/prompt-config';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { getRetryDelayMs, shouldRetryPromptRequest } from '@/lib/prompt-route-utils';
+import { SITE_URL } from '@/lib/site';
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
@@ -100,7 +102,7 @@ async function makeOpenRouterCall(
 
   const referer = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_BASE_URL || 'https://grokify.ai';
+    : process.env.NEXT_PUBLIC_BASE_URL || SITE_URL;
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -120,12 +122,12 @@ async function makeOpenRouterCall(
   }
 }
 
-const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 const RETRY_DELAYS_MS = [250, 750];
 
 async function makeOpenRouterCallWithRetry(
   apiKey: string,
   body: OpenRouterRequestBody,
+  hasInlineImage: boolean,
   title: string = 'Grokify Prompt Generator'
 ): Promise<Response> {
   let lastResponse: Response | null = null;
@@ -133,12 +135,13 @@ async function makeOpenRouterCallWithRetry(
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
     lastResponse = await makeOpenRouterCall(apiKey, body, title);
 
-    if (lastResponse.ok || !RETRYABLE_STATUS.has(lastResponse.status)) {
+    if (lastResponse.ok || !shouldRetryPromptRequest(lastResponse.status, hasInlineImage)) {
       return lastResponse;
     }
 
     if (attempt < RETRY_DELAYS_MS.length) {
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+      const delayMs = getRetryDelayMs(lastResponse.headers, attempt, RETRY_DELAYS_MS);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
@@ -250,7 +253,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const openRouterResponse = await makeOpenRouterCallWithRetry(apiKey, requestBody);
+    const openRouterResponse = await makeOpenRouterCallWithRetry(apiKey, requestBody, Boolean(imageBase64));
 
     if (!openRouterResponse.ok) {
       const errorText = await openRouterResponse.text();

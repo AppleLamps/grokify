@@ -13,6 +13,7 @@
 
 <p align="center">
   <a href="https://www.grokify.ai">Live Demo</a> •
+  <a href="https://github.com/AppleLamps/grokify">GitHub</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
   <a href="#api-reference">API Reference</a>
@@ -35,7 +36,7 @@ No login required. No API keys needed from users. Just enter a username and go.
 | 🎨 **AI Artwork** | Generates satirical cartoon illustrations based on posting personality |
 | 🔥 **Roast Letter** | Comedy Central-style therapy notes from the fictional "Dr. Burn Notice" |
 | 🕵️ **FBI Profile** | Satirical FBI behavioral analysis reports with dark humor |
-| 🔍 **OSINT Dossier** | Comprehensive intelligence-style analysis with viral content deep dive |
+| 🔍 **OSINT Dossier** | Comprehensive intelligence-style analysis with viral content deep dive (`POST /api/osint-profile`; dossier UI in `OsintSection` / `OsintReport`) |
 | ✏️ **Caricature** | Upload a photo and get a Times Square street artist-style caricature |
 | ✨ **Grokify Prompt** | Transform any idea into a polished AI prompt with Grok |
 | ⚡ **Grok Imagine** | Generate images & videos with xAI's Grok Imagine model - local IndexedDB gallery |
@@ -152,8 +153,8 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/xpressionist.git
-cd xpressionist
+git clone https://github.com/AppleLamps/grokify.git
+cd grokify
 
 # Install dependencies
 npm install
@@ -173,6 +174,10 @@ npm run dev
 Create a `.env.local` file with the following:
 
 ```env
+# Public site (metadata, Open Graph, OpenRouter HTTP-Referer). Use https://www.grokify.ai in production.
+NEXT_PUBLIC_BASE_URL="https://www.grokify.ai"
+NEXT_PUBLIC_APP_URL="https://www.grokify.ai"
+
 # Database (Neon Postgres)
 DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
 
@@ -286,7 +291,7 @@ Content-Type: application/json
 ## Project Structure
 
 ```
-xpressionist/
+.
 ├── app/
 │   ├── api/
 │   │   ├── analyze-account/    # Profile analysis → image prompt
@@ -305,9 +310,15 @@ xpressionist/
 │   ├── share/[id]/             # Shareable artwork pages
 │   ├── globals.css
 │   ├── layout.tsx
-│   └── page.tsx
+│   ├── page.tsx
+│   ├── robots.ts               # robots.txt (sitemap URL on grokify.ai)
+│   └── sitemap.ts              # sitemap.xml for main routes
 ├── components/
-│   ├── home/                   # Home page sections
+│   ├── home/
+│   │   ├── HomeClient.tsx      # Shell: sidebar, overlays, results, dynamic sections
+│   │   ├── HomeHeroColumn.tsx  # Landing hero, CTAs, modals (memoized)
+│   │   ├── HomePhoneColumn.tsx # iPhone-style form; local @username state (memoized)
+│   │   └── sections/           # ResultSection, RoastSection, etc.
 │   ├── imagine/                # Grok Imagine components (gallery, sidebar, input bar)
 │   ├── prompt/                 # Grokify Prompt components
 │   ├── ui/                     # shadcn/ui components
@@ -320,11 +331,10 @@ xpressionist/
 │   ├── index.ts                # Neon connection
 │   └── schema.ts               # Drizzle schema
 ├── hooks/
-│   └── usePromptHistory.ts
-├── hooks/
 │   ├── usePromptHistory.ts     # Prompt history hook
 │   └── useImagineStore.ts      # Grok Imagine gallery state
 └── lib/
+    ├── site.ts                 # SITE_URL / SITE_NAME (grokify.ai) for SEO & APIs
     ├── circuit-breaker.ts      # API resilience
     ├── fetchWithTimeout.ts     # API timeout handling
     ├── imagine-storage.ts      # IndexedDB storage for images

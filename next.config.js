@@ -10,10 +10,6 @@ const nextConfig = {
   },
   // Silence Turbopack warning - empty config is fine
   turbopack: {},
-  // Exclude the nested Next.js project from file tracing
-  outputFileTracingExcludes: {
-    '*': ['./grok-4-prompt/**/*'],
-  },
   // Allow larger request bodies for image/video editing
   experimental: {
     serverActions: {

@@ -3,8 +3,7 @@ import { list } from '@vercel/blob';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Sparkles, Download } from 'lucide-react';
-
-const SITE_URL = 'https://www.grokify.ai';
+import { SITE_NAME, SITE_URL } from '@/lib/site';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -46,7 +45,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!imageData) {
     return {
-      title: 'Image Not Found - Xpressionist',
+      title: `Artwork not found | ${SITE_NAME}`,
+      metadataBase: new URL(SITE_URL),
     };
   }
 
@@ -55,20 +55,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : 'X Profile Artwork';
 
   const description = imageData.username
-    ? `Check out this AI-generated satirical artwork of @${imageData.username}'s X profile, created by Xpressionist!`
-    : 'Check out this AI-generated satirical artwork created by Xpressionist!';
+    ? `AI-generated satirical artwork of @${imageData.username}'s X profile — ${SITE_NAME} at grokify.ai`
+    : `AI-generated satirical artwork — ${SITE_NAME} at grokify.ai`;
 
   const shareUrl = `${SITE_URL}/share/${id}`;
 
   return {
-    title: `${title} - Xpressionist`,
+    title: `${title} | ${SITE_NAME}`,
     description,
     metadataBase: new URL(SITE_URL),
+    alternates: { canonical: `/share/${id}` },
     openGraph: {
       title,
       description,
       url: shareUrl,
-      siteName: 'Xpressionist',
+      siteName: SITE_NAME,
       images: [
         {
           url: imageData.url,
@@ -83,7 +84,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: 'summary_large_image',
       title,
       description,
-      site: '@xpressionist',
       images: [{
         url: imageData.url,
         width: 1024,

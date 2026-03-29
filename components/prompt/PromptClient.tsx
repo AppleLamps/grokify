@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import {
   Upload,
   Trash2,
@@ -14,9 +14,29 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { STYLE_PRESETS, PROMPT_CONFIG, type JsonPromptPayload } from '@/lib/prompt-config-client';
+import {
+  cleanupPreviewUrl,
+  compressImageDataUrl,
+  replacePreviewUrl,
+} from '@/lib/prompt-client-utils';
 
 // Types
 type CopyTarget = 'default' | 'json' | 'scene' | '';
+
+const RANDOM_IDEAS = [
+  'A cyberpunk samurai standing on a neon-lit rooftop in Tokyo',
+  'An ancient library floating in the clouds at sunset',
+  'A mechanical dragon made of brass and clockwork parts',
+  'A lone astronaut discovering an alien garden on Mars',
+  'A steampunk airship navigating through a storm',
+  'A mystical forest with bioluminescent trees and floating spirits',
+  'A futuristic city built inside a giant crystal cave',
+  'An underwater kingdom with merpeople and ancient ruins',
+  'A phoenix rising from volcanic ashes at dawn',
+  'A time traveler in Victorian London meeting their past self',
+] as const;
+
+const STYLE_PRESET_NAMES = Object.keys(STYLE_PRESETS);
 
 export default function PromptClient() {
   // Form state
@@ -50,6 +70,12 @@ export default function PromptClient() {
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return () => {
+      cleanupPreviewUrl(imagePreview, (url) => URL.revokeObjectURL(url));
+    };
+  }, [imagePreview]);
 
   // Computed directions with styles
   const directionsWithStyles = useMemo(() => {
@@ -92,25 +118,17 @@ export default function PromptClient() {
     setIsCompressing(true);
 
     try {
-      // Create preview
       const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-      setImageMimeType(file.type);
+      setImagePreview((current) => replacePreviewUrl(current, previewUrl, (url) => URL.revokeObjectURL(url)));
 
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        // Remove the data URL prefix to get just the base64 string
-        const base64 = result.split(',')[1];
-        setImageBase64(base64);
-        setIsCompressing(false);
-      };
-      reader.onerror = () => {
-        setError('Failed to read image file.');
-        setIsCompressing(false);
-      };
-      reader.readAsDataURL(file);
+      const compressed = await compressImageDataUrl(file, {
+        maxDimension: PROMPT_CONFIG.IMAGE_MAX_DIMENSION,
+        targetSizeBytes: PROMPT_CONFIG.IMAGE_TARGET_SIZE,
+      });
+
+      setImageMimeType(compressed.mimeType);
+      setImageBase64(compressed.base64);
+      setIsCompressing(false);
     } catch (err) {
       console.error('Error processing image:', err);
       setError('Error processing image.');
@@ -120,12 +138,10 @@ export default function PromptClient() {
 
   // Remove image
   const handleImageRemove = useCallback(() => {
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
     setImagePreview(null);
     setImageBase64(null);
-  }, [imagePreview]);
+    setImageMimeType('image/png');
+  }, []);
 
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,21 +201,7 @@ export default function PromptClient() {
     setError('');
     setShowOutput(false);
 
-    // Generate a random creative idea
-    const randomIdeas = [
-      'A cyberpunk samurai standing on a neon-lit rooftop in Tokyo',
-      'An ancient library floating in the clouds at sunset',
-      'A mechanical dragon made of brass and clockwork parts',
-      'A lone astronaut discovering an alien garden on Mars',
-      'A steampunk airship navigating through a storm',
-      'A mystical forest with bioluminescent trees and floating spirits',
-      'A futuristic city built inside a giant crystal cave',
-      'An underwater kingdom with merpeople and ancient ruins',
-      'A phoenix rising from volcanic ashes at dawn',
-      'A time traveler in Victorian London meeting their past self',
-    ];
-
-    const randomIdea = randomIdeas[Math.floor(Math.random() * randomIdeas.length)];
+    const randomIdea = RANDOM_IDEAS[Math.floor(Math.random() * RANDOM_IDEAS.length)];
 
     try {
       const response = await fetch('/api/prompt-generate', {
@@ -307,7 +309,7 @@ export default function PromptClient() {
                 <textarea
                   value={idea}
                   onChange={(e) => setIdea(e.target.value)}
-                  className="w-full px-4 py-3 text-sm bg-black/40 border border-white/10 text-gray-200 font-mono resize-none min-h-[100px] focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all placeholder:text-gray-600"
+                  className="w-full px-4 py-3 text-sm bg-black/40 border border-white/10 text-gray-200 font-mono resize-none min-h-[100px] focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all placeholder:text-gray-600 selection:bg-amber-400/85 selection:text-neutral-950"
                   placeholder="ENTER_CONCEPT_DESCRIPTION..."
                   maxLength={1000}
                   disabled={isAnyLoading}
@@ -325,7 +327,7 @@ export default function PromptClient() {
                 <textarea
                   value={directions}
                   onChange={(e) => setDirections(e.target.value)}
-                  className="w-full px-4 py-3 text-sm bg-black/40 border border-white/10 text-gray-200 font-mono resize-none min-h-[80px] focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all placeholder:text-gray-600"
+                  className="w-full px-4 py-3 text-sm bg-black/40 border border-white/10 text-gray-200 font-mono resize-none min-h-[80px] focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all placeholder:text-gray-600 selection:bg-amber-400/85 selection:text-neutral-950"
                   placeholder="STYLE_PARAMS: cinematic, cyberpunk | MOOD: mysterious..."
                   maxLength={500}
                   disabled={isAnyLoading}
@@ -352,7 +354,7 @@ export default function PromptClient() {
                 {showStylePresets && (
                   <div className="mt-3 p-4 border border-amber-500/10 bg-black/30">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                      {Object.keys(STYLE_PRESETS).map((styleName) => (
+                      {STYLE_PRESET_NAMES.map((styleName) => (
                         <button
                           key={styleName}
                           type="button"
@@ -549,12 +551,12 @@ export default function PromptClient() {
               disabled={isAnyLoading || (!idea.trim() && !imageBase64)}
               className={`px-8 py-4 text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                 isLoading
-                  ? 'bg-gradient-to-r from-amber-500 via-yellow-200 to-amber-500 bg-[length:200%_100%] animate-shimmer text-black border border-amber-400'
+                  ? 'prompt-execute-loading text-neutral-950 border border-amber-300 shadow-[0_0_18px_rgba(245,158,11,0.45)]'
                   : 'bg-amber-500 hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] text-black'
               }`}
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-neutral-900/25 border-t-neutral-900 rounded-full animate-spin" />
               ) : (
                 <>
                   <Zap className="w-5 h-5" />
@@ -693,15 +695,8 @@ export default function PromptClient() {
         </div>
       )}
 
-      {/* Custom animations */}
+      {/* Custom animations (EXECUTE gold shimmer lives in globals.css as .prompt-execute-loading) */}
       <style jsx>{`
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        .animate-shimmer {
-          animation: shimmer 1.5s linear infinite;
-        }
         @keyframes fade-in {
           from { opacity: 0; }
           to { opacity: 1; }

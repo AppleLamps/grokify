@@ -9,6 +9,7 @@ import {
 } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { STYLE_PROMPTS, getStylePrompt } from '@/lib/style-prompts';
+import { SITE_URL } from '@/lib/site';
 
 // Image model
 const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
@@ -225,7 +226,7 @@ export async function POST(req: NextRequest) {
           headers: {
             Authorization: `Bearer ${openrouterApiKey}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://www.grokify.ai',
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || SITE_URL,
             'X-Title': 'X Account Image Generator',
           },
           body: JSON.stringify({

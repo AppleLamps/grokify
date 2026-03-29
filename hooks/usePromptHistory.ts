@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 export interface PromptHistoryItem {
   id: string;
@@ -115,7 +115,7 @@ export function usePromptHistory() {
     };
   }, [history]);
 
-  const addToHistory = (item: Omit<PromptHistoryItem, 'id' | 'createdAt'>) => {
+  const addToHistory = useCallback((item: Omit<PromptHistoryItem, 'id' | 'createdAt'>) => {
     const newItem: PromptHistoryItem = {
       ...item,
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -124,22 +124,24 @@ export function usePromptHistory() {
 
     setHistory((prev) => {
       const updated = [newItem, ...prev];
-      // Keep only the most recent items
       return updated.slice(0, MAX_HISTORY_ITEMS);
     });
-  };
+  }, []);
 
-  const deleteFromHistory = (id: string) => {
+  const deleteFromHistory = useCallback((id: string) => {
     setHistory((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const clearHistory = () => {
+  const clearHistory = useCallback(() => {
     setHistory([]);
-  };
+  }, []);
 
-  const getHistoryItem = (id: string) => {
-    return history.find((item) => item.id === id);
-  };
+  const getHistoryItem = useCallback(
+    (id: string) => {
+      return history.find((item) => item.id === id);
+    },
+    [history]
+  );
 
   return {
     history,

@@ -10,7 +10,6 @@ import { PROMPT_CONFIG, STYLE_PRESETS } from './prompt-config-shared';
 
 /**
  * Configuration for Grokify Prompt Generator
- * Ported from grok-4-prompt project
  */
 
 // ============================================================================

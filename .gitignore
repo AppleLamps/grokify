@@ -85,7 +85,6 @@ lerna-debug.log*
 
 # Reference projects
 openrouter-photo-main/
-grok-4-prompt/
 grok-imagine-docs/
 .next
 node_modules
