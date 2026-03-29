@@ -17,7 +17,7 @@ import ImagineGallery from './ImagineGallery';
 import ImagineInputBar from './ImagineInputBar';
 import ImagineLightbox from './ImagineLightbox';
 import ImagineSettings from './ImagineSettings';
-import type { GalleryImage, GenerationType, AspectRatio } from './types';
+import type { GalleryImage, GenerationType, AspectRatio, VideoResolution, VideoSize, VideoExtendSettings } from './types';
 
 export default function ImagineClient() {
     const store = useImagineStore();
@@ -36,6 +36,9 @@ export default function ImagineClient() {
             videoDuration: number;
             editImageBase64?: string | null;
             editVideoBase64?: string | null;
+            referenceImageBase64s?: string[];
+            videoResolution?: VideoResolution;
+            videoSize?: VideoSize | null;
             style?: string;
         }) => {
             if (isGenerating) return;
@@ -51,6 +54,7 @@ export default function ImagineClient() {
                     let videoUrl: string | undefined;
                     // If image is attached, upload it first for image-to-video
                     let imageUrl: string | undefined;
+                    let referenceImageUrls: string[] = [];
 
                     if (settings.editVideoBase64) {
                         // Convert base64 data URL to File for client-side upload
@@ -87,6 +91,24 @@ export default function ImagineClient() {
                         imageUrl = uploadData.imageUrl;
                     }
 
+                    if (settings.referenceImageBase64s?.length) {
+                        referenceImageUrls = await Promise.all(
+                            settings.referenceImageBase64s.map(async (imageDataUrl) => {
+                                const uploadRes = await fetch('/api/upload-image', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ imageDataUrl }),
+                                    signal: abortControllerRef.current?.signal,
+                                });
+                                if (!uploadRes.ok) {
+                                    throw new Error('Failed to upload reference image for video generation');
+                                }
+                                const uploadData = await uploadRes.json();
+                                return uploadData.imageUrl as string;
+                            })
+                        );
+                    }
+
                     const res = await fetch('/api/imagine-video', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -94,8 +116,11 @@ export default function ImagineClient() {
                             prompt: settings.prompt,
                             aspect_ratio: settings.aspectRatio,
                             duration: settings.videoDuration,
+                            resolution: settings.videoResolution,
+                            ...(settings.videoSize && { size: settings.videoSize }),
                             ...(videoUrl && { videoUrl }),
                             ...(imageUrl && { imageUrl }),
+                            ...(referenceImageUrls.length > 0 && { referenceImages: referenceImageUrls }),
                         }),
                         signal: abortControllerRef.current.signal,
                     });
@@ -164,6 +189,86 @@ export default function ImagineClient() {
         setIsGenerating(false);
     }, [store]);
 
+    const uploadVideoDataUrl = useCallback(async (videoDataUrl: string) => {
+        const base64Match = videoDataUrl.match(/^data:video\/([\w.+-]+);base64,(.+)$/);
+        if (!base64Match) {
+            throw new Error('Invalid video data format');
+        }
+
+        const [, videoType, base64Data] = base64Match;
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        const videoBlob = new Blob([bytes], { type: `video/${videoType}` });
+        const safeExtension = videoType.replace(/[^a-zA-Z0-9]/g, '') || 'mp4';
+        const videoFile = new File([videoBlob], `video.${safeExtension}`, { type: `video/${videoType}` });
+
+        const blob = await upload(videoFile.name, videoFile, {
+            access: 'public',
+            handleUploadUrl: '/api/upload-video/token',
+        });
+
+        return blob.url;
+    }, []);
+
+    const handleExtendVideo = useCallback(
+        async (settings: VideoExtendSettings) => {
+            if (isGenerating) return;
+
+            setIsGenerating(true);
+            abortControllerRef.current = new AbortController();
+            const placeholderIds = store.addPlaceholders(1);
+
+            try {
+                const sourceVideoUrl = settings.sourceVideoUrl
+                    ?? (settings.sourceVideoBase64 ? await uploadVideoDataUrl(settings.sourceVideoBase64) : undefined);
+
+                if (!sourceVideoUrl) {
+                    throw new Error('A source video is required to extend.');
+                }
+
+                const res = await fetch('/api/imagine-video/extend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: settings.prompt,
+                        duration: settings.duration,
+                        videoUrl: sourceVideoUrl,
+                    }),
+                    signal: abortControllerRef.current.signal,
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(data.error || 'Video extension failed');
+                }
+
+                store.removePlaceholder(placeholderIds[0]);
+
+                if (data.video?.url) {
+                    await store.addVideoUrl(data.video.url, settings.prompt, settings.aspectRatio);
+                    toast.success('Video extended!');
+                } else {
+                    throw new Error('Invalid response from video extension API');
+                }
+            } catch (err: unknown) {
+                if ((err as Error).name === 'AbortError') {
+                    toast.info('Generation cancelled');
+                } else {
+                    toast.error((err as Error).message || 'Video extension failed');
+                }
+                store.removeAllPlaceholders();
+            } finally {
+                setIsGenerating(false);
+                abortControllerRef.current = null;
+            }
+        },
+        [isGenerating, store, uploadVideoDataUrl]
+    );
+
     const filteredImages = store.getFilteredImages();
 
     if (store.isLoading) {
@@ -203,6 +308,7 @@ export default function ImagineClient() {
                 selectedFolderId={store.selectedFolderId}
                 onGenerate={handleGenerate}
                 onCancel={handleCancel}
+                onExtendVideo={handleExtendVideo}
                 onSelectFolder={store.setSelectedFolder}
                 onOpenSettings={() => setSettingsOpen(true)}
             />
@@ -211,6 +317,8 @@ export default function ImagineClient() {
                 image={lightboxImage}
                 onClose={() => setLightboxImage(null)}
                 getFullImageUrl={store.getFullImageUrl}
+                onExtendVideo={handleExtendVideo}
+                isGenerating={isGenerating}
             />
 
             <ImagineSettings

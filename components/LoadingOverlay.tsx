@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Search, Sparkles, Paintbrush, Zap, TrendingUp, Eye, Brain, Palette, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type LoadingType = 'photo' | 'roast' | 'fbi' | 'osint' | 'caricature' | 'jointpic' | 'video';
 type PhotoStage = 'analyze' | 'image' | 'video';
@@ -285,7 +286,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
   const IconComponent = currentMessage.icon;
   const stepInfo = (type === 'photo' || type === 'jointpic' || type === 'video') ? (stage === 'analyze' ? 'Step 1 of 2' : 'Step 2 of 2') : null;
   const isJointPic = type === 'jointpic';
-  const progressDots = 12;
+  const progressDots = 10;
   const filledDots = Math.floor((progress / 100) * progressDots);
 
   const getTitle = () => {
@@ -309,34 +310,71 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
     return name.substring(0, 2).toUpperCase();
   };
 
+  const getTheme = () => {
+    if (type === 'video') {
+      return {
+        glow: 'rgba(34,211,238,0.30)',
+        ringA: '#22d3ee',
+        ringB: '#3b82f6',
+        accent: '#67e8f9',
+        panelGlow: 'rgba(34,211,238,0.16)',
+        track: 'linear-gradient(90deg, #22d3ee 0%, #3b82f6 100%)',
+        chip: 'from-cyan-500/16 to-blue-500/10 border-cyan-400/20 text-cyan-200',
+      };
+    }
+
+    if (type === 'jointpic') {
+      return {
+        glow: 'rgba(251,191,36,0.28)',
+        ringA: '#f59e0b',
+        ringB: '#fbbf24',
+        accent: '#fde68a',
+        panelGlow: 'rgba(245,158,11,0.16)',
+        track: 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)',
+        chip: 'from-amber-500/16 to-yellow-500/10 border-amber-400/20 text-amber-200',
+      };
+    }
+
+    return {
+      glow: 'rgba(244,63,94,0.28)',
+      ringA: '#f43f5e',
+      ringB: '#fb923c',
+      accent: '#fdba74',
+      panelGlow: 'rgba(244,63,94,0.16)',
+      track: 'linear-gradient(90deg, #f43f5e 0%, #fb923c 55%, #fbbf24 100%)',
+      chip: 'from-rose-500/16 to-orange-500/10 border-rose-400/20 text-rose-200',
+    };
+  };
+
+  const theme = getTheme();
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
       style={{
-        background: `linear-gradient(${gradientAngle}deg, 
-          rgba(0,0,0,0.97) 0%, 
-          rgba(20,10,30,0.98) 25%, 
-          rgba(10,20,40,0.98) 50%, 
-          rgba(30,15,20,0.98) 75%, 
-          rgba(0,0,0,0.97) 100%)`,
+        background: `linear-gradient(${gradientAngle}deg,
+          rgba(5,5,7,0.88) 0%,
+          rgba(11,12,18,0.92) 28%,
+          rgba(15,18,30,0.90) 52%,
+          rgba(22,12,18,0.92) 76%,
+          rgba(5,5,7,0.9) 100%)`,
+        backdropFilter: 'blur(18px)',
       }}
     >
-      {/* Animated background grid */}
-      <div className="absolute inset-0 opacity-[0.03]">
+      <div className="absolute inset-0">
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 opacity-70"
           style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            background: `
+              radial-gradient(circle at 18% 18%, rgba(59,130,246,0.12), transparent 32%),
+              radial-gradient(circle at 84% 18%, rgba(244,63,94,0.11), transparent 28%),
+              radial-gradient(circle at 50% 82%, rgba(168,85,247,0.08), transparent 30%)
             `,
-            backgroundSize: '50px 50px',
-            animation: 'grid-move 20s linear infinite',
           }}
         />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_22%,transparent_78%,rgba(255,255,255,0.02))]" />
       </div>
 
-      {/* Floating particles */}
       <div className="absolute inset-0 pointer-events-none">
         {particles.map(particle => (
           <div
@@ -348,411 +386,188 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
               width: particle.size,
               height: particle.size,
               backgroundColor: particle.color,
-              opacity: particle.opacity,
+              opacity: particle.opacity * 0.45,
               boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
             }}
           />
         ))}
       </div>
 
-      <div className="relative z-10 text-center max-w-xl px-6">
-        {/* Dual Orbs for Joint Pic */}
-        {isJointPic && username && username2 ? (
-          <div className="relative flex items-center justify-center gap-16 h-56 mb-6">
-            {/* Connection beam - positioned absolutely between orbs */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 flex items-center justify-center pointer-events-none">
-              {/* Base track */}
-              <div
-                className="absolute w-full h-1.5 rounded-full"
-                style={{
-                  background: 'linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.15) 20%, rgba(245,158,11,0.2) 50%, rgba(245,158,11,0.15) 80%, transparent 100%)',
-                }}
-              />
-              {/* Energy core */}
-              <div
-                className="absolute w-full h-2 rounded-full"
-                style={{
-                  background: `linear-gradient(90deg,
-                    transparent 0%,
-                    rgba(251,191,36,${0.4 + progress * 0.006}) 15%,
-                    rgba(245,158,11,${0.7 + progress * 0.003}) 50%,
-                    rgba(251,191,36,${0.4 + progress * 0.006}) 85%,
-                    transparent 100%)`,
-                  boxShadow: `0 0 ${15 + progress * 0.25}px rgba(245,158,11,0.6)`,
-                  animation: 'pulse-fast 1.5s ease-in-out infinite',
-                }}
-              />
-              {/* Bidirectional particles - left to right */}
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={`ltr-${i}`}
-                  className="absolute w-2.5 h-2.5 rounded-full"
-                  style={{
-                    background: 'radial-gradient(circle, #fef3c7 0%, #fbbf24 60%, transparent 100%)',
-                    boxShadow: '0 0 10px #fbbf24',
-                    animation: `energy-ltr 2.5s ease-in-out infinite`,
-                    animationDelay: `${i * 0.6}s`,
-                  }}
-                />
-              ))}
-              {/* Bidirectional particles - right to left */}
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={`rtl-${i}`}
-                  className="absolute w-2 h-2 rounded-full"
-                  style={{
-                    background: 'radial-gradient(circle, #fef3c7 0%, #eab308 60%, transparent 100%)',
-                    boxShadow: '0 0 8px #eab308',
-                    animation: `energy-rtl 2.5s ease-in-out infinite`,
-                    animationDelay: `${i * 0.6 + 0.3}s`,
-                  }}
-                />
-              ))}
-              {/* Center merge point */}
-              <div className="absolute w-4 h-4">
-                <div
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: 'radial-gradient(circle, rgba(251,191,36,0.8) 0%, transparent 70%)',
-                    animation: 'ping-slow 2s ease-out infinite',
-                  }}
-                />
-                <div
-                  className="absolute inset-0.5 rounded-full"
-                  style={{
-                    background: 'radial-gradient(circle, #fef3c7 0%, #fbbf24 100%)',
-                    boxShadow: '0 0 12px rgba(251,191,36,0.8)',
-                  }}
-                />
-              </div>
+      <div className="relative z-10 w-full max-w-2xl px-6">
+        <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-6 shadow-[0_24px_120px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:p-8">
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/[0.04] to-transparent" />
+          <div
+            className="absolute inset-x-[12%] top-[-20%] h-40 rounded-full blur-3xl"
+            style={{ background: `radial-gradient(circle, ${theme.panelGlow} 0%, transparent 72%)` }}
+          />
+
+          <div className="relative flex flex-col items-center text-center">
+            <div className={cn(
+              'mb-5 inline-flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]',
+              theme.chip
+            )}>
+              <Sparkles className="h-3.5 w-3.5" />
+              {type === 'jointpic' ? 'Dual Profile Synthesis' : type === 'video' ? 'Motion Engine' : 'Signal Chamber'}
             </div>
 
-            {/* Left Orb */}
-            <div className="relative" style={{ animation: 'orb-breathe 4s ease-in-out infinite' }}>
-              {/* Outer pulsing aura */}
-              <div
-                className="absolute -inset-6 rounded-full"
-                style={{
-                  background: 'radial-gradient(circle, rgba(245,158,11,0.25) 0%, rgba(245,158,11,0.1) 40%, transparent 70%)',
-                  filter: 'blur(8px)',
-                  animation: 'pulse-slow 3s ease-in-out infinite',
-                }}
-              />
-              {/* Orbital ring */}
-              <div
-                className="absolute -inset-2 rounded-full"
-                style={{
-                  background: 'conic-gradient(from 0deg, transparent 0%, rgba(245,158,11,0.5) 25%, transparent 50%, rgba(251,191,36,0.5) 75%, transparent 100%)',
-                  mask: 'radial-gradient(transparent 65%, black 67%, black 73%, transparent 75%)',
-                  WebkitMask: 'radial-gradient(transparent 65%, black 67%, black 73%, transparent 75%)',
-                  animation: 'spin-slow 8s linear infinite',
-                }}
-              />
-              {/* Glass border */}
-              <div
-                className="absolute -inset-0.5 rounded-full"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
-                }}
-              />
-              {/* Main orb */}
-              <div
-                className="w-24 h-24 rounded-full flex items-center justify-center relative overflow-hidden"
-                style={{
-                  background: `
-                    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
-                    radial-gradient(circle at 70% 70%, rgba(0,0,0,0.3) 0%, transparent 50%),
-                    linear-gradient(135deg, #fbbf24 0%, #f59e0b 30%, #d97706 60%, #b45309 100%)
-                  `,
-                  boxShadow: `
-                    0 0 40px rgba(245,158,11,0.5),
-                    0 8px 24px rgba(0,0,0,0.3),
-                    inset 0 2px 10px rgba(255,255,255,0.2),
-                    inset 0 -5px 20px rgba(0,0,0,0.4)
-                  `,
-                }}
-              >
-                {/* Animated shine sweep */}
+            {isJointPic && username && username2 ? (
+              <div className="relative mb-8 flex items-center justify-center gap-6 sm:gap-10">
                 <div
-                  className="absolute inset-0 overflow-hidden rounded-full"
-                  style={{ animation: 'shine-sweep 3s ease-in-out infinite' }}
+                  className="absolute left-1/2 top-1/2 h-[2px] w-24 -translate-x-1/2 -translate-y-1/2 sm:w-36"
+                  style={{
+                    background: `linear-gradient(90deg, transparent 0%, ${theme.ringA} 25%, ${theme.ringB} 50%, ${theme.ringA} 75%, transparent 100%)`,
+                    boxShadow: `0 0 18px ${theme.glow}`,
+                  }}
+                />
+                {[username, username2].map((name, index) => (
+                  <div key={name} className="relative">
+                    <div
+                      className="absolute inset-[-14px] rounded-full blur-2xl"
+                      style={{ background: `radial-gradient(circle, ${theme.glow} 0%, transparent 70%)` }}
+                    />
+                    <div
+                      className="absolute inset-[-5px] rounded-full opacity-80"
+                      style={{
+                        background: `conic-gradient(from ${index === 0 ? '45deg' : '225deg'}, transparent 0%, ${theme.ringA} 20%, transparent 42%, ${theme.ringB} 72%, transparent 100%)`,
+                        WebkitMask: 'radial-gradient(transparent 64%, black 66%, black 72%, transparent 74%)',
+                        mask: 'radial-gradient(transparent 64%, black 66%, black 72%, transparent 74%)',
+                        animation: `${index === 0 ? 'spin-slow' : 'spin-reverse'} 7s linear infinite`,
+                      }}
+                    />
+                    <div
+                      className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/10 text-lg font-semibold text-white shadow-[inset_0_1px_10px_rgba(255,255,255,0.12)] sm:h-24 sm:w-24 sm:text-xl"
+                      style={{
+                        background: index === 0
+                          ? 'linear-gradient(135deg, rgba(244,63,94,0.95) 0%, rgba(251,146,60,0.88) 100%)'
+                          : 'linear-gradient(135deg, rgba(245,158,11,0.95) 0%, rgba(250,204,21,0.88) 100%)',
+                        boxShadow: `0 18px 50px rgba(0,0,0,0.35), 0 0 28px ${theme.glow}`,
+                      }}
+                    >
+                      {getInitials(name)}
+                    </div>
+                    <p className="mt-3 text-xs font-medium tracking-[0.12em] text-neutral-400 sm:text-sm">@{name}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="relative mb-8 flex h-40 w-40 items-center justify-center">
+                <div
+                  className="absolute inset-0 rounded-full blur-3xl"
+                  style={{ background: `radial-gradient(circle, ${theme.glow} 0%, transparent 70%)` }}
+                />
+                <div
+                  className="absolute inset-0 rounded-full opacity-90"
+                  style={{
+                    background: `conic-gradient(from 0deg, ${theme.ringA} 0%, ${theme.ringB} 38%, transparent 58%, ${theme.ringA} 82%, transparent 100%)`,
+                    WebkitMask: 'radial-gradient(transparent 63%, black 65%, black 71%, transparent 73%)',
+                    mask: 'radial-gradient(transparent 63%, black 65%, black 71%, transparent 73%)',
+                    animation: 'spin-slow 8s linear infinite',
+                  }}
+                />
+                <div
+                  className="absolute inset-[14px] rounded-full opacity-75"
+                  style={{
+                    background: `conic-gradient(from 180deg, transparent 0%, ${theme.ringB} 24%, transparent 48%, ${theme.ringA} 74%, transparent 100%)`,
+                    WebkitMask: 'radial-gradient(transparent 67%, black 69%, black 74%, transparent 76%)',
+                    mask: 'radial-gradient(transparent 67%, black 69%, black 74%, transparent 76%)',
+                    animation: 'spin-reverse 10s linear infinite',
+                  }}
+                />
+                <div
+                  className="relative flex h-24 w-24 items-center justify-center rounded-full border border-white/10 text-white shadow-[inset_0_1px_12px_rgba(255,255,255,0.18)]"
+                  style={{
+                    background: `linear-gradient(145deg, ${theme.ringA} 0%, ${theme.ringB} 100%)`,
+                    boxShadow: `0 18px 50px rgba(0,0,0,0.35), 0 0 35px ${theme.glow}`,
+                  }}
                 >
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0.1) 50%, transparent 55%)',
-                    }}
-                  />
+                  <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.22),transparent_42%)]" />
+                  <IconComponent className="relative z-10 h-9 w-9" />
                 </div>
-                <span className="text-white font-bold text-xl z-10 drop-shadow-lg">{getInitials(username)}</span>
               </div>
-              {/* Username label */}
-              <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <span className="text-amber-400 text-sm font-semibold tracking-wide">@{username}</span>
-              </div>
-            </div>
+            )}
 
-            {/* Right Orb */}
-            <div className="relative" style={{ animation: 'orb-breathe 4s ease-in-out infinite', animationDelay: '0.5s' }}>
-              {/* Outer pulsing aura */}
-              <div
-                className="absolute -inset-6 rounded-full"
-                style={{
-                  background: 'radial-gradient(circle, rgba(234,179,8,0.25) 0%, rgba(234,179,8,0.1) 40%, transparent 70%)',
-                  filter: 'blur(8px)',
-                  animation: 'pulse-slow 3s ease-in-out infinite',
-                  animationDelay: '0.5s',
-                }}
-              />
-              {/* Orbital ring */}
-              <div
-                className="absolute -inset-2 rounded-full"
-                style={{
-                  background: 'conic-gradient(from 180deg, transparent 0%, rgba(234,179,8,0.5) 25%, transparent 50%, rgba(251,191,36,0.5) 75%, transparent 100%)',
-                  mask: 'radial-gradient(transparent 65%, black 67%, black 73%, transparent 75%)',
-                  WebkitMask: 'radial-gradient(transparent 65%, black 67%, black 73%, transparent 75%)',
-                  animation: 'spin-slow 8s linear infinite reverse',
-                }}
-              />
-              {/* Glass border */}
-              <div
-                className="absolute -inset-0.5 rounded-full"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
-                }}
-              />
-              {/* Main orb */}
-              <div
-                className="w-24 h-24 rounded-full flex items-center justify-center relative overflow-hidden"
-                style={{
-                  background: `
-                    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
-                    radial-gradient(circle at 70% 70%, rgba(0,0,0,0.3) 0%, transparent 50%),
-                    linear-gradient(135deg, #fcd34d 0%, #eab308 30%, #ca8a04 60%, #a16207 100%)
-                  `,
-                  boxShadow: `
-                    0 0 40px rgba(234,179,8,0.5),
-                    0 8px 24px rgba(0,0,0,0.3),
-                    inset 0 2px 10px rgba(255,255,255,0.2),
-                    inset 0 -5px 20px rgba(0,0,0,0.4)
-                  `,
-                }}
-              >
-                {/* Animated shine sweep */}
-                <div
-                  className="absolute inset-0 overflow-hidden rounded-full"
-                  style={{ animation: 'shine-sweep 3s ease-in-out infinite', animationDelay: '1.5s' }}
-                >
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0.1) 50%, transparent 55%)',
-                    }}
-                  />
+            <div className="w-full max-w-xl rounded-[28px] border border-white/10 bg-black/20 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:px-6">
+              <div className="mb-4 flex flex-wrap items-center justify-center gap-3 text-center sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Current Operation</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">{getTitle()}</h2>
                 </div>
-                <span className="text-white font-bold text-xl z-10 drop-shadow-lg">{getInitials(username2)}</span>
+                {stepInfo && (
+                  <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium tracking-[0.12em] text-neutral-300">
+                    {stepInfo}
+                  </div>
+                )}
               </div>
-              {/* Username label */}
-              <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <span className="text-yellow-400 text-sm font-semibold tracking-wide">@{username2}</span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Single orb for other types */
-          <div className="relative w-28 h-28 mx-auto mb-8">
-            {/* Outer glow */}
-            <div
-              className="absolute -inset-4 rounded-full animate-pulse"
-              style={{
-                background: 'radial-gradient(circle, rgba(244,63,94,0.3) 0%, transparent 70%)',
-              }}
-            />
-            {/* Spinning rings */}
-            <div className="absolute inset-0 rounded-full border-4 border-white/5" />
-            <div
-              className="absolute inset-0 rounded-full border-4 border-transparent"
-              style={{
-                borderTopColor: '#f43f5e',
-                borderRightColor: '#f97316',
-                animation: 'spin 2s linear infinite',
-              }}
-            />
-            <div
-              className="absolute inset-2 rounded-full border-2 border-transparent"
-              style={{
-                borderTopColor: '#fb923c',
-                borderLeftColor: '#fbbf24',
-                animation: 'spin 3s linear infinite reverse',
-              }}
-            />
-            {/* Inner orb */}
-            <div
-              className="absolute inset-4 rounded-full flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(135deg, #f43f5e 0%, #f97316 100%)',
-                boxShadow: '0 0 40px rgba(244,63,94,0.5)',
-              }}
-            >
-              <IconComponent className="w-8 h-8 text-white" />
-            </div>
-          </div>
-        )}
 
-        {/* Title */}
-        <div className="space-y-2 mb-6">
-          <h2 className="text-2xl font-bold text-white">{getTitle()}</h2>
-          {stepInfo && (
-            <p className="text-neutral-500 text-sm font-medium">{stepInfo}</p>
-          )}
-        </div>
-
-        {/* Simplified Status Indicator for Joint Pic */}
-        {isJointPic && stage === 'analyze' && (
-          <div className="mb-4 flex items-center justify-center gap-2.5 text-sm text-neutral-400">
-            <div className="relative">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <div className="absolute inset-0 w-2 h-2 rounded-full bg-green-500 animate-ping opacity-75" />
-            </div>
-            <span className="font-mono tracking-wide">{activityLog[activityIndex]?.query || 'Searching...'}</span>
-          </div>
-        )}
-
-        {/* Animated message */}
-        <div className="h-8 flex items-center justify-center mb-6">
-          <p className="text-lg text-neutral-300" key={messageIndex}>
-            <span className="inline-flex items-center gap-2">
-              <IconComponent className="w-5 h-5 text-amber-500" />
-              {currentMessage.text}
-            </span>
-          </p>
-        </div>
-
-        {/* Progress Indicator */}
-        {isJointPic ? (
-          /* Merging Arcs Progress for Joint Pic */
-          <div className="space-y-3">
-            <div className="relative w-52 h-2 mx-auto">
-              {/* Background track */}
-              <div className="absolute inset-0 rounded-full bg-neutral-800/50" />
-              {/* Left arc growing from left */}
-              <div
-                className="absolute left-0 top-0 h-full rounded-l-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${Math.min(progress, 50)}%`,
-                  background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
-                  boxShadow: progress > 0 ? '0 0 12px rgba(245,158,11,0.5)' : 'none',
-                }}
-              />
-              {/* Right arc growing from right */}
-              <div
-                className="absolute right-0 top-0 h-full rounded-r-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${Math.max(0, progress - 50)}%`,
-                  background: 'linear-gradient(270deg, #eab308, #fbbf24)',
-                  boxShadow: progress > 50 ? '0 0 12px rgba(234,179,8,0.5)' : 'none',
-                }}
-              />
-              {/* Center merge indicator */}
-              {progress >= 45 && (
-                <div
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-all duration-300"
-                  style={{
-                    background: 'radial-gradient(circle, #fef3c7 0%, #fbbf24 100%)',
-                    boxShadow: '0 0 12px rgba(251,191,36,0.8)',
-                    opacity: Math.min(1, (progress - 45) / 10),
-                    transform: `translate(-50%, -50%) scale(${0.5 + Math.min(0.5, (progress - 45) / 20)})`,
-                  }}
-                />
+              {isJointPic && stage === 'analyze' && (
+                <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-neutral-300">
+                  <div className="relative h-2 w-2 shrink-0">
+                    <div className="absolute inset-0 rounded-full bg-emerald-400" />
+                    <div className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                  </div>
+                  <span className="truncate font-mono">{activityLog[activityIndex]?.query || 'Searching...'}</span>
+                </div>
               )}
-            </div>
-            <div className="flex justify-center text-xs text-neutral-500 font-medium">
-              <span>{Math.round(progress)}% complete</span>
-            </div>
-          </div>
-        ) : (
-          /* Segmented progress dots for other types */
-          <div className="space-y-3">
-            <div className="flex items-center justify-center gap-2">
-              {[...Array(progressDots)].map((_, i) => (
+
+              <div className="mb-5 flex items-center justify-center gap-2 text-sm text-neutral-300 sm:text-base">
+                <IconComponent className="h-4.5 w-4.5 shrink-0" style={{ color: theme.accent }} />
+                <span>{currentMessage.text}</span>
+              </div>
+
+              <div className="mb-4 h-2 overflow-hidden rounded-full bg-white/[0.06]">
                 <div
-                  key={i}
-                  className={`w-3 h-3 rounded-full transition-all duration-500 ${i < filledDots
-                    ? 'scale-100'
-                    : i === filledDots
-                      ? 'scale-110 animate-pulse'
-                      : 'scale-75 opacity-30'
-                    }`}
+                  className="h-full rounded-full transition-all duration-700 ease-out"
                   style={{
-                    background: i < filledDots
-                      ? `linear-gradient(135deg, #f59e0b, #eab308)`
-                      : i === filledDots
-                        ? '#fbbf24'
-                        : '#374151',
-                    boxShadow: i <= filledDots ? '0 0 8px rgba(245,158,11,0.5)' : 'none',
+                    width: `${Math.max(progress, 4)}%`,
+                    background: theme.track,
+                    boxShadow: `0 0 18px ${theme.glow}`,
                   }}
                 />
-              ))}
-            </div>
-            <div className="flex justify-between text-xs text-neutral-500 max-w-xs mx-auto">
-              <span>{Math.round(progress)}%</span>
-              <span>{elapsedSeconds}s elapsed</span>
+              </div>
+
+              <div className="mb-5 flex items-center justify-between text-xs font-medium text-neutral-500">
+                <span>{Math.round(progress)}% complete</span>
+                <span>{elapsedSeconds}s elapsed</span>
+              </div>
+
+              <div className="flex items-center justify-center gap-2">
+                {[...Array(progressDots)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="transition-all duration-500"
+                    style={{
+                      width: i < filledDots ? 16 : 8,
+                      height: 8,
+                      borderRadius: 999,
+                      background: i <= filledDots
+                        ? theme.track
+                        : 'rgba(255,255,255,0.10)',
+                      opacity: i <= filledDots ? 1 : 0.45,
+                      boxShadow: i < filledDots ? `0 0 12px ${theme.glow}` : 'none',
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* CSS Animations */}
       <style jsx>{`
-        @keyframes orb-breathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.03); }
-        }
         @keyframes spin-slow {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.05); }
-        }
-        @keyframes pulse-fast {
-          0%, 100% { opacity: 0.7; }
-          50% { opacity: 1; }
-        }
-        @keyframes shine-sweep {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
-        }
-        @keyframes energy-ltr {
-          0% { transform: translateX(-80px); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateX(80px); opacity: 0; }
-        }
-        @keyframes energy-rtl {
-          0% { transform: translateX(80px); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateX(-80px); opacity: 0; }
-        }
-        @keyframes ping-slow {
-          0% { transform: scale(1); opacity: 0.8; }
-          100% { transform: scale(2.5); opacity: 0; }
+        @keyframes spin-reverse {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
         }
         @keyframes float-up {
           0% { transform: translateY(0) scale(1); opacity: var(--opacity); }
-          100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
-        }
-        @keyframes grid-move {
-          0% { transform: translate(0, 0); }
-          100% { transform: translate(50px, 50px); }
-        }
-        @keyframes spin {
-          100% { transform: rotate(360deg); }
+          100% { transform: translateY(-40px) scale(0.5); opacity: 0; }
         }
         .animate-float-up {
-          animation: float-up 2s ease-out forwards;
+          animation: float-up 2.2s ease-out forwards;
         }
       `}</style>
     </div>

@@ -10,6 +10,7 @@ import {
     PanelLeft,
     Edit2,
     Home,
+    Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Folder, GalleryImage } from './types';
@@ -144,6 +145,10 @@ export default function ImagineSidebar({
                         </div>
                     ) : (
                         <>
+                            <Link href="/prompt" className="imagine-sidebar__add-btn imagine-sidebar__prompt-link">
+                                <Sparkles className="w-4 h-4" />
+                                <span>Grokify Prompt</span>
+                            </Link>
                             <button
                                 onClick={() => setIsCreating(true)}
                                 className="imagine-sidebar__add-btn"

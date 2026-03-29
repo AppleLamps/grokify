@@ -15,7 +15,7 @@ const IMAGE_TIMEOUT = 120000;
 const ImageRequestSchema = z.object({
     prompt: z.string().min(1, 'Prompt is required').max(4000, 'Prompt too long'),
     n: z.number().min(1).max(10).optional().default(1),
-    aspect_ratio: z.enum(['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3']).optional().default('1:1'),
+    aspect_ratio: z.enum(['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3', '2:1', '1:2', '19.5:9', '9:19.5', '20:9', '9:20', 'auto']).optional().default('1:1'),
     response_format: z.enum(['url', 'b64_json']).optional().default('url'),
     // For image editing - provide either a URL or base64 data
     imageUrl: z.string().optional(),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 import { getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { parseVideoPollResult } from '@/lib/video-poll-result';
 import { z } from 'zod';
 
 // Grok Imagine Video model
@@ -17,26 +18,24 @@ const POLL_INTERVAL = 3000;
 // Request validation schema
 const VideoRequestSchema = z.object({
     prompt: z.string().min(1, 'Prompt is required').max(4000, 'Prompt too long'),
-    duration: z.number().min(1).max(15).optional().default(5),
+    duration: z.coerce.number().min(1).max(15).optional(),
+    seconds: z.coerce.number().min(1).max(15).optional(),
     aspectRatio: z.enum(['16:9', '9:16', '4:3', '3:4', '1:1', '3:2', '2:3']).optional().default('16:9'),
+    aspect_ratio: z.enum(['16:9', '9:16', '4:3', '3:4', '1:1', '3:2', '2:3']).optional(),
     resolution: z.enum(['720p', '480p']).optional().default('720p'),
+    size: z.enum(['848x480', '1696x960', '1280x720', '1920x1080']).optional(),
     imageUrl: z.string().url().optional(), // For image-to-video
+    image_url: z.string().url().optional(),
     videoUrl: z.string().url().optional(), // For video editing
+    video_url: z.string().url().optional(),
+    referenceImages: z.array(z.string().url()).optional(),
+    reference_images: z.array(z.object({ url: z.string().url() })).optional(),
+    outputUploadUrl: z.string().url().optional(),
 });
 
 // Response schema for video generation request
 const VideoRequestResponseSchema = z.object({
     request_id: z.string(),
-});
-
-// Response schema for video result polling
-const VideoResultSchema = z.object({
-    video: z.object({
-        url: z.string().url(),
-        duration: z.number().optional(),
-    }).optional(),
-    status: z.string().optional(),
-    error: z.string().optional(),
 });
 
 export async function OPTIONS() {
@@ -59,7 +58,27 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { prompt, duration, aspectRatio, resolution, imageUrl, videoUrl } = validationResult.data;
+        const {
+            prompt,
+            duration,
+            seconds,
+            aspectRatio,
+            aspect_ratio,
+            resolution,
+            size,
+            imageUrl,
+            image_url,
+            videoUrl,
+            video_url,
+            referenceImages,
+            reference_images,
+            outputUploadUrl,
+        } = validationResult.data;
+        const effectiveDuration = duration ?? seconds ?? 8;
+        const effectiveAspectRatio = aspect_ratio ?? aspectRatio ?? '16:9';
+        const effectiveImageUrl = image_url ?? imageUrl;
+        const effectiveVideoUrl = video_url ?? videoUrl;
+        const effectiveReferenceImages = referenceImages ?? reference_images?.map((item) => item.url) ?? [];
 
         // Check circuit breaker
         if (!canProceed(breakerKey)) {
@@ -79,33 +98,45 @@ export async function POST(req: NextRequest) {
         }
 
         // Determine if this is an edit request
-        const isEditRequest = !!videoUrl;
+        const isEditRequest = !!effectiveVideoUrl;
         const endpoint = isEditRequest
             ? 'https://api.x.ai/v1/videos/edits'
             : 'https://api.x.ai/v1/videos/generations';
 
-        console.log(`Starting video ${isEditRequest ? 'edit' : 'generation'} with Grok Imagine, duration: ${duration}s, aspect ratio: ${aspectRatio}`);
+        console.log(`Starting video ${isEditRequest ? 'edit' : 'generation'} with Grok Imagine, duration: ${effectiveDuration}s, aspect ratio: ${effectiveAspectRatio}`);
 
         // Build request body
         const requestBody: Record<string, unknown> = {
             model: VIDEO_MODEL,
             prompt,
-            aspect_ratio: aspectRatio,
+            aspect_ratio: effectiveAspectRatio,
             resolution,
         };
 
+        if (size) {
+            requestBody.size = size;
+        }
+
+        if (outputUploadUrl) {
+            requestBody.output = { upload_url: outputUploadUrl };
+        }
+
         // Only add duration for generation (not edits - edited video keeps original duration)
         if (!isEditRequest) {
-            requestBody.duration = duration;
+            requestBody.duration = effectiveDuration;
         }
 
         // Add video URL for editing
-        if (videoUrl) {
-            requestBody.video = { url: videoUrl };
+        if (effectiveVideoUrl) {
+            requestBody.video = { url: effectiveVideoUrl };
         }
         // Add image URL if provided (for image-to-video)
-        else if (imageUrl) {
-            requestBody.image = { url: imageUrl };
+        else if (effectiveImageUrl) {
+            requestBody.image = { url: effectiveImageUrl };
+        }
+
+        if (!isEditRequest && effectiveReferenceImages.length) {
+            requestBody.reference_images = effectiveReferenceImages.map((url) => ({ url }));
         }
 
         // Step 1: Send video generation/edit request
@@ -160,6 +191,9 @@ export async function POST(req: NextRequest) {
         const startTime = Date.now();
         let resultVideoUrl: string | null = null;
         let lastError: string | null = null;
+        let lastProgress = 0;
+        let respectsModeration: boolean | null = null;
+        let resultDuration: number | null = null;
 
         while (Date.now() - startTime < VIDEO_POLL_TIMEOUT) {
             await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
@@ -192,18 +226,26 @@ export async function POST(req: NextRequest) {
                 const pollData = await pollResponse.json();
                 console.log('Poll response:', JSON.stringify(pollData).substring(0, 200));
 
-                const pollValidation = VideoResultSchema.safeParse(pollData);
+                const parsedResult = parseVideoPollResult(pollData);
 
-                if (pollValidation.success) {
-                    if (pollValidation.data.video?.url) {
-                        resultVideoUrl = pollValidation.data.video.url;
+                if (parsedResult) {
+                    if (parsedResult.progress !== null) {
+                        lastProgress = parsedResult.progress;
+                    }
+
+                    if (parsedResult.videoUrl) {
+                        resultVideoUrl = parsedResult.videoUrl;
+                        respectsModeration = parsedResult.respectsModeration;
+                        resultDuration = parsedResult.duration;
                         break;
                     }
-                    if (pollValidation.data.error) {
-                        lastError = pollValidation.data.error;
+
+                    if (parsedResult.error) {
+                        lastError = parsedResult.error;
                         break;
                     }
-                    if (pollValidation.data.status === 'failed') {
+
+                    if (parsedResult.status === 'failed') {
                         lastError = 'Video generation failed';
                         break;
                     }
@@ -222,6 +264,8 @@ export async function POST(req: NextRequest) {
                     video: {
                         id: request_id,
                         url: resultVideoUrl,
+                        duration: resultDuration ?? undefined,
+                        respectModeration: respectsModeration ?? undefined,
                     }
                 },
                 { headers: corsHeaders }
@@ -234,6 +278,7 @@ export async function POST(req: NextRequest) {
             {
                 error: lastError || 'Video generation timed out. Please try again.',
                 requestId: request_id, // Return request ID in case they want to check later
+                progress: lastProgress,
             },
             { status: 504, headers: corsHeaders }
         );

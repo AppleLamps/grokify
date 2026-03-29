@@ -1,97 +1,140 @@
-// Shared style prompt templates used by both /api/generate-image and /api/imagine
-// Each key maps to a detailed prompt prefix describing the desired art style.
+// Shared style prompt templates used by both /api/generate-image and /api/imagine.
+// Each style acts as a visual treatment layer on top of the account-derived scene prompt.
 
 export const STYLE_PROMPTS: Record<string, string> = {
-  // Classic/Traditional
-  default: `Create a satirical cartoon illustration in the style of MAD Magazine with bold outlines, vibrant colors, and exaggerated expressions.`,
+  // Classic / Traditional
+  default:
+    'Render the scene as a satirical editorial cartoon with bold black outlines, exaggerated facial features, punchy character acting, bright print-style color blocking, dense comedic background details, and lively MAD Magazine energy.',
 
-  oil: `Create a classical oil painting style illustration with rich textures, visible brushstrokes, dramatic chiaroscuro lighting, deep saturated colors, and the timeless elegance of Renaissance masters.`,
+  oil:
+    'Render the scene as a classical oil painting with layered brush texture, rich pigment, warm museum-grade color depth, dramatic chiaroscuro lighting, carefully staged composition, and painterly surface detail throughout.',
 
-  watercolor: `Create a soft, dreamy watercolor painting illustration with flowing colors, gentle gradients, organic brush strokes, subtle color bleeding, and the delicate, artistic quality of traditional watercolor art.`,
+  watercolor:
+    'Render the scene as a refined watercolor illustration with soft pigment blooms, translucent layered washes, delicate edge variation, airy highlights, hand-painted paper texture, and gentle atmospheric transitions.',
 
-  charcoal: `Create a dramatic charcoal sketch illustration with bold strokes, deep blacks, soft grays, smudged textures, expressive lines, and the raw artistic quality of traditional life drawing.`,
+  charcoal:
+    'Render the scene as a dramatic charcoal drawing with smoky tonal gradients, heavy shadow masses, rough expressive mark-making, dusty paper texture, sharp silhouette contrast, and raw hand-drawn energy.',
 
-  renaissance: `Create a Renaissance portrait in the style of Leonardo da Vinci or Raphael, with sfumato technique, warm earth tones, classical composition, dramatic lighting, and timeless elegance.`,
+  renaissance:
+    'Render the scene with Renaissance portrait discipline using balanced composition, sculpted forms, warm earth pigments, soft sfumato transitions, dignified staging, and luminous classical skin and fabric treatment.',
 
-  baroque: `Create a dramatic Baroque style painting with rich dark backgrounds, theatrical lighting, dynamic composition, ornate details, and the dramatic grandeur of Caravaggio or Rembrandt.`,
+  baroque:
+    'Render the scene with Baroque intensity using theatrical spotlighting, deep shadow pools, ornate visual richness, dynamic diagonals, dark luxurious backgrounds, and dramatic high-contrast depth.',
 
-  pencil: `Create a detailed pencil sketch illustration with fine linework, crosshatching for shading, realistic proportions, subtle gradations, and the refined quality of classical figure drawing.`,
+  pencil:
+    'Render the scene as a meticulous pencil illustration with crisp line hierarchy, controlled crosshatching, subtle graphite shading, realistic volume, clean draftsmanship, and refined sketchbook texture.',
 
-  artdeco: `Create an Art Deco style illustration with geometric patterns, bold lines, luxurious gold and black colors, symmetrical designs, and the glamorous 1920s aesthetic of the Jazz Age.`,
+  artdeco:
+    'Render the scene in an Art Deco treatment with sleek geometric framing, elegant symmetry, polished metallic accents, stylized luxury surfaces, disciplined composition, and glamorous black-gold contrast.',
 
-  // Anime/Eastern
-  ghibli: `Create a beautiful illustration in the style of Studio Ghibli anime, with soft pastel colors, whimsical fantasy elements, dreamy atmosphere, gentle lighting, and the signature warm, nostalgic feeling of Hayao Miyazaki's films.`,
+  // Anime / Eastern
+  ghibli:
+    'Render the scene with warm storybook animation styling, soft hand-painted color, inviting natural light, whimsical environmental detail, gentle emotional expressions, and cozy cinematic fantasy atmosphere.',
 
-  anime: `Create a dynamic anime-style illustration with bold lines, expressive eyes, dramatic poses, vibrant colors, speed lines, and the energetic aesthetic of popular Japanese anime series.`,
+  anime:
+    'Render the scene as polished anime key art with clean linework, vivid cel-shaded color, expressive faces, energetic posing, crisp separation of foreground and background, and heightened visual drama.',
 
-  manga: `Create a black and white manga-style illustration with dramatic ink work, screentone shading, dynamic panel composition, expressive lines, and the distinctive aesthetic of Japanese comic art.`,
+  manga:
+    'Render the scene as black-and-white manga art with bold ink contrast, speed-driven line energy, screentone shading, graphic panel-like framing, expressive facial exaggeration, and high-impact monochrome storytelling.',
 
-  chibi: `Create a super-cute chibi-style illustration with an oversized head, tiny body, huge sparkling eyes, rounded features, pastel colors, and the adorable kawaii aesthetic.`,
+  chibi:
+    'Render the scene in chibi form with oversized heads, tiny bodies, rounded silhouettes, playful expressions, simplified props, pastel-bright color, and irresistibly cute visual exaggeration.',
 
-  ukiyo: `Create a Japanese ukiyo-e woodblock print style illustration with flat colors, bold outlines, wave patterns, traditional composition, limited color palette, and the elegant aesthetic of Hokusai.`,
+  ukiyo:
+    'Render the scene as a Japanese woodblock print with flat layered color, elegant contour lines, restrained palette, patterned negative space, decorative rhythm, and stylized traditional print texture.',
 
-  shonen: `Create an epic shonen manga style illustration with intense action poses, dramatic speed lines, powerful auras, dynamic angles, bold expressions, and the high-energy aesthetic of Dragon Ball or Naruto.`,
+  shonen:
+    'Render the scene with explosive shonen action language using extreme poses, charged motion lines, high-energy perspective, intense facial expression, saturated contrast, and heroic manga spectacle.',
 
-  manhwa: `Create a Korean manhwa (webtoon) style illustration with clean digital linework, soft color gradients, romantic lighting, beautiful character designs, and the polished aesthetic of popular Korean webtoons.`,
+  manhwa:
+    'Render the scene as modern manhwa artwork with sleek digital linework, glossy color gradients, polished character rendering, romantic cinematic lighting, vertical-composition clarity, and clean premium finish.',
 
-  // Modern/Digital
-  pixar: `Create a 3D animated illustration in the style of Pixar movies, with expressive characters, vibrant saturated colors, smooth rendering, dynamic lighting, and that signature Pixar charm and warmth.`,
+  // Modern / Digital
+  pixar:
+    'Render the scene as high-end stylized 3D animation with rounded appealing forms, expressive eyes, soft global illumination, vibrant but controlled color, polished materials, and cinematic family-film warmth.',
 
-  cyberpunk: `Create a cyberpunk style illustration with neon lights, futuristic technology, dark urban atmosphere, holographic elements, rain-slicked streets, vibrant pink and cyan color palette, and dystopian sci-fi aesthetic.`,
+  cyberpunk:
+    'Render the scene as dense cyberpunk illustration with neon magenta-cyan lighting, wet reflective surfaces, layered holographic signage, hard rim light, deep urban perspective, and sleek high-tech texture.',
 
-  vaporwave: `Create a vaporwave aesthetic illustration with glitchy effects, Roman busts, gradient sunsets in pink and purple, palm trees, geometric shapes, 80s/90s nostalgia, and dreamy surreal atmosphere.`,
+  vaporwave:
+    'Render the scene with vaporwave atmosphere using dreamy gradients, retro digital haze, pastel neon color, surreal spatial emptiness, nostalgic faux-80s iconography, and smooth synthetic glow.',
 
-  lowpoly: `Create a low-poly 3D style illustration with geometric faceted surfaces, limited color palette, clean angular shapes, subtle gradients between polygons, and modern minimalist 3D aesthetic.`,
+  lowpoly:
+    'Render the scene as low-poly 3D art with faceted geometry, simplified planar shading, sharp silhouette edges, restrained polygonal detail, clean color grouping, and crisp modern digital composition.',
 
-  neon: `Create a neon glow art illustration with bright luminous outlines, dark background, vibrant electric colors (pink, blue, purple), light bloom effects, and retro arcade aesthetic.`,
+  neon:
+    'Render the scene as luminous neon artwork with dark negative space, glowing contour edges, intense bloom, electric color contrast, signage-like highlights, and graphic nightlife atmosphere.',
 
-  minimalist: `Create a clean minimalist illustration with simple geometric shapes, limited color palette, lots of white space, flat design elements, and modern elegant simplicity.`,
+  minimalist:
+    'Render the scene in a minimalist illustration style with distilled shapes, controlled negative space, restrained palette, clean composition, simplified forms, and elegant visual reduction without clutter.',
 
-  glitch: `Create a glitch art illustration with digital corruption effects, RGB channel splitting, pixel displacement, scan lines, data moshing aesthetic, and the chaotic beauty of broken digital media.`,
+  glitch:
+    'Render the scene with glitch-art treatment using RGB separation, scanline distortion, digital tearing, corrupted pixel fragments, unstable light streaks, and deliberately broken-screen visual tension.',
 
-  synthwave: `Create a synthwave/retrowave style illustration with neon grids, chrome text effects, sunset gradients in pink and orange, palm tree silhouettes, sports cars, and 80s retro-futuristic aesthetic.`,
+  synthwave:
+    'Render the scene with synthwave styling using sunset gradients, chrome-lit edges, retro-futurist magenta-orange-cyan palette, cinematic haze, stylized night atmosphere, and glossy 80s poster energy.',
 
-  hyperreal: `Create a hyperrealistic digital art illustration with ultra-detailed textures, photorealistic lighting, sharp focus, perfect skin details, and the polished quality of high-end digital concept art.`,
+  hyperreal:
+    'Render the scene with hyperreal digital realism using razor-sharp detail, precise material definition, lifelike lighting response, cinematic depth, refined skin and surface texture, and premium concept-art fidelity.',
 
   // Artistic
-  comic: `Create a bold comic book style illustration with thick black outlines, halftone dots, dynamic panel-like composition, dramatic shadows, action lines, and speech bubble-ready aesthetic like classic Marvel or DC comics.`,
+  comic:
+    'Render the scene as premium comic-book art with thick contour lines, halftone shadow language, bold action framing, saturated heroic color, graphic punch, and print-ready panel intensity.',
 
-  retro: `Create a retro pop art style illustration inspired by 80s and 90s aesthetics, with bold geometric shapes, neon colors, pixel art elements, synthwave vibes, VHS grain, and nostalgic vintage feel.`,
+  retro:
+    'Render the scene in retro pop illustration style with bold shape language, nostalgic color blocking, analog print texture, playful graphic rhythm, vintage commercial-art charm, and upbeat visual punch.',
 
-  impressionist: `Create an impressionist painting illustration in the style of Monet or Renoir, with visible brushstrokes, soft edges, dappled light, pastel colors, and the dreamy atmospheric quality of French impressionism.`,
+  impressionist:
+    'Render the scene as Impressionist painting with broken color strokes, luminous atmosphere, softened edges, light-driven form, airy palette shifts, and painterly movement over fine detail.',
 
-  surreal: `Create a surrealist illustration in the style of Salvador Dalí, with dreamlike impossible imagery, melting objects, unexpected juxtapositions, symbolic elements, and the bizarre beauty of the subconscious mind.`,
+  surreal:
+    'Render the scene with surrealist logic using dreamlike spatial distortion, uncanny object relationships, symbolic staging, soft but eerie lighting, precise strange detail, and a lucid-unreal atmosphere.',
 
-  warhol: `Create a pop art illustration in the style of Andy Warhol, with bold flat colors, high contrast, repeated image variations, screen print texture, and the iconic aesthetic of 1960s pop art.`,
+  warhol:
+    'Render the scene as pop-art screen print with flat high-contrast color fields, repeated graphic shapes, posterized value structure, commercial print texture, bold iconic simplification, and gallery-wall punch.',
 
-  noir: `Create a film noir style illustration with dramatic black and white contrast, venetian blind shadows, moody lighting, mysterious atmosphere, rain-soaked streets, and the cinematic aesthetic of 1940s detective movies.`,
+  noir:
+    'Render the scene in film noir style with hard black-and-white contrast, smoky atmosphere, sharp shadow slashes, moody backlight, rain-slick reflections, and tense mid-century cinematic framing.',
 
-  expressionist: `Create an expressionist illustration with bold distorted forms, emotional color choices, visible brushwork, exaggerated features, psychological intensity, and the raw emotional power of artists like Edvard Munch.`,
+  expressionist:
+    'Render the scene with expressionist intensity using distorted forms, emotionally charged color, aggressive brush movement, psychological lighting, unstable perspective, and heightened inner-tension atmosphere.',
 
-  psychedelic: `Create a psychedelic art illustration with swirling patterns, vibrant rainbow colors, flowing organic shapes, kaleidoscopic effects, trippy optical illusions, and the mind-expanding aesthetic of 1960s counterculture.`,
+  psychedelic:
+    'Render the scene as psychedelic art with swirling forms, vibrating rainbow contrast, hallucinatory pattern density, fluid transitions, optical distortion, and euphoric mind-bending visual rhythm.',
 
-  // Fun/Novelty
-  sticker: `Create a sticker art style illustration with bold outlines, flat vibrant colors, die-cut border effect, subtle drop shadow, and the playful aesthetic of vinyl stickers.`,
+  // Fun / Novelty
+  sticker:
+    'Render the scene as sticker art with bold simplified shapes, clean die-cut silhouette, thick outlines, cheerful flat color, glossy decal finish, and playful merch-ready readability.',
 
-  claymation: `Create a claymation-style illustration that looks like stop-motion animation with clay figures, visible texture, soft lighting, rounded shapes, and the charming handmade quality of Wallace & Gromit.`,
+  claymation:
+    'Render the scene as claymation with squishy sculpted forms, tactile clay texture, soft studio lighting, rounded handmade imperfections, stop-motion charm, and cozy practical miniature depth.',
 
-  graffiti: `Create a street graffiti art illustration with bold spray paint style, dripping effects, bubble letters, urban textures, vibrant colors, and the raw energy of street art murals.`,
+  graffiti:
+    'Render the scene as street graffiti with aerosol texture, bold mural composition, drips and paint bloom, saturated urban color, expressive tagging energy, and rough wall-surface realism.',
 
-  pixel: `Create an 8-bit pixel art illustration with chunky pixels, limited retro color palette, nostalgic video game aesthetic, clean pixel-perfect edges, and the charming simplicity of classic arcade games.`,
+  pixel:
+    'Render the scene as high-quality pixel art with deliberate sprite-like shapes, limited retro palette, crisp pixel edges, readable silhouette design, tileable detail logic, and classic game-screen clarity.',
 
-  lego: `Create a LEGO brick style illustration with characters as LEGO minifigures, blocky proportions, plastic sheen, bright primary colors, and the playful toy aesthetic of LEGO sets.`,
+  lego:
+    'Render the scene as LEGO-style construction with brick-built forms, minifigure proportions, glossy molded plastic surfaces, toy-like color blocking, modular geometry, and playful set-piece staging.',
 
-  papercut: `Create a layered paper cut art illustration with visible paper layers, subtle shadows between layers, clean cut edges, limited color palette, and the handcrafted aesthetic of paper sculpture.`,
+  papercut:
+    'Render the scene as layered paper-cut artwork with stacked silhouette planes, crisp cut edges, soft cast shadows between layers, handcrafted composition, and tactile collage depth.',
 
-  balloon: `Create a balloon animal sculpture style illustration with twisted balloon shapes, shiny reflective surface, simple rounded forms, bright colors, and the playful aesthetic of balloon art.`,
+  balloon:
+    'Render the scene as balloon-sculpture art with inflated tubular forms, glossy stretched highlights, playful curvature, bright carnival color, whimsical proportions, and reflective latex texture.',
 
-  plushie: `Create a cute plushie/stuffed toy style illustration with soft fuzzy textures, button eyes, stitched details, huggable proportions, and the adorable aesthetic of handmade stuffed animals.`,
+  plushie:
+    'Render the scene as plush toy illustration with soft stuffed volume, fuzzy textile texture, stitched details, rounded cuddly shapes, cozy lighting, and handmade collectible charm.',
 
-  vintage: `Create a vintage photograph style illustration with sepia tones, aged paper texture, Victorian-era clothing and styling, oval vignette frame, and the nostalgic aesthetic of 19th century photography.`,
+  vintage:
+    'Render the scene as antique photography with sepia toning, faded print texture, soft focus, age-worn contrast, period styling, and elegant archival portrait atmosphere.',
 
-  steampunk: `Create a steampunk style illustration with brass gears and cogs, Victorian fashion, goggles and top hats, steam-powered machinery, copper pipes, and the retro-futuristic aesthetic of alternate history.`,
+  steampunk:
+    'Render the scene with steampunk treatment using brass machinery, riveted metal detail, Victorian industrial styling, warm copper light, smoky atmosphere, and elaborate retro-mechanical ornament.',
 
-  fantasy: `Create an epic fantasy RPG style illustration with heroic pose, magical effects, detailed armor or robes, dramatic lighting, and the epic aesthetic of Dungeons & Dragons character art.`,
+  fantasy:
+    'Render the scene as epic fantasy illustration with heroic staging, magical light effects, ornate costume detail, storybook scale, atmospheric depth, and polished tabletop-RPG adventure energy.',
 };
 
 // Get style prompt for a given style ID, falling back to 'default'

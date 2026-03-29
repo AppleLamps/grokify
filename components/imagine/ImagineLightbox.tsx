@@ -1,23 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Download, Copy, Check, Play } from 'lucide-react';
-import type { GalleryImage } from './types';
+import { useState, useEffect, useCallback } from 'react';
+import { X, Download, Copy, Check, Clapperboard } from 'lucide-react';
+import type { GalleryImage, VideoExtendSettings } from './types';
+import ImagineExtendDialog from './ImagineExtendDialog';
 
 interface ImagineLightboxProps {
     image: GalleryImage | null;
     onClose: () => void;
     getFullImageUrl: (id: string) => Promise<string | null>;
+    onExtendVideo: (settings: VideoExtendSettings) => void;
+    isGenerating: boolean;
 }
 
 export default function ImagineLightbox({
     image,
     onClose,
     getFullImageUrl,
+    onExtendVideo,
+    isGenerating,
 }: ImagineLightboxProps) {
     const [fullUrl, setFullUrl] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [extendDialogOpen, setExtendDialogOpen] = useState(false);
 
     useEffect(() => {
         if (!image) {
@@ -49,10 +55,8 @@ export default function ImagineLightbox({
         return () => window.removeEventListener('keydown', handleEscape);
     }, [onClose]);
 
-    if (!image) return null;
-
     const handleDownload = async () => {
-        if (!fullUrl) return;
+        if (!image || !fullUrl) return;
 
         try {
             const response = await fetch(fullUrl);
@@ -71,6 +75,7 @@ export default function ImagineLightbox({
     };
 
     const handleCopyPrompt = async () => {
+        if (!image) return;
         try {
             await navigator.clipboard.writeText(image.prompt);
             setCopied(true);
@@ -79,6 +84,20 @@ export default function ImagineLightbox({
             console.error('Copy failed:', err);
         }
     };
+
+    const handleExtendSubmit = useCallback(({ prompt, duration }: { prompt: string; duration: number }) => {
+        if (!image || image.type !== 'video' || !fullUrl) return;
+
+        onExtendVideo({
+            prompt,
+            duration,
+            sourceVideoUrl: fullUrl,
+            aspectRatio: image.aspectRatio,
+        });
+        setExtendDialogOpen(false);
+    }, [fullUrl, image, onExtendVideo]);
+
+    if (!image) return null;
 
     return (
         <div className="imagine-lightbox" onClick={onClose}>
@@ -142,9 +161,30 @@ export default function ImagineLightbox({
                             <Download className="w-4 h-4" />
                             Download
                         </button>
+                        {image.type === 'video' && fullUrl && (
+                            <button
+                                className="imagine-lightbox__btn imagine-lightbox__btn--accent"
+                                onClick={() => setExtendDialogOpen(true)}
+                                disabled={isGenerating}
+                            >
+                                <Clapperboard className="w-4 h-4" />
+                                Extend
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
+
+            <ImagineExtendDialog
+                open={extendDialogOpen}
+                onClose={() => setExtendDialogOpen(false)}
+                title="Extend Generated Video"
+                subtitle="Describe what should happen next in this clip."
+                defaultPrompt={image.prompt}
+                defaultDuration={6}
+                isSubmitting={isGenerating}
+                onSubmit={handleExtendSubmit}
+            />
         </div>
     );
 }

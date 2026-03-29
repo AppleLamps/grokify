@@ -8,7 +8,11 @@
     top: 0;
     height: 100vh;
     width: var(--im-sidebar-width);
-    background: var(--im-bg-card);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
+        var(--im-bg-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-right: 1px solid var(--im-border);
     display: flex;
     flex-direction: column;
@@ -26,7 +30,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--im-border);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.12);
 }
 
 .imagine-sidebar__header-left {
@@ -42,7 +46,7 @@
     width: 32px;
     height: 32px;
     background: transparent;
-    border: 1px solid var(--im-border);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--im-radius-sm);
     color: var(--im-text-secondary);
     cursor: pointer;
@@ -51,15 +55,19 @@
 }
 
 .imagine-sidebar__home:hover {
-    background: var(--im-bg-hover);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--im-text-primary);
+    border-color: rgba(245, 158, 11, 0.24);
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.12);
 }
 
 .imagine-sidebar__title {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--im-text-primary);
+    color: #fbbf24;
     margin: 0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .imagine-sidebar__collapse {
@@ -69,7 +77,7 @@
     width: 32px;
     height: 32px;
     background: transparent;
-    border: 1px solid var(--im-border);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--im-radius-sm);
     color: var(--im-text-secondary);
     cursor: pointer;
@@ -77,8 +85,9 @@
 }
 
 .imagine-sidebar__collapse:hover {
-    background: var(--im-bg-hover);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--im-text-primary);
+    border-color: rgba(245, 158, 11, 0.24);
 }
 
 .imagine-sidebar__content {
@@ -93,8 +102,8 @@
 .imagine-sidebar__nav {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 0 0.5rem;
+    gap: 8px;
+    padding: 0.25rem 0.75rem;
 }
 
 .imagine-sidebar__folder-item {
@@ -108,10 +117,10 @@
     align-items: center;
     gap: 0.5rem;
     width: 100%;
-    padding: 0.5rem 0.75rem;
-    background: transparent;
-    border: none;
-    border-radius: var(--im-radius-sm);
+    padding: 0.75rem 0.875rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid transparent;
+    border-radius: 14px;
     color: var(--im-text-secondary);
     font-size: 0.875rem;
     cursor: pointer;
@@ -120,14 +129,17 @@
 }
 
 .imagine-sidebar__folder:hover {
-    background: var(--im-bg-hover);
+    background: rgba(255, 255, 255, 0.045);
     color: var(--im-text-primary);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 .imagine-sidebar__folder--active {
-    background: var(--im-bg-tertiary);
-    color: var(--im-text-primary);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(251, 146, 60, 0.08) 50%, rgba(244, 63, 94, 0.08));
+    border-color: rgba(245, 158, 11, 0.26);
+    color: #fff7ed;
     font-weight: 500;
+    box-shadow: 0 16px 36px rgba(245, 158, 11, 0.12);
 }
 
 .imagine-sidebar__folder-icon {
@@ -147,16 +159,19 @@
 
 .imagine-sidebar__folder-count {
     font-size: 0.75rem;
-    color: var(--im-text-muted);
-    background: var(--im-bg-tertiary);
+    color: var(--im-text-secondary);
+    background: rgba(255, 255, 255, 0.06);
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: 999px;
     min-width: 24px;
     text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .imagine-sidebar__folder--active .imagine-sidebar__folder-count {
-    background: var(--im-bg-hover);
+    background: rgba(255, 248, 235, 0.1);
+    color: #fde68a;
+    border-color: rgba(245, 158, 11, 0.16);
 }
 
 .imagine-sidebar__folder-delete {
@@ -179,13 +194,13 @@
 }
 
 .imagine-sidebar__folder-delete:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: rgba(239, 68, 68, 0.14);
+    color: #fda4af;
 }
 
 .imagine-sidebar__actions {
     padding: 1rem 0.5rem;
-    border-top: 1px solid var(--im-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -197,30 +212,45 @@
     gap: 0.5rem;
     width: 100%;
     padding: 0.5rem 0.75rem;
-    background: transparent;
-    border: 1px solid var(--im-border);
-    border-radius: var(--im-radius-sm);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
     color: var(--im-text-secondary);
     font-size: 0.875rem;
     cursor: pointer;
     transition: all var(--im-transition);
+    text-decoration: none;
+}
+
+.imagine-sidebar__prompt-link {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(251, 146, 60, 0.08) 52%, rgba(244, 63, 94, 0.08));
+    border-color: rgba(245, 158, 11, 0.22);
+    color: #fff7ed;
+    box-shadow: 0 14px 30px rgba(245, 158, 11, 0.12);
+}
+
+.imagine-sidebar__prompt-link:hover {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.22), rgba(251, 146, 60, 0.12) 52%, rgba(251, 113, 133, 0.1));
+    border-color: rgba(251, 191, 36, 0.28);
+    color: #ffffff;
 }
 
 .imagine-sidebar__add-btn:hover {
-    background: var(--im-bg-hover);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--im-text-primary);
-    border-color: var(--im-text-muted);
+    border-color: rgba(245, 158, 11, 0.2);
 }
 
 .imagine-sidebar__add-btn--active {
     background: var(--im-accent);
-    color: white;
-    border-color: var(--im-accent);
+    color: #111111;
+    border-color: rgba(251, 191, 36, 0.4);
+    box-shadow: 0 18px 34px rgba(245, 158, 11, 0.18);
 }
 
 .imagine-sidebar__add-btn--active:hover {
     background: var(--im-accent-hover);
-    border-color: var(--im-accent-hover);
+    border-color: rgba(251, 191, 36, 0.48);
 }
 
 .imagine-sidebar__create-form {
@@ -231,24 +261,25 @@
 .imagine-sidebar__input {
     flex: 1;
     padding: 0.5rem 0.75rem;
-    background: var(--im-bg-tertiary);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--im-border);
-    border-radius: var(--im-radius-sm);
+    border-radius: 12px;
     color: var(--im-text-primary);
     font-size: 0.875rem;
 }
 
 .imagine-sidebar__input:focus {
     outline: none;
-    border-color: var(--im-accent);
+    border-color: rgba(245, 158, 11, 0.28);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.08);
 }
 
 .imagine-sidebar__save-btn {
     padding: 0.5rem 0.75rem;
     background: var(--im-accent);
     border: none;
-    border-radius: var(--im-radius-sm);
-    color: white;
+    border-radius: 12px;
+    color: #111111;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
@@ -270,8 +301,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background: var(--im-bg-card);
+    border-radius: 16px;
+    background: rgba(10, 10, 12, 0.78);
+    backdrop-filter: blur(18px);
     border: 1px solid var(--im-border);
     box-shadow: var(--im-shadow-md);
     color: var(--im-text-secondary);
@@ -280,9 +312,10 @@
 }
 
 .imagine-sidebar-toggle:hover {
-    background: var(--im-bg-hover);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--im-text-primary);
     box-shadow: var(--im-shadow-lg);
+    border-color: rgba(245, 158, 11, 0.22);
 }
 
 .imagine-sidebar-toggle--hidden {

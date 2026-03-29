@@ -26,9 +26,12 @@
 
 .imagine-gallery__card {
     position: relative;
-    border-radius: 12px;
+    border-radius: 18px;
     overflow: hidden;
-    background: var(--im-bg-card);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
+        rgba(10, 10, 12, 0.74);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--im-shadow-sm);
@@ -39,6 +42,7 @@
 .imagine-gallery__card:hover {
     transform: translateY(-4px);
     box-shadow: var(--im-shadow-lg);
+    border-color: rgba(245, 158, 11, 0.18);
 }
 
 .imagine-gallery__image {
@@ -63,8 +67,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
     color: white;
     border: none;
     border-radius: 50%;
@@ -80,7 +84,7 @@
 }
 
 .imagine-gallery__delete:hover {
-    background: #ef4444;
+    background: linear-gradient(135deg, #fb7185, #ef4444);
     transform: scale(1.1);
 }
 
@@ -91,8 +95,9 @@
     left: 8px;
     z-index: 10;
     padding: 4px;
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -104,7 +109,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--im-bg-tertiary), var(--im-bg-secondary));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
     color: var(--im-text-muted);
 }
 
@@ -116,7 +121,7 @@
     justify-content: center;
     color: var(--im-text-muted);
     font-size: 0.75rem;
-    background: var(--im-bg-tertiary);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 /* Loading Placeholder - Golden Shimmer */
@@ -230,28 +235,55 @@
     min-height: 50vh;
     text-align: center;
     color: var(--im-text-muted);
+    position: relative;
 }
 
 .imagine-empty__icon {
     margin-bottom: 1.5rem;
-    opacity: 0.4;
-    color: var(--im-text-muted);
+    opacity: 0.88;
+    color: #fbbf24;
+    position: relative;
+    z-index: 1;
 }
 
 .imagine-empty__icon svg {
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
+    filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.14));
+}
+
+.imagine-empty::before {
+    content: '';
+    position: absolute;
+    width: min(560px, 90%);
+    height: 320px;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background:
+        radial-gradient(circle at top, rgba(245, 158, 11, 0.12), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(244, 63, 94, 0.08), transparent 30%),
+        rgba(10, 10, 12, 0.46);
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
 }
 
 .imagine-empty__title {
-    font-size: 1.25rem;
-    color: var(--im-text-secondary);
-    margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+    color: #fafaf9;
+    margin-bottom: 0.65rem;
+    position: relative;
+    z-index: 1;
 }
 
 .imagine-empty__description {
-    font-size: 0.875rem;
-    max-width: 400px;
+    font-size: 0.92rem;
+    max-width: 420px;
+    color: #a1a1aa;
+    position: relative;
+    z-index: 1;
 }
 
 /* Responsive */

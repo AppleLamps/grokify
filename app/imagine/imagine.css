@@ -1,24 +1,24 @@
 /* ========================================
-   Grok Imagine - Light Theme (OpenRouter Style)
+   Grok Imagine - Grokify Dark Theme
    Base styles - other modules imported in ImagineClient.tsx
    ======================================== */
 
 /* CSS Variables */
 .imagine-layout {
-    --im-bg-primary: #ffffff;
-    --im-bg-secondary: #f8f9fa;
-    --im-bg-tertiary: #f1f3f4;
-    --im-bg-card: #ffffff;
-    --im-bg-hover: #e8eaed;
-    --im-text-primary: #202124;
-    --im-text-secondary: #5f6368;
-    --im-text-muted: #9aa0a6;
-    --im-accent: #1a1a1a;
-    --im-accent-hover: #333333;
-    --im-border: #e0e0e0;
-    --im-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --im-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --im-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --im-bg-primary: #09090b;
+    --im-bg-secondary: rgba(255, 255, 255, 0.03);
+    --im-bg-tertiary: rgba(255, 255, 255, 0.055);
+    --im-bg-card: rgba(10, 10, 12, 0.72);
+    --im-bg-hover: rgba(255, 255, 255, 0.08);
+    --im-text-primary: #f5f5f5;
+    --im-text-secondary: #d4d4d8;
+    --im-text-muted: #71717a;
+    --im-accent: linear-gradient(135deg, #f59e0b 0%, #fb923c 55%, #f43f5e 100%);
+    --im-accent-hover: linear-gradient(135deg, #fbbf24 0%, #fb923c 52%, #fb7185 100%);
+    --im-border: rgba(255, 255, 255, 0.08);
+    --im-shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.2);
+    --im-shadow-md: 0 18px 40px rgba(0, 0, 0, 0.28);
+    --im-shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.42);
     --im-radius-sm: 8px;
     --im-radius-md: 16px;
     --im-radius-lg: 24px;
@@ -30,9 +30,28 @@
 .imagine-layout {
     display: flex;
     min-height: 100vh;
-    background: var(--im-bg-primary);
+    position: relative;
+    isolation: isolate;
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 30%),
+        radial-gradient(circle at top right, rgba(244, 63, 94, 0.16), transparent 28%),
+        radial-gradient(circle at bottom center, rgba(245, 158, 11, 0.1), transparent 32%),
+        var(--im-bg-primary);
     color: var(--im-text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: inherit;
+}
+
+.imagine-layout::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0)),
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 100%);
+    background-size: auto, 34px 34px;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* Header - hidden for minimal look like OpenRouter */
@@ -47,20 +66,20 @@
 }
 
 .imagine-layout ::-webkit-scrollbar-track {
-    background: var(--im-bg-secondary);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .imagine-layout ::-webkit-scrollbar-thumb {
-    background: var(--im-border);
+    background: rgba(255, 255, 255, 0.12);
     border-radius: 4px;
 }
 
 .imagine-layout ::-webkit-scrollbar-thumb:hover {
-    background: var(--im-text-muted);
+    background: rgba(245, 158, 11, 0.28);
 }
 
 /* Selection */
 .imagine-layout ::selection {
-    background-color: var(--im-accent);
-    color: white;
+    background-color: rgba(251, 191, 36, 0.88);
+    color: #111111;
 }

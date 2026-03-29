@@ -1,6 +1,7 @@
 /**
  * IndexedDB storage module for Grok Imagine - efficient image persistence
  */
+import { buildStoredGalleryImage } from '@/lib/imagine-gallery-utils';
 
 const DB_NAME = 'grok-imagine-gallery';
 const DB_VERSION = 1;
@@ -199,8 +200,10 @@ class ImagineStorage {
                 });
 
                 return {
-                    ...img,
-                    thumbnailUrl: thumbBlob ? URL.createObjectURL(thumbBlob) : undefined,
+                    ...buildStoredGalleryImage(
+                        img,
+                        thumbBlob ? URL.createObjectURL(thumbBlob) : undefined,
+                    ),
                 };
             })
         );

@@ -264,19 +264,29 @@ export default function Home() {
     if (!result?.imageUrl) return;
 
     try {
-      // Use proxy to avoid CORS issues with external image URLs
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(result.imageUrl)}`;
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error('Failed to fetch image');
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
       link.download = `xpressionist-${result.username}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+
+      if (result.imageUrl.startsWith('data:')) {
+        // Data URL — use directly without proxying
+        link.href = result.imageUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // External URL — proxy to avoid CORS issues
+        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(result.imageUrl)}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error('Failed to fetch image');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+
       toast.success('Downloaded!');
     } catch {
       toast.error('Download failed');

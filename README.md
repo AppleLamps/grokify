@@ -137,6 +137,7 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | **Video Generation** | [xAI Grok Imagine Video](https://x.ai/) |
 | **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) + IndexedDB (local) |
 | **Deployment** | [Vercel](https://vercel.com/) |
+| **Tests** | [Node.js test runner](https://nodejs.org/api/test.html) (`tsx` for TypeScript) |
 
 ---
 
@@ -167,6 +168,9 @@ npm run db:push
 
 # Start development server
 npm run dev
+
+# Run unit tests (prompt helpers)
+npm test
 ```
 
 ### Environment Variables
@@ -290,11 +294,15 @@ Content-Type: application/json
 
 ## Project Structure
 
+Single **Next.js** application at the repo root. The older nested **`grok-4-prompt`** reference project has been removed; Grokify Prompt lives under `app/prompt/` and `components/prompt/`.
+
 ```
 .
+├── .agents/skills/             # Optional AI assistant skill docs (Cursor/Claude); not required to run the app
 ├── app/
 │   ├── api/
 │   │   ├── analyze-account/    # Profile analysis → image prompt
+│   │   ├── analyze-account-video/ # Profile → video prompt
 │   │   ├── generate-image/     # Prompt → Gemini image
 │   │   ├── imagine/            # Grok Imagine image generation
 │   │   ├── imagine-video/      # Grok Imagine video generation
@@ -304,7 +312,10 @@ Content-Type: application/json
 │   │   ├── osint-profile/      # Intelligence dossier
 │   │   ├── caricature/         # Photo → caricature
 │   │   ├── prompt-generate/    # Grokify Prompt generator
-│   │   └── upload-image/       # Vercel Blob storage
+│   │   ├── proxy-image/       # CORS-safe image fetch
+│   │   ├── upload-image/       # Vercel Blob storage
+│   │   ├── upload-video/       # Video upload (token route for client uploads)
+│   │   └── bot/poll-mentions/  # X bot cron / mentions (optional)
 │   ├── imagine/                # Grok Imagine gallery page
 │   ├── prompt/                 # Grokify Prompt page
 │   ├── share/[id]/             # Shareable artwork pages
@@ -332,13 +343,21 @@ Content-Type: application/json
 │   └── schema.ts               # Drizzle schema
 ├── hooks/
 │   ├── usePromptHistory.ts     # Prompt history hook
-│   └── useImagineStore.ts      # Grok Imagine gallery state
+│   ├── useImagineStore.ts     # Grok Imagine gallery state
+│   └── use-mobile.tsx          # Responsive breakpoint helper (sidebar/UI)
+├── tests/
+│   ├── prompt-client-utils.test.ts  # Tests for prompt UI helpers
+│   └── prompt-route-utils.test.ts    # Tests for prompt-generate retry logic
 └── lib/
     ├── site.ts                 # SITE_URL / SITE_NAME (grokify.ai) for SEO & APIs
+    ├── prompt-client-utils.ts  # Grokify Prompt: image compression & preview URL helpers
+    ├── prompt-route-utils.ts   # Grokify Prompt API: retryable status / backoff helpers
     ├── circuit-breaker.ts      # API resilience
     ├── fetchWithTimeout.ts     # API timeout handling
     ├── imagine-storage.ts      # IndexedDB storage for images
-    ├── prompt-config.ts        # Grokify Prompt configuration
+    ├── prompt-config.ts        # Grokify Prompt configuration (server)
+    ├── prompt-config-shared.ts # Shared presets/types
+    ├── prompt-config-client.ts # Client-safe re-exports
     ├── schemas.ts              # Zod validation schemas
     └── utils.ts
 ```
@@ -352,7 +371,10 @@ Content-Type: application/json
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
+| `npm test` | Run unit tests (`tests/**/*.test.ts` via `tsx`) |
 | `npm run lint` | Run ESLint |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:migrate` | Run Drizzle migrations |
 | `npm run db:push` | Push schema to database |
 | `npm run db:studio` | Open Drizzle Studio |
 

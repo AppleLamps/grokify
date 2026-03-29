@@ -14,8 +14,10 @@ import {
   type StructuredPayload,
 } from '@/lib/prompt-config';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { buildPromptControlBlock, normalizeLightingMode } from '@/lib/prompt-controls';
 import { getRetryDelayMs, shouldRetryPromptRequest } from '@/lib/prompt-route-utils';
 import { SITE_URL } from '@/lib/site';
+import type { ImageIntent, LightingMode } from '@/lib/prompt-config-shared';
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
@@ -29,6 +31,10 @@ interface GenerateRequestBody {
   isJsonMode?: boolean;
   isTestMode?: boolean;
   isVideoPrompt?: boolean;
+  detailBoost?: boolean;
+  realismBias?: boolean;
+  lightingMode?: LightingMode;
+  imageIntent?: ImageIntent;
   imageBase64?: string;
   imageMimeType?: string;
 }
@@ -160,6 +166,10 @@ export async function POST(request: NextRequest) {
       isJsonMode = false,
       isTestMode = false,
       isVideoPrompt = false,
+      detailBoost = false,
+      realismBias = false,
+      lightingMode,
+      imageIntent = 'RECREATE_CLOSELY',
       imageBase64,
       imageMimeType = 'image/png',
     } = body;
@@ -198,10 +208,13 @@ export async function POST(request: NextRequest) {
     // Build user prompt
     let userPrompt = '';
     if (imageBase64 && !idea.trim() && !directions.trim()) {
-      userPrompt =
-        'Please analyze this image and create a detailed prompt to recreate it as closely as possible for AI image generation.';
+      userPrompt = imageIntent === 'RECREATE_CLOSELY'
+        ? 'Please analyze this image and create a detailed prompt to recreate it as closely as possible for AI image generation. Prioritize fidelity to the uploaded image, preserving the same subject, composition, materials, proportions, lighting relationships, and overall visual character.'
+        : 'Please analyze this image and create a detailed prompt for AI image generation.';
     } else if (imageBase64 && (idea || directions)) {
-      userPrompt = 'Please analyze this image and create a prompt for AI image generation';
+      userPrompt = imageIntent === 'RECREATE_CLOSELY'
+        ? 'Please analyze this image and create a prompt for AI image generation that recreates the uploaded image as closely as possible while incorporating the user instructions'
+        : 'Please analyze this image and create a prompt for AI image generation';
       if (idea.trim()) {
         userPrompt += ` incorporating this idea: ${idea}`;
       }
@@ -214,6 +227,12 @@ export async function POST(request: NextRequest) {
         userPrompt += `\n\nAdditional directions: ${directions}`;
       }
     }
+
+    userPrompt += buildPromptControlBlock({
+      detailBoost,
+      realismBias,
+      lightingMode: normalizeLightingMode(lightingMode),
+    });
 
     if (isJsonMode) {
       userPrompt += '\n\nReturn only raw JSON. No markdown fences, no explanations, no extra text.';

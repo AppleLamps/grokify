@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Upload,
   Trash2,
@@ -11,14 +12,25 @@ import {
   ChevronDown,
   HelpCircle,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { STYLE_PRESETS, PROMPT_CONFIG, type JsonPromptPayload } from '@/lib/prompt-config-client';
+import {
+  STYLE_PRESETS,
+  PROMPT_CONFIG,
+  LIGHTING_MODES,
+  IMAGE_INTENTS,
+  type JsonPromptPayload,
+  type ImageIntent,
+  type LightingMode,
+} from '@/lib/prompt-config-client';
 import {
   cleanupPreviewUrl,
   compressImageDataUrl,
   replacePreviewUrl,
 } from '@/lib/prompt-client-utils';
+import { getDroppedFiles, hasFilesInTransfer } from '@/lib/drag-drop-utils';
+import { IMAGINE_HANDOFF_QUERY, saveImagineHandoff } from '@/lib/imagine-handoff';
 
 // Types
 type CopyTarget = 'default' | 'json' | 'scene' | '';
@@ -39,6 +51,8 @@ const RANDOM_IDEAS = [
 const STYLE_PRESET_NAMES = Object.keys(STYLE_PRESETS);
 
 export default function PromptClient() {
+  const router = useRouter();
+
   // Form state
   const [idea, setIdea] = useState('');
   const [directions, setDirections] = useState('');
@@ -50,11 +64,16 @@ export default function PromptClient() {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imageMimeType, setImageMimeType] = useState<string>('image/png');
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isImageDropActive, setIsImageDropActive] = useState(false);
 
   // Config flags
   const [isJsonMode, setIsJsonMode] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
   const [isVideoPrompt, setIsVideoPrompt] = useState(false);
+  const [detailBoost, setDetailBoost] = useState(false);
+  const [realismBias, setRealismBias] = useState(false);
+  const [lightingMode, setLightingMode] = useState<LightingMode>('AUTO');
+  const [imageIntent, setImageIntent] = useState<ImageIntent>('RECREATE_CLOSELY');
 
   // Output state
   const [generatedPrompt, setGeneratedPrompt] = useState<string | JsonPromptPayload | null>(null);
@@ -70,6 +89,7 @@ export default function PromptClient() {
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+  const imageDropDepthRef = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -87,6 +107,17 @@ export default function PromptClient() {
     if (base && styleText) return `${base}, ${styleText}`;
     return base || styleText || '';
   }, [directions, activeStyles]);
+
+  const imaginePrompt = useMemo(() => {
+    if (!generatedPrompt) return null;
+    if (typeof generatedPrompt === 'string') {
+      const prompt = generatedPrompt.trim();
+      return prompt || null;
+    }
+
+    const prompt = generatedPrompt.scene.trim();
+    return prompt || null;
+  }, [generatedPrompt]);
 
   // Toggle style preset
   const toggleStyle = useCallback((styleName: string) => {
@@ -143,6 +174,45 @@ export default function PromptClient() {
     setImageMimeType('image/png');
   }, []);
 
+  const handleDroppedPromptFiles = useCallback((files: File[]) => {
+    const imageFile = files.find((file) => file.type.startsWith('image/'));
+    if (imageFile) {
+      void handleImageUpload(imageFile);
+      return;
+    }
+
+    setError('Please upload a valid image file.');
+  }, [handleImageUpload]);
+
+  const handleImageDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!hasFilesInTransfer(e.dataTransfer)) return;
+    e.preventDefault();
+    imageDropDepthRef.current += 1;
+    setIsImageDropActive(true);
+  }, []);
+
+  const handleImageDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!hasFilesInTransfer(e.dataTransfer)) return;
+    e.preventDefault();
+  }, []);
+
+  const handleImageDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!hasFilesInTransfer(e.dataTransfer)) return;
+    e.preventDefault();
+    imageDropDepthRef.current = Math.max(0, imageDropDepthRef.current - 1);
+    if (imageDropDepthRef.current === 0) {
+      setIsImageDropActive(false);
+    }
+  }, []);
+
+  const handleImageDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!hasFilesInTransfer(e.dataTransfer)) return;
+    e.preventDefault();
+    imageDropDepthRef.current = 0;
+    setIsImageDropActive(false);
+    handleDroppedPromptFiles(getDroppedFiles(e.dataTransfer));
+  }, [handleDroppedPromptFiles]);
+
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,6 +236,10 @@ export default function PromptClient() {
           isJsonMode,
           isTestMode,
           isVideoPrompt,
+          detailBoost,
+          realismBias,
+          lightingMode,
+          imageIntent,
           imageBase64,
           imageMimeType,
         }),
@@ -213,6 +287,10 @@ export default function PromptClient() {
           isJsonMode: false,
           isTestMode: false,
           isVideoPrompt: false,
+          detailBoost: false,
+          realismBias: false,
+          lightingMode: 'AUTO',
+          imageIntent: 'RECREATE_CLOSELY',
         }),
       });
 
@@ -248,6 +326,10 @@ export default function PromptClient() {
     setGeneratedPrompt(null);
     setError('');
     setShowOutput(false);
+    setDetailBoost(false);
+    setRealismBias(false);
+    setLightingMode('AUTO');
+    setImageIntent('RECREATE_CLOSELY');
     handleImageRemove();
   };
 
@@ -280,6 +362,18 @@ export default function PromptClient() {
     if (!generatedPrompt || typeof generatedPrompt === 'string') return;
     copyToClipboard(generatedPrompt.scene, 'scene');
   };
+
+  const handleGenerateWithImagine = useCallback(() => {
+    if (!imaginePrompt) return;
+
+    saveImagineHandoff({
+      prompt: imaginePrompt,
+      autogenerate: true,
+      createdAt: Date.now(),
+    });
+
+    router.push(`/imagine?handoff=${IMAGINE_HANDOFF_QUERY}`);
+  }, [imaginePrompt, router]);
 
   const isAnyLoading = isLoading || isSurpriseLoading;
 
@@ -390,13 +484,23 @@ export default function PromptClient() {
                     </p>
                   </div>
                 ) : imagePreview ? (
-                  <div className="space-y-2">
+                  <div
+                    className="space-y-2"
+                    onDragEnter={handleImageDragEnter}
+                    onDragOver={handleImageDragOver}
+                    onDragLeave={handleImageDragLeave}
+                    onDrop={handleImageDrop}
+                  >
                     <div className="relative">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={imagePreview}
                         alt="Upload preview"
-                        className="w-full h-36 object-cover border border-white/10"
+                        className={`w-full h-36 object-cover border transition-all ${
+                          isImageDropActive
+                            ? 'border-amber-400/80 shadow-[0_0_0_1px_rgba(251,191,36,0.3),0_0_28px_rgba(245,158,11,0.22)]'
+                            : 'border-white/10'
+                        }`}
                       />
                       <button
                         type="button"
@@ -410,8 +514,16 @@ export default function PromptClient() {
                   </div>
                 ) : (
                   <div
-                    className="relative flex flex-col items-center justify-center min-h-[140px] border border-dashed border-white/15 bg-black/30 cursor-pointer hover:border-amber-500/40 transition-all"
+                    className={`relative flex flex-col items-center justify-center min-h-[140px] border border-dashed bg-black/30 cursor-pointer transition-all ${
+                      isImageDropActive
+                        ? 'border-amber-400/80 bg-amber-500/[0.08] shadow-[0_0_0_1px_rgba(251,191,36,0.3),0_0_30px_rgba(245,158,11,0.2)]'
+                        : 'border-white/15 hover:border-amber-500/40'
+                    }`}
                     onClick={() => fileInputRef.current?.click()}
+                    onDragEnter={handleImageDragEnter}
+                    onDragOver={handleImageDragOver}
+                    onDragLeave={handleImageDragLeave}
+                    onDrop={handleImageDrop}
                   >
                     {/* Corner brackets */}
                     <div className="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-white/30" />
@@ -423,7 +535,9 @@ export default function PromptClient() {
                     <p className="text-xs font-semibold uppercase tracking-widest text-gray-300 mb-1">
                       IMG_REF_UPLOAD
                     </p>
-                    <p className="text-xs text-gray-600">DRAG_DROP_TARGET</p>
+                    <p className={`text-xs ${isImageDropActive ? 'text-amber-300' : 'text-gray-600'}`}>
+                      {isImageDropActive ? 'DROP_IMAGE_HERE' : 'DRAG_DROP_TARGET'}
+                    </p>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -511,6 +625,96 @@ export default function PromptClient() {
                       {isVideoPrompt ? '[ACTIVE]' : '[INACTIVE]'}
                     </button>
                   </div>
+
+                  <div className="flex items-center justify-between group">
+                    <div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400 group-hover:text-amber-500/80 transition-colors">
+                        DETAIL_BOOST
+                      </span>
+                      <span className="block text-[10px] text-gray-600 mt-0.5 font-mono">Higher scene density</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDetailBoost((v) => !v)}
+                      className={`min-w-[80px] px-3 py-1.5 text-xs font-mono border transition-all ${
+                        detailBoost
+                          ? 'bg-amber-500 border-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                          : 'bg-black/40 border-white/10 text-gray-500 hover:border-amber-500/50 hover:text-amber-500'
+                      }`}
+                    >
+                      {detailBoost ? '[ACTIVE]' : '[INACTIVE]'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between group">
+                    <div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400 group-hover:text-amber-500/80 transition-colors">
+                        REALISM_BIAS
+                      </span>
+                      <span className="block text-[10px] text-gray-600 mt-0.5 font-mono">Grounded materials</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setRealismBias((v) => !v)}
+                      className={`min-w-[80px] px-3 py-1.5 text-xs font-mono border transition-all ${
+                        realismBias
+                          ? 'bg-amber-500 border-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                          : 'bg-black/40 border-white/10 text-gray-500 hover:border-amber-500/50 hover:text-amber-500'
+                      }`}
+                    >
+                      {realismBias ? '[ACTIVE]' : '[INACTIVE]'}
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                        LIGHTING_MODE
+                      </span>
+                      <span className="block text-[10px] text-gray-600 mt-0.5 font-mono">Force a lighting identity</span>
+                    </div>
+                    <div className="relative">
+                      <select
+                        value={lightingMode}
+                        onChange={(e) => setLightingMode(e.target.value as LightingMode)}
+                        className="w-full appearance-none bg-black/40 border border-white/10 text-gray-300 font-mono text-xs tracking-wider px-3 py-2.5 pr-9 focus:outline-none focus:border-amber-500/50 hover:border-amber-500/30 transition-all"
+                        disabled={isAnyLoading}
+                        aria-label="Select lighting mode"
+                      >
+                        {LIGHTING_MODES.map((mode) => (
+                          <option key={mode} value={mode} className="bg-[#0d0d0d]">
+                            {mode}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 w-4 h-4 -translate-y-1/2 text-gray-500" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                        IMAGE_INTENT
+                      </span>
+                      <span className="block text-[10px] text-gray-600 mt-0.5 font-mono">How uploaded images should be interpreted</span>
+                    </div>
+                    <div className="relative">
+                      <select
+                        value={imageIntent}
+                        onChange={(e) => setImageIntent(e.target.value as ImageIntent)}
+                        className="w-full appearance-none bg-black/40 border border-white/10 text-gray-300 font-mono text-xs tracking-wider px-3 py-2.5 pr-9 focus:outline-none focus:border-amber-500/50 hover:border-amber-500/30 transition-all"
+                        disabled={isAnyLoading}
+                        aria-label="Select image intent"
+                      >
+                        {IMAGE_INTENTS.map((intent) => (
+                          <option key={intent} value={intent} className="bg-[#0d0d0d]">
+                            {intent}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 w-4 h-4 -translate-y-1/2 text-gray-500" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -583,7 +787,18 @@ export default function PromptClient() {
                 06 // OUTPUT_STREAM
               </span>
               <div className="flex items-center gap-2">
+                {imaginePrompt && (
+                  <button
+                    type="button"
+                    onClick={handleGenerateWithImagine}
+                    className="flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-wider whitespace-nowrap bg-amber-500 text-black border border-amber-500 hover:bg-amber-400 hover:shadow-[0_0_18px_rgba(245,158,11,0.25)] transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    GENERATE
+                  </button>
+                )}
                 <button
+                  type="button"
                   onClick={handleCopyDefault}
                   className={`flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
                     copiedType === 'default'
@@ -597,6 +812,7 @@ export default function PromptClient() {
                 {isJsonMode && (
                   <>
                     <button
+                      type="button"
                       onClick={handleCopyJson}
                       className={`flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
                         copiedType === 'json'
@@ -608,6 +824,7 @@ export default function PromptClient() {
                       JSON
                     </button>
                     <button
+                      type="button"
                       onClick={handleCopyScene}
                       className={`flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
                         copiedType === 'scene'
@@ -687,7 +904,11 @@ export default function PromptClient() {
                 <p className="text-gray-400">
                   <strong>EMILY_JSON_MODE:</strong> Structured JSON output for advanced workflows<br />
                   <strong>TEST_ELYSIAN:</strong> Alternative poetic prompt style<br />
-                  <strong>VIDEO_SEQ:</strong> Generate text-to-video scene descriptions
+                  <strong>VIDEO_SEQ:</strong> Generate text-to-video scene descriptions<br />
+                  <strong>DETAIL_BOOST:</strong> Adds richer texture, props, and environment density<br />
+                  <strong>REALISM_BIAS:</strong> Pushes believable materials and physical image behavior<br />
+                  <strong>LIGHTING_MODE:</strong> Forces a stronger lighting identity like noir, neon, or golden hour<br />
+                  <strong>IMAGE_INTENT:</strong> Tells the model whether an uploaded image should be recreated closely or handled in another future mode
                 </p>
               </div>
             </div>

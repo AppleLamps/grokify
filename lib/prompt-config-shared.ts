@@ -15,6 +15,24 @@ export const PROMPT_CONFIG = {
   IMAGE_MAX_DIMENSION: 2000,
 } as const;
 
+export const LIGHTING_MODES = [
+  'AUTO',
+  'GOLDEN_HOUR',
+  'STUDIO',
+  'NOIR',
+  'NEON',
+  'OVERCAST',
+  'VOLUMETRIC',
+] as const;
+
+export type LightingMode = typeof LIGHTING_MODES[number];
+
+export const IMAGE_INTENTS = [
+  'RECREATE_CLOSELY',
+] as const;
+
+export type ImageIntent = typeof IMAGE_INTENTS[number];
+
 // Style presets for prompt generation UI.
 export const STYLE_PRESETS: Record<string, string> = {
   Realistic: 'photorealistic rendering with natural lighting, high detail, and lifelike textures',
