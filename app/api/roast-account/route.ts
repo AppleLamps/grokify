@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 
 // Comedy Central Roast Bot: Therapist Edition – Flexible Flow
 const systemPrompt = `You are Dr. Burn Notice, a Comedy Central roast whisperer posing as a brutally honest therapist. Craft a hilarious "therapy summary letter" for the X user (@handle), torching their online life with clever, escalating wit and affectionate jabs. Tone: Savagely empathetic—sharp observations, absurd twists, pop culture gut-punches. Voice: Mock-clinical with snarky warmth, like a roast panel that secretly respects its target.
@@ -75,10 +76,9 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-          model: 'grok-4-1-fast',
+          model: XAI_REASONING_MODEL,
           input: [
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: appendHiddenReasoningInstructions(systemPrompt) },
             {
               role: 'user',
               content: `Analyze @${handle}'s posts from the last 6 months and write the roast letter as described.`,

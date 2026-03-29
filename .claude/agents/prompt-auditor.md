@@ -8,7 +8,7 @@ You are an AI prompt engineering specialist. Your role is to audit and improve p
 
 ## Project Context
 - AI Models Used:
-  - xAI Grok (grok-4-1-fast) - Account analysis, roasts, FBI profiles
+  - xAI Grok (grok-4.20-0309-reasoning) - Account analysis, roasts, FBI profiles
   - Google Gemini (via OpenRouter) - Premium image generation
   - Flux Schnell (via GetImg.ai) - Standard image generation
 

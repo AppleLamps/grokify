@@ -6,6 +6,7 @@ import {
   extractGrokResponsesContent,
 } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 import { STYLE_PROMPTS, getStylePrompt } from '@/lib/style-prompts';
 import { VALID_STYLES, STYLE_DISPLAY_NAMES } from './constants';
 import { uploadMedia, postReply, postTextReply, type XMention } from './x-api';
@@ -132,9 +133,9 @@ export async function analyzeAccountForBot(handle: string): Promise<string> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'grok-4-1-fast',
+        model: XAI_REASONING_MODEL,
         input: [
-          { role: 'system', content: ANALYSIS_SYSTEM_PROMPT },
+          { role: 'system', content: appendHiddenReasoningInstructions(ANALYSIS_SYSTEM_PROMPT) },
           {
             role: 'user',
             content: `Execute a COMPREHENSIVE analysis of @${handle}'s X account. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.
@@ -446,9 +447,9 @@ export async function generateCaricatureForBot(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'grok-4-1-fast',
+        model: XAI_REASONING_MODEL,
         messages: [
-          { role: 'system', content: CARICATURE_SYSTEM_PROMPT },
+          { role: 'system', content: appendHiddenReasoningInstructions(CARICATURE_SYSTEM_PROMPT) },
           {
             role: 'user',
             content: [

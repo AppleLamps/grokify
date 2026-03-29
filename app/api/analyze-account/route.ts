@@ -4,6 +4,7 @@ import { eq, gt, and } from 'drizzle-orm';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponseSchema, extractGrokContent, GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 
 // Feature flag: Set to true to enable caching
 const ENABLE_CACHING = process.env.ENABLE_CACHING === 'true';
@@ -112,6 +113,8 @@ Content Guidelines:
 - **Satirical ≠ Offensive:** Great satire can be biting and edgy through clever visual choices, exaggerated caricature, and absurdist humor without explicit offensive content.`;
     }
 
+    const finalSystemPrompt = appendHiddenReasoningInstructions(systemPrompt);
+
     let imagePrompt: string;
 
     const today = new Date();
@@ -139,10 +142,9 @@ Content Guidelines:
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-            model: 'grok-4-1-fast',
+            model: XAI_REASONING_MODEL,
             messages: [
-              { role: 'system', content: systemPrompt },
+              { role: 'system', content: finalSystemPrompt },
               {
                 role: 'user',
                 content: `Based on this X account data: ${cachedContext}\n\nCreate a humorous but relevant image generation prompt that captures the account's essence.`,
@@ -199,10 +201,9 @@ Content Guidelines:
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-            model: 'grok-4-1-fast',
+            model: XAI_REASONING_MODEL,
             input: [
-              { role: 'system', content: systemPrompt },
+              { role: 'system', content: finalSystemPrompt },
               {
                 role: 'user',
                 content: `Execute a COMPREHENSIVE analysis of @${handle}'s X account. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.

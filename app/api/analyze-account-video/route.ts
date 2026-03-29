@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 
 export async function OPTIONS() {
     return NextResponse.json(null, { headers: getCorsHeaders() });
@@ -112,9 +113,9 @@ Make it feel like a personalized SNL digital short about their X presence.`;
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    model: 'grok-4-1-fast',
+                    model: XAI_REASONING_MODEL,
                     input: [
-                        { role: 'system', content: systemPrompt },
+                        { role: 'system', content: appendHiddenReasoningInstructions(systemPrompt) },
                         {
                             role: 'user',
                             content: `Create a satirical cartoon video about @${handle}. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.

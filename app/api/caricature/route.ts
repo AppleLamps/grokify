@@ -8,6 +8,7 @@ import {
     getCorsHeaders,
 } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 import { SITE_URL } from '@/lib/site';
 
 // Image model for caricature generation
@@ -113,9 +114,9 @@ export async function POST(req: NextRequest) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    model: 'grok-4-1-fast',
+                    model: XAI_REASONING_MODEL,
                     messages: [
-                        { role: 'system', content: CARICATURE_SYSTEM_PROMPT },
+                        { role: 'system', content: appendHiddenReasoningInstructions(CARICATURE_SYSTEM_PROMPT) },
                         {
                             role: 'user',
                             content: [

@@ -132,7 +132,7 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | **UI Components** | [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) |
 | **Database** | [Neon](https://neon.tech/) (Serverless Postgres) |
 | **ORM** | [Drizzle ORM](https://orm.drizzle.team/) |
-| **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4-1-fast) |
+| **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4.20-0309-reasoning) |
 | **Image Generation** | [xAI Grok Imagine](https://x.ai/) + [Google Gemini](https://ai.google.dev/) via [OpenRouter](https://openrouter.ai/) |
 | **Video Generation** | [xAI Grok Imagine Video](https://x.ai/) |
 | **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) + IndexedDB (local) |

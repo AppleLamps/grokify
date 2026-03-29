@@ -69,8 +69,8 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        // DO NOT CHANGE - grok-4-1-fast required for X search
-        model: 'grok-4-1-fast',
+        // DO NOT CHANGE - grok-4.20-0309-reasoning required for X search
+        model: 'grok-4.20-0309-reasoning',
         messages: [
           { role: 'system', content: systemPrompt },
           {
@@ -162,7 +162,7 @@ const handleNewFeature = async () => {
 
 ## Guardrails
 
-- Always use `grok-4-1-fast` model for X search capability
+- Always use `grok-4.20-0309-reasoning` model for X search capability
 - Include 6-month date range for search parameters
 - Never log or expose API keys
 - Handle API errors gracefully with user-friendly messages

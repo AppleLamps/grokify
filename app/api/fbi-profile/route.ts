@@ -3,6 +3,7 @@ import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { stripCitations } from '@/lib/report-parser';
+import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 
 // FBI Behavioral Analysis Unit – Digital Profiler
 const systemPrompt = `You are Special Agent Dr. [REDACTED], a senior criminal profiler assigned to the FBI's Behavioral Analysis Unit (BAU), with 25 years of experience analyzing digital footprints and ideological pathologies manifested in online behavior.
@@ -113,10 +114,9 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-          model: 'grok-4-1-fast',
+          model: XAI_REASONING_MODEL,
           input: [
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: appendHiddenReasoningInstructions(systemPrompt) },
             {
               role: 'user',
               content: `Conduct a deep behavioral analysis of @${handle}'s X activity from the last 6 months and generate the FBI profile report as described. Today's date is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.`,

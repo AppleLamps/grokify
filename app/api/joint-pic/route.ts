@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 
 export async function OPTIONS() {
   return NextResponse.json(null, { headers: getCorsHeaders() });
@@ -113,10 +114,9 @@ Your final output must be ONLY the image generation prompt. No preamble, no expl
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-          model: 'grok-4-1-fast',
+          model: XAI_REASONING_MODEL,
           input: [
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: appendHiddenReasoningInstructions(systemPrompt) },
             {
               role: 'user',
               content: `Execute a COMPREHENSIVE analysis of TWO X accounts: @${handle1} and @${handle2}. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.

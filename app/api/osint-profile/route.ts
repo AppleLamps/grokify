@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 
 // OSINT-style Internal User Classification Analyst - Enhanced Edition
 const systemPrompt = `You are an elite OSINT analyst producing a comprehensive "Internal User Classification" dossier for a specified X (Twitter) username. You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduct multiple searches, gather hundreds of posts, find viral content, and leave no stone unturned. Your goal is the most complete public profile possible.
@@ -267,10 +268,9 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-          model: 'grok-4-1-fast',
+          model: XAI_REASONING_MODEL,
           input: [
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: appendHiddenReasoningInstructions(systemPrompt) },
             {
               role: 'user',
               content: `Execute a COMPREHENSIVE OSINT analysis of @${handle}. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}. Focus on the last ${daysBack} days but also find their all-time viral hits.

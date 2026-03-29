@@ -7,6 +7,7 @@ import type {
   StructuredPayload,
 } from './prompt-config-shared';
 import { PROMPT_CONFIG, STYLE_PRESETS } from './prompt-config-shared';
+import { XAI_REASONING_MODEL } from './grok-config';
 
 /**
  * Configuration for Grokify Prompt Generator
@@ -18,12 +19,12 @@ import { PROMPT_CONFIG, STYLE_PRESETS } from './prompt-config-shared';
 
 export const API_CONFIG = {
   /** API request timeout in milliseconds */
-  REQUEST_TIMEOUT: 30000,
+  REQUEST_TIMEOUT: 45000,
 } as const;
 
-export const OPENROUTER_MODELS = {
+export const XAI_MODELS = {
   /** Primary model for prompt generation */
-  PRIMARY: 'x-ai/grok-4.1-fast',
+  PRIMARY: XAI_REASONING_MODEL,
 } as const;
 
 export const PROMPT_MODES = {

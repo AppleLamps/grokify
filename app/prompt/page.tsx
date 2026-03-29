@@ -45,7 +45,7 @@ export default function PromptPage() {
 
       <footer className="mt-12 text-center py-6 border-t border-amber-500/15">
         <p className="text-xs text-gray-600 font-mono uppercase tracking-wider">
-          POWERED_BY: OpenRouter API | MODEL: x-ai/grok-4.1-fast
+          POWERED_BY: xAI API | MODEL: grok-4.20-0309-reasoning
         </p>
         <p className="text-xs text-gray-600 font-mono mt-2">
           CREATED_BY: @lamps_apple |{' '}
