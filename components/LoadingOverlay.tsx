@@ -1,15 +1,13 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Search, Sparkles, Paintbrush, Zap, TrendingUp, Eye, Brain, Palette, Check } from 'lucide-react';
+import { Search, Sparkles, Paintbrush, Zap, TrendingUp, Eye, Brain, Palette, Check, TimerReset, Activity, Radar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-type LoadingType = 'photo' | 'roast' | 'fbi' | 'osint' | 'caricature' | 'jointpic' | 'video';
-type PhotoStage = 'analyze' | 'image' | 'video';
+import { getLoadingOverlayProgress, type LoadingType, type LoadingStage } from '@/lib/loading-overlay-progress';
 
 interface LoadingOverlayProps {
   type: LoadingType;
-  stage?: PhotoStage;
+  stage?: LoadingStage;
   username?: string;
   username2?: string;
 }
@@ -114,17 +112,6 @@ const ACTIVITY_LOG_ENTRIES = [
   { query: 'Generating prompt...', status: 'pending' },
 ];
 
-// Estimated durations in seconds
-const DURATIONS: Record<LoadingType, number> = {
-  photo: 45,
-  roast: 30,
-  fbi: 30,
-  osint: 90,
-  caricature: 45,
-  jointpic: 60,
-  video: 90,
-};
-
 // Particle component for the orb trails
 interface Particle {
   id: number;
@@ -159,37 +146,11 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
     return OSINT_MESSAGES;
   }, [type, stage]);
 
-  // Calculate progress percentage
-  const progress = useMemo(() => {
-    const baseDuration = DURATIONS[type];
-    let adjustedProgress = (elapsedSeconds / baseDuration) * 100;
-
-    if (type === 'photo') {
-      if (stage === 'analyze') {
-        adjustedProgress = Math.min((elapsedSeconds / 30) * 70, 70);
-      } else {
-        adjustedProgress = 70 + Math.min((elapsedSeconds / 20) * 30, 29);
-      }
-    }
-
-    if (type === 'jointpic') {
-      if (stage === 'analyze') {
-        adjustedProgress = Math.min((elapsedSeconds / 45) * 70, 70);
-      } else {
-        adjustedProgress = 70 + Math.min((elapsedSeconds / 20) * 30, 29);
-      }
-    }
-
-    if (type === 'video') {
-      if (stage === 'analyze') {
-        adjustedProgress = Math.min((elapsedSeconds / 20) * 30, 30);
-      } else {
-        adjustedProgress = 30 + Math.min((elapsedSeconds / 60) * 69, 69);
-      }
-    }
-
-    return Math.min(adjustedProgress, 99);
-  }, [elapsedSeconds, type, stage]);
+  const progressState = useMemo(
+    () => getLoadingOverlayProgress({ type, stage, elapsedSeconds }),
+    [elapsedSeconds, stage, type]
+  );
+  const progress = progressState.progress;
 
   // Generate activity log with replaced usernames
   const activityLog = useMemo(() => {
@@ -287,7 +248,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
   const stepInfo = (type === 'photo' || type === 'jointpic' || type === 'video') ? (stage === 'analyze' ? 'Step 1 of 2' : 'Step 2 of 2') : null;
   const isJointPic = type === 'jointpic';
   const progressDots = 10;
-  const filledDots = Math.floor((progress / 100) * progressDots);
+  const filledDots = Math.max(1, Math.ceil((progress / 100) * progressDots));
 
   const getTitle = () => {
     if (type === 'photo') {
@@ -303,6 +264,13 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
     if (type === 'fbi') return 'Building Profile';
     if (type === 'caricature') return 'Drawing Your Caricature';
     return 'Compiling Dossier';
+  };
+
+  const progressSummary = () => {
+    if (progress < 20) return 'Systems are warming up and establishing the first pass.';
+    if (progress < 50) return 'The model is gathering signal and building a coherent read.';
+    if (progress < 80) return 'The output is taking shape and the visual direction is stabilizing.';
+    return 'Final passes are underway before the result is returned.';
   };
 
   // Get initials from username
@@ -394,12 +362,13 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
       </div>
 
       <div className="relative z-10 w-full max-w-2xl px-6">
-        <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-6 shadow-[0_24px_120px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:p-8">
+        <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-6 shadow-[0_24px_120px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:p-8">
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/[0.04] to-transparent" />
           <div
             className="absolute inset-x-[12%] top-[-20%] h-40 rounded-full blur-3xl"
             style={{ background: `radial-gradient(circle, ${theme.panelGlow} 0%, transparent 72%)` }}
           />
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),transparent_28%,transparent_72%,rgba(255,255,255,0.03))]" />
 
           <div className="relative flex flex-col items-center text-center">
             <div className={cn(
@@ -486,11 +455,14 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
               </div>
             )}
 
-            <div className="w-full max-w-xl rounded-[28px] border border-white/10 bg-black/20 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:px-6">
-              <div className="mb-4 flex flex-wrap items-center justify-center gap-3 text-center sm:justify-between">
+            <div className="w-full max-w-xl rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(4,6,12,0.72),rgba(8,10,18,0.52))] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_60px_rgba(0,0,0,0.18)] sm:px-6">
+              <div className="mb-3 flex flex-wrap items-center justify-center gap-3 text-center sm:justify-between">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Current Operation</p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">{getTitle()}</h2>
+                  <p className="mt-2 max-w-md text-sm leading-6 text-neutral-400">
+                    {progressSummary()}
+                  </p>
                 </div>
                 {stepInfo && (
                   <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium tracking-[0.12em] text-neutral-300">
@@ -514,6 +486,30 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
                 <span>{currentMessage.text}</span>
               </div>
 
+              <div className="mb-5 grid grid-cols-1 gap-3 text-left sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                    <Radar className="h-3.5 w-3.5" />
+                    Active Phase
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-white">{progressState.phaseLabel}</p>
+                </div>
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                    <Activity className="h-3.5 w-3.5" />
+                    Status
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-white">{progressState.statusLabel}</p>
+                </div>
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                    <TimerReset className="h-3.5 w-3.5" />
+                    Elapsed
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-white">{elapsedSeconds}s</p>
+                </div>
+              </div>
+
               <div className="mb-4 h-2 overflow-hidden rounded-full bg-white/[0.06]">
                 <div
                   className="h-full rounded-full transition-all duration-700 ease-out"
@@ -526,8 +522,8 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
               </div>
 
               <div className="mb-5 flex items-center justify-between text-xs font-medium text-neutral-500">
-                <span>{Math.round(progress)}% complete</span>
-                <span>{elapsedSeconds}s elapsed</span>
+                <span>{progress}% complete</span>
+                <span>{progressState.phaseLabel}</span>
               </div>
 
               <div className="flex items-center justify-center gap-2">

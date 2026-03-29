@@ -3,6 +3,7 @@ import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 import { getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { getStylePrompt, getValidStyleIds } from '@/lib/style-prompts';
+import { mergeImaginePrompt } from '@/lib/merge-imagine-prompt';
 import { z } from 'zod';
 
 // Grok Imagine Image model
@@ -60,9 +61,13 @@ export async function POST(req: NextRequest) {
         const validStyles = getValidStyleIds();
         const selectedStyle = style && validStyles.includes(style) ? style : undefined;
 
-        // Enhance prompt with style if a valid style is selected
+        // Merge scene prompt and style into one coherent prompt for Grok Imagine
         let enhancedPrompt = prompt;
-        if (selectedStyle) {
+        if (selectedStyle && selectedStyle !== 'default') {
+            const stylePrompt = getStylePrompt(selectedStyle);
+            const mergedPrompt = await mergeImaginePrompt({ prompt, stylePrompt });
+            enhancedPrompt = mergedPrompt.prompt;
+        } else if (selectedStyle) {
             const stylePrompt = getStylePrompt(selectedStyle);
             enhancedPrompt = `${stylePrompt}\n\n${prompt}`;
         }
