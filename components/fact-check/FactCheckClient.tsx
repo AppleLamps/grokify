@@ -307,6 +307,18 @@ export default function FactCheckClient() {
             </div>
           </div>
 
+          {result.sourceAnalysis ? (
+            <div className="glass-card rounded-[2rem] p-6 sm:p-8">
+              <div className="mb-5 border-b border-white/10 pb-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-neutral-500">
+                  Credibility
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Source Analysis</h2>
+              </div>
+              <div className="space-y-4">{renderSummary(result.sourceAnalysis)}</div>
+            </div>
+          ) : null}
+
           <div className="glass-card rounded-[2rem] p-6 sm:p-8">
             <details className="group">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-white">

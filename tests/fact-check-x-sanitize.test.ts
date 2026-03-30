@@ -58,3 +58,31 @@ test('sanitizeFactCheckXOutput strips links and citation markers from display co
     },
   ]);
 });
+
+test('sanitizeFactCheckXOutput strips links and citations from sourceAnalysis', () => {
+  const input: FactCheckXOutput = {
+    summaryMd: 'Clean summary.',
+    claims: [],
+    sources: [],
+    sourceAnalysis:
+      'The primary source is [IRGC media](https://example.com/irgc) [1]. No independent outlet has confirmed this. See https://example.com/details for more.',
+  };
+
+  const result = sanitizeFactCheckXOutput(input);
+
+  assert.equal(
+    result.sourceAnalysis,
+    'The primary source is IRGC media . No independent outlet has confirmed this. See for more.',
+  );
+});
+
+test('sanitizeFactCheckXOutput omits sourceAnalysis when not provided', () => {
+  const input: FactCheckXOutput = {
+    summaryMd: 'Summary text.',
+    claims: [],
+    sources: [],
+  };
+
+  const result = sanitizeFactCheckXOutput(input);
+  assert.equal(result.sourceAnalysis, undefined);
+});

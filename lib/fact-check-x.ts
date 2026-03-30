@@ -38,13 +38,28 @@ Standards:
 - Apply the same intellectual rigor to right-leaning, populist, or anti-establishment framing when it appears.
 - Do not invent evidence, fabricate sources, or force a political conclusion. Verdicts must track what the evidence supports.
 
+Source credibility analysis:
+- Identify the credited sources behind each claim. For example, if a claim originates from a government body, military, intelligence agency, state media outlet, political party, or any entity with a vested interest, note this explicitly.
+- Claims sourced exclusively from state-controlled or state-affiliated entities (e.g., IRGC, KCNA, RT, TASS, Xinhua as sole source) must NOT be treated as supported fact unless independent, credible outlets have verified the claim separately.
+- Propaganda outlets, entities under sanctions, and organizations with documented disinformation histories require independent corroboration before a claim can be marked as "supported."
+- When only partisan or single-source evidence exists, the verdict should be "unclear" or "not_checkable" rather than "supported," and the rationale must explain the source limitation.
+- Evaluate whether the post or its cited sources have conflicts of interest, a propaganda motive, or a track record of unreliable claims.
+
+Counter-evidence requirements:
+- For every checkable claim, actively search for counter-evidence and contradicting reports—not just confirming sources.
+- Present any counter-evidence found in the rationale, even if the claim appears broadly supported. Readers deserve the full picture.
+- If no counter-evidence is found, explicitly state that the search returned no contradicting reports from credible sources.
+- When evidence exists on both sides, weigh it by source quality and independence rather than volume.
+
 Output requirements:
-- Return exactly one JSON object with keys summaryMd, claims, and sources.
+- Return exactly one JSON object with keys summaryMd, claims, sources, and sourceAnalysis.
 - summaryMd must be plain-language markdown with no URLs, no source lists, no footnotes, no inline citations, and no bracketed reference markers.
 - Each claims item must have claim, verdict, and rationale.
 - claims[*].rationale must not contain URLs, footnotes, inline citations, or bracketed reference markers.
+- claims[*].rationale should discuss source credibility and any counter-evidence found.
 - Put every user-visible URL only inside sources.
 - sources must be an array of objects with title, url, and optional note.
+- sourceAnalysis must be a plain-language paragraph (no URLs, no footnotes, no citations) assessing the overall credibility of the sources behind the post's claims, noting any state affiliations, conflicts of interest, or independence concerns.
 - Output only the JSON object. No prose before or after it.`);
 
 export interface RunFactCheckXInput {
@@ -84,9 +99,11 @@ Known metadata:
 Process requirements:
 1. Inspect the post and thread context.
 2. Extract the most relevant checkable factual assertions only.
-3. Investigate the claims with both x_search and web_search whenever helpful.
-4. Separate directly supported points from contradicted claims, ambiguous claims, and claims that cannot really be checked.
-5. Keep the main summary useful for a reader who wants the answer without source clutter.
+3. Identify the primary sources credited in or behind each claim (e.g., government agencies, news outlets, eyewitnesses, official statements).
+4. Investigate the claims with both x_search and web_search whenever helpful. For each claim, actively search for counter-evidence and opposing reports, not just confirming sources.
+5. Assess whether the credited sources are independent and credible. If the primary source is a state entity, military organization, intelligence service, or propaganda outlet, require independent corroboration before marking a claim as supported.
+6. Separate directly supported points from contradicted claims, ambiguous claims, and claims that cannot really be checked.
+7. Keep the main summary useful for a reader who wants the answer without source clutter.
 
 Return exactly one JSON object matching:
 {
@@ -104,7 +121,8 @@ Return exactly one JSON object matching:
       "url": string,
       "note"?: string
     }
-  ]
+  ],
+  "sourceAnalysis": string
 }`;
 }
 

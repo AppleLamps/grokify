@@ -30,6 +30,7 @@ export const factCheckXOutputSchema = z
     summaryMd: z.string(),
     claims: z.array(factCheckXClaimSchema),
     sources: z.array(factCheckXSourceSchema),
+    sourceAnalysis: z.string().optional(),
   })
   .strict();
 
