@@ -456,8 +456,8 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
             )}
 
             <div className="w-full max-w-xl rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(4,6,12,0.72),rgba(8,10,18,0.52))] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_60px_rgba(0,0,0,0.18)] sm:px-6">
-              <div className="mb-3 flex flex-wrap items-center justify-center gap-3 text-center sm:justify-between">
-                <div>
+              <div className="relative mb-3 text-center">
+                <div className="mx-auto max-w-md">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Current Operation</p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">{getTitle()}</h2>
                   <p className="mt-2 max-w-md text-sm leading-6 text-neutral-400">
@@ -465,7 +465,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
                   </p>
                 </div>
                 {stepInfo && (
-                  <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium tracking-[0.12em] text-neutral-300">
+                  <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium tracking-[0.12em] text-neutral-300 sm:absolute sm:right-0 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
                     {stepInfo}
                   </div>
                 )}
