@@ -39,6 +39,7 @@ No login required. No API keys needed from users. Just enter a username and go.
 | 🔍 **OSINT Dossier** | Comprehensive intelligence-style analysis with viral content deep dive (`POST /api/osint-profile`; dossier UI in `OsintSection` / `OsintReport`) |
 | ✏️ **Caricature** | Upload a photo and get a Times Square street artist-style caricature |
 | ✨ **Grokify Prompt** | Transform any idea into a polished AI prompt with Grok |
+| 🧾 **X Post Fact Checker** | Paste an X post URL for a structured fact check with quick/deep research modes and optional sources |
 | ⚡ **Grok Imagine** | Generate images & videos with xAI's Grok Imagine model - local IndexedDB gallery |
 | 👥 **Joint Picture** | Generate artwork combining two X accounts together |
 | 🖼️ **38 Art Styles** | 5 categories: Classic, Anime, Modern, Artistic, and Fun (see [full list](#art-styles)) |
@@ -188,6 +189,9 @@ DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
 # xAI API (Grok analysis + X search)
 XAI_API_KEY="xai-..."
 
+# Optional: override the fact-checker deep research model
+XAI_FACT_CHECK_DEEP_MODEL="grok-4.20-multi-agent"
+
 # OpenRouter API (Gemini image generation)
 OPENROUTER_API_KEY="sk-or-..."
 
@@ -263,6 +267,19 @@ Content-Type: application/json
 { "idea": "A dragon fighting a robot", "style": "cinematic" }
 ```
 
+### X Post Fact Checker
+
+```http
+POST /api/fact-check-x
+Content-Type: application/json
+
+{ "url": "https://x.com/handle/status/1234567890", "mode": "quick" }
+```
+
+Modes:
+- `quick` uses `grok-4.20-0309-reasoning`
+- `deep` uses `grok-4.20-multi-agent` by default
+
 ### Grok Imagine (Image)
 
 ```http
@@ -311,12 +328,14 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   │   ├── fbi-profile/        # Satirical FBI report
 │   │   ├── osint-profile/      # Intelligence dossier
 │   │   ├── caricature/         # Photo → caricature
+│   │   ├── fact-check-x/       # X post fact-check API
 │   │   ├── prompt-generate/    # Grokify Prompt generator
 │   │   ├── proxy-image/       # CORS-safe image fetch
 │   │   ├── upload-image/       # Vercel Blob storage
 │   │   ├── upload-video/       # Video upload (token route for client uploads)
 │   │   └── bot/poll-mentions/  # X bot cron / mentions (optional)
 │   ├── imagine/                # Grok Imagine gallery page
+│   ├── fact-check/             # X post fact-check page
 │   ├── prompt/                 # Grokify Prompt page
 │   ├── share/[id]/             # Shareable artwork pages
 │   ├── globals.css
@@ -405,6 +424,7 @@ X-pressionist uses specialized AI personas powered by Grok:
 | **OSINT Analyst** | `/api/osint-profile` | Elite intelligence analyst building comprehensive dossiers |
 | **Street Artist** | `/api/caricature` | NYC Times Square caricature artist with quick wit |
 | **Prompt Alchemist** | `/api/prompt-generate` | Expert prompt engineer transforming ideas into polished AI prompts |
+| **Fact Checker** | `/api/fact-check-x` | Researches an X post with web/X search and returns a citation-clean structured verdict |
 | **Grok Imagine** | `/api/imagine` | xAI's native image generation with local gallery storage |
 
 ---
