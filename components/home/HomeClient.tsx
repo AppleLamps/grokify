@@ -655,7 +655,7 @@ export default function Home() {
         />
       )}
 
-      <main className="relative z-10 min-h-screen px-6 lg:px-12 py-16 lg:py-24 flex flex-col justify-center">
+      <main className="relative z-10 min-h-screen w-full flex-1 px-6 lg:px-12 py-16 lg:py-24 flex flex-col justify-center">
         <div className="max-w-6xl mx-auto w-full space-y-24">
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
