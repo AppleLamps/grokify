@@ -8,6 +8,7 @@ import {
   Flame,
   FlaskConical,
   Pencil,
+  ShieldCheck,
   Upload,
   Users,
   Wand2,
@@ -62,7 +63,7 @@ function HomeHeroColumnInner({
   onJointPicGenerate,
 }: HomeHeroColumnProps) {
   return (
-    <div className="space-y-6 text-center lg:text-left">
+    <div className="space-y-5 text-center lg:-mt-4 lg:text-left">
       <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] flex items-center justify-center lg:justify-start gap-2 sm:gap-3">
         <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] shrink-0 fill-white">
           <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
@@ -99,6 +100,26 @@ function HomeHeroColumnInner({
           <DollarSign className="w-4 h-4" />
           <span className="font-mono tracking-wide">8F2Fvu...BAGs</span>
         </a>
+      </div>
+
+      <div className="flex justify-center lg:justify-start">
+        <Link
+          href="/fact-check"
+          className="group block w-[280px] sm:w-auto sm:max-w-sm p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-cyan-500/10 via-sky-500/5 to-blue-500/10 border border-cyan-400/30 backdrop-blur-sm hover:from-cyan-500/20 hover:via-sky-500/10 hover:to-blue-500/20 hover:border-cyan-300/50 transition-all shadow-[0_0_20px_rgba(34,211,238,0.14)] hover:shadow-[0_0_30px_rgba(56,189,248,0.25)]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 shadow-lg shadow-cyan-500/25">
+                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <span className="text-sm sm:text-lg font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors">Fact Check X Post</span>
+            </div>
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400/50 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all" />
+          </div>
+          <p className="hidden sm:block text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors leading-relaxed text-left mt-2">
+            Paste a post URL, run web and X search, and get a clean verdict with claim-by-claim analysis and optional sources.
+          </p>
+        </Link>
       </div>
 
       <div className="flex justify-center lg:justify-start">
