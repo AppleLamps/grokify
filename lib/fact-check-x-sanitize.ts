@@ -57,6 +57,9 @@ export function sanitizeFactCheckXOutput(input: FactCheckXOutput): FactCheckXOut
       rationale: sanitizeDisplayText(claim.rationale),
     })),
     sources: dedupeSources(parsed.sources),
+    ...(parsed.sourceAnalysis != null
+      ? { sourceAnalysis: sanitizeDisplayText(parsed.sourceAnalysis) }
+      : {}),
   };
 }
 
