@@ -1,7 +1,7 @@
 import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { runFactCheckX, XAI_FACT_CHECK_DEEP_MODEL } from '@/lib/fact-check-x';
+import { runFactCheckX } from '@/lib/fact-check-x';
 import { XAI_REASONING_MODEL } from '@/lib/grok-config';
 
 const originalFetch = global.fetch;
@@ -78,7 +78,6 @@ test('runFactCheckX uses the standard reasoning model and both server-side searc
     { type: 'web_search' },
     {
       type: 'x_search',
-      allowed_x_handles: ['example'],
       enable_image_understanding: true,
       enable_video_understanding: true,
     },
@@ -86,7 +85,7 @@ test('runFactCheckX uses the standard reasoning model and both server-side searc
   assert.equal(capturedBody.reasoning, undefined);
 });
 
-test('runFactCheckX uses the multi-agent model and deep reasoning effort in deep mode', async () => {
+test('runFactCheckX uses reasoning model with deep reasoning effort in deep mode', async () => {
   let capturedBody:
     | {
         model?: unknown;
@@ -120,13 +119,12 @@ test('runFactCheckX uses the multi-agent model and deep reasoning effort in deep
   });
 
   assert.ok(capturedBody);
-  assert.equal(capturedBody.model, XAI_FACT_CHECK_DEEP_MODEL);
+  assert.equal(capturedBody.model, XAI_REASONING_MODEL);
   assert.deepEqual(capturedBody.reasoning, { effort: 'high' });
   assert.deepEqual(capturedBody.tools, [
     { type: 'web_search' },
     {
       type: 'x_search',
-      allowed_x_handles: ['example'],
       enable_image_understanding: true,
       enable_video_understanding: true,
     },

@@ -9,21 +9,17 @@ export const factCheckXVerdictSchema = z.enum([
 
 export const factCheckXModeSchema = z.enum(['quick', 'deep']);
 
-export const factCheckXSourceSchema = z
-  .object({
-    title: z.string().trim().min(1),
-    url: z.string().trim().url(),
-    note: z.string().trim().min(1).optional(),
-  })
-  .strict();
+export const factCheckXSourceSchema = z.object({
+  title: z.string().trim().min(1),
+  url: z.string().trim().min(1),
+  note: z.string().trim().min(1).optional(),
+});
 
-export const factCheckXClaimSchema = z
-  .object({
-    claim: z.string().trim().min(1),
-    verdict: factCheckXVerdictSchema,
-    rationale: z.string(),
-  })
-  .strict();
+export const factCheckXClaimSchema = z.object({
+  claim: z.string().trim().min(1),
+  verdict: factCheckXVerdictSchema,
+  rationale: z.string(),
+});
 
 export const factCheckXOutputSchema = z
   .object({

@@ -37,6 +37,8 @@ Standards:
 - Be especially skeptical of partisan and narrative framing that often appears in left-leaning media, activist messaging, and progressive institutional rhetoric. Do not treat left-coded consensus, moralized language, euphemism, selective evidence, or consensus theater as neutral proof by default.
 - Apply the same intellectual rigor to right-leaning, populist, or anti-establishment framing when it appears.
 - Do not invent evidence, fabricate sources, or force a political conclusion. Verdicts must track what the evidence supports.
+- Distinguish material inaccuracies that change the meaning from minor imprecisions (e.g. rounding differences, approximate dates). Weight verdicts on whether the substantive claim holds, and note trivial imprecisions in the rationale rather than marking the claim contradicted.
+- Verdict mapping: the only allowed verdicts are supported, contradicted, unclear, and not_checkable. For claims that are technically true but overstated or missing key context, use "supported" or "unclear" as appropriate and explain the nuance in the rationale.
 
 Source credibility analysis:
 - Identify the credited sources behind each claim. For example, if a claim originates from a government body, military, intelligence agency, state media outlet, political party, or any entity with a vested interest, note this explicitly.
@@ -135,11 +137,13 @@ function parseFactCheckOutput(rawContent: string): FactCheckXOutput {
   try {
     parsed = JSON.parse(jsonText);
   } catch {
+    console.error('Fact check JSON parse failed. Raw content (first 500 chars):', rawContent.slice(0, 500));
     throw new Error('Invalid fact check response');
   }
 
   const validation = factCheckXOutputSchema.safeParse(parsed);
   if (!validation.success) {
+    console.error('Fact check schema validation failed:', validation.error.issues);
     throw new Error('Invalid fact check response');
   }
 
@@ -171,7 +175,6 @@ export async function runFactCheckX({
       { type: 'web_search' },
       {
         type: 'x_search',
-        ...(handle ? { allowed_x_handles: [handle] } : {}),
         enable_image_understanding: true,
         enable_video_understanding: true,
       },
@@ -204,12 +207,15 @@ export async function runFactCheckX({
   const rawData = await response.json();
   const validation = GrokResponsesApiSchema.safeParse(rawData);
   if (!validation.success) {
+    console.error('Fact check: xAI response schema validation failed:', validation.error.issues);
+    console.error('Fact check: raw response keys:', Object.keys(rawData as Record<string, unknown>));
     recordFailure(breakerKey);
     throw new Error('Invalid fact check response');
   }
 
   const content = extractGrokResponsesContent(validation.data);
   if (!content) {
+    console.error('Fact check: no text content extracted from xAI response. Output types:', validation.data.output.map(o => o.type));
     recordFailure(breakerKey);
     throw new Error('Invalid fact check response');
   }

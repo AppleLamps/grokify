@@ -27,13 +27,22 @@ function sanitizeDisplayText(value: string): string {
   return withoutCitations.replace(WHITESPACE_RE, ' ').trim();
 }
 
+function isValidUrl(value: string): boolean {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function dedupeSources(sources: FactCheckXSource[]): FactCheckXSource[] {
   const seen = new Set<string>();
   const deduped: FactCheckXSource[] = [];
 
   for (const source of sources) {
     const key = source.url.trim();
-    if (seen.has(key)) {
+    if (seen.has(key) || !isValidUrl(key)) {
       continue;
     }
 

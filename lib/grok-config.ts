@@ -1,4 +1,4 @@
-export const XAI_REASONING_MODEL = 'grok-4.20-0309-reasoning';
+export const XAI_REASONING_MODEL = 'grok-4.20-reasoning';
 
 export const OPENROUTER_REASONING_MODEL = 'x-ai/grok-4.20-beta';
 
