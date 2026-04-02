@@ -18,6 +18,7 @@ import ImagineInputBar from './ImagineInputBar';
 import ImagineLightbox from './ImagineLightbox';
 import ImagineSettings from './ImagineSettings';
 import type { GalleryImage, GenerationType, AspectRatio, VideoResolution, VideoSize, VideoExtendSettings } from './types';
+import { VIDEO_MAINTENANCE_ENABLED, VIDEO_MAINTENANCE_MESSAGE } from '@/lib/video-maintenance';
 
 export default function ImagineClient() {
     const store = useImagineStore();
@@ -41,6 +42,11 @@ export default function ImagineClient() {
             videoSize?: VideoSize | null;
             style?: string;
         }) => {
+            if (settings.type === 'video' && VIDEO_MAINTENANCE_ENABLED) {
+                toast.error(VIDEO_MAINTENANCE_MESSAGE);
+                return;
+            }
+
             if (isGenerating) return;
             setIsGenerating(true);
             abortControllerRef.current = new AbortController();
@@ -216,6 +222,11 @@ export default function ImagineClient() {
 
     const handleExtendVideo = useCallback(
         async (settings: VideoExtendSettings) => {
+            if (VIDEO_MAINTENANCE_ENABLED) {
+                toast.error(VIDEO_MAINTENANCE_MESSAGE);
+                return;
+            }
+
             if (isGenerating) return;
 
             setIsGenerating(true);

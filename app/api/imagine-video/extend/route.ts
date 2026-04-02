@@ -3,6 +3,7 @@ import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 import { getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { parseVideoPollResult } from '@/lib/video-poll-result';
+import { VIDEO_MAINTENANCE_ENABLED, VIDEO_MAINTENANCE_MESSAGE } from '@/lib/video-maintenance';
 import { z } from 'zod';
 
 const VIDEO_MODEL = 'grok-imagine-video';
@@ -31,6 +32,13 @@ export async function POST(req: NextRequest) {
   const breakerKey = 'xai:imagine-video';
 
   try {
+    if (VIDEO_MAINTENANCE_ENABLED) {
+      return NextResponse.json(
+        { error: VIDEO_MAINTENANCE_MESSAGE },
+        { status: 503, headers: corsHeaders }
+      );
+    }
+
     const body = await req.json();
     const validationResult = VideoExtensionSchema.safeParse(body);
 
