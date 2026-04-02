@@ -403,7 +403,7 @@ export default function PromptClient() {
                 <textarea
                   value={idea}
                   onChange={(e) => setIdea(e.target.value)}
-                  className="w-full px-4 py-3 text-sm bg-black/40 border border-white/10 text-gray-200 font-mono resize-none min-h-[100px] focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all placeholder:text-gray-600 selection:bg-amber-400/85 selection:text-neutral-950"
+                  className="w-full px-4 py-3 text-sm bg-black/40 border border-white/10 text-gray-200 font-mono resize-none min-h-[180px] focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all placeholder:text-gray-600 selection:bg-amber-400/85 selection:text-neutral-950"
                   placeholder="ENTER_CONCEPT_DESCRIPTION..."
                   maxLength={1000}
                   disabled={isAnyLoading}
