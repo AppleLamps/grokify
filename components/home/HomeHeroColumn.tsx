@@ -17,6 +17,12 @@ import {
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  getImagineImageUnavailableMessage,
+  getImagineVideoUnavailableMessage,
+  isGrokImageGenerationEnabled,
+  isGrokVideoGenerationEnabled,
+} from '@/lib/grok-image-availability';
 
 const StyleSelectorModal = dynamic(
   () => import('@/components/StyleSelectorModal').then((mod) => mod.StyleSelectorModal),
@@ -62,6 +68,9 @@ function HomeHeroColumnInner({
   onJointPicHandle2Change,
   onJointPicGenerate,
 }: HomeHeroColumnProps) {
+  const grokImageGenerationEnabled = isGrokImageGenerationEnabled();
+  const grokVideoGenerationEnabled = isGrokVideoGenerationEnabled();
+
   return (
     <div className="space-y-4 text-center lg:-mt-2 lg:text-left">
       <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] flex items-center justify-center lg:justify-start gap-2 sm:gap-3">
@@ -157,7 +166,9 @@ function HomeHeroColumnInner({
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500/50 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
           </div>
           <p className="hidden sm:block text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors leading-relaxed text-left mt-2">
-            Generate stunning images and videos with xAI&apos;s latest Grok Imagine model. Just describe what you want!
+            {grokImageGenerationEnabled && grokVideoGenerationEnabled
+              ? 'Generate stunning images and videos with xAI\'s latest Grok Imagine model. Just describe what you want!'
+              : `${getImagineImageUnavailableMessage()} ${getImagineVideoUnavailableMessage()}`}
           </p>
         </Link>
       </div>

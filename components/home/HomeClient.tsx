@@ -18,6 +18,12 @@ import { usePromptHistory } from '@/hooks/usePromptHistory';
 import type { ResultPayload } from '@/components/home/sections/ResultSection';
 import HomeHeroColumn from '@/components/home/HomeHeroColumn';
 import HomePhoneColumn from '@/components/home/HomePhoneColumn';
+import {
+  getHomePhotoUnavailableMessage,
+  getHomeVideoUnavailableMessage,
+  isGrokImageGenerationEnabled,
+  isGrokVideoGenerationEnabled,
+} from '@/lib/grok-image-availability';
 
 const PromptHistorySidebar = dynamic(
   () => import('@/components/PromptHistorySidebar').then((mod) => mod.PromptHistorySidebar),
@@ -54,7 +60,7 @@ function HistoryTrigger() {
 export default function Home() {
   const [clearUsernameSignal, setClearUsernameSignal] = useState(0);
   const [selectedStyle, setSelectedStyle] = useState<string>('default');
-  const [selectedModel, setSelectedModel] = useState<'nano-banana' | 'grok-imagine'>('grok-imagine');
+  const [selectedModel, setSelectedModel] = useState<'nano-banana' | 'grok-imagine'>('nano-banana');
   const [isLoading, setIsLoading] = useState(false);
   const [isRoasting, setIsRoasting] = useState(false);
   const [isProfiling, setIsProfiling] = useState(false);
@@ -136,6 +142,10 @@ export default function Home() {
 
       setLoadingStage('image');
 
+      if (selectedModel === 'grok-imagine' && !isGrokImageGenerationEnabled()) {
+        throw new Error(getHomePhotoUnavailableMessage());
+      }
+
       let imageResponse;
       if (selectedModel === 'grok-imagine') {
         // Use Grok Imagine API
@@ -203,6 +213,13 @@ export default function Home() {
   }, [addToHistory, selectedModel, selectedStyle]);
 
   const handleGenerateVideo = useCallback(async (normalizedHandle: string) => {
+    if (!isGrokVideoGenerationEnabled()) {
+      const message = getHomeVideoUnavailableMessage();
+      setGlobalError(message);
+      toast.error(message);
+      return;
+    }
+
     setIsVideoGenerating(true);
     setGlobalError('');
     setVideoResult(null);

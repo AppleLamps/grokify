@@ -19,6 +19,12 @@ import ImagineLightbox from './ImagineLightbox';
 import ImagineSettings from './ImagineSettings';
 import type { GalleryImage, GenerationType, AspectRatio, VideoResolution, VideoSize, VideoExtendSettings } from './types';
 import { VIDEO_MAINTENANCE_ENABLED, VIDEO_MAINTENANCE_MESSAGE } from '@/lib/video-maintenance';
+import {
+    getImagineImageUnavailableMessage,
+    getImagineVideoUnavailableMessage,
+    isGrokImageGenerationEnabled,
+    isGrokVideoGenerationEnabled,
+} from '@/lib/grok-image-availability';
 
 export default function ImagineClient() {
     const store = useImagineStore();
@@ -42,6 +48,16 @@ export default function ImagineClient() {
             videoSize?: VideoSize | null;
             style?: string;
         }) => {
+            if (settings.type === 'image' && !isGrokImageGenerationEnabled()) {
+                toast.error(getImagineImageUnavailableMessage());
+                return;
+            }
+
+            if (settings.type === 'video' && !isGrokVideoGenerationEnabled()) {
+                toast.error(getImagineVideoUnavailableMessage());
+                return;
+            }
+
             if (settings.type === 'video' && VIDEO_MAINTENANCE_ENABLED) {
                 toast.error(VIDEO_MAINTENANCE_MESSAGE);
                 return;
@@ -222,6 +238,11 @@ export default function ImagineClient() {
 
     const handleExtendVideo = useCallback(
         async (settings: VideoExtendSettings) => {
+            if (!isGrokVideoGenerationEnabled()) {
+                toast.error(getImagineVideoUnavailableMessage());
+                return;
+            }
+
             if (VIDEO_MAINTENANCE_ENABLED) {
                 toast.error(VIDEO_MAINTENANCE_MESSAGE);
                 return;

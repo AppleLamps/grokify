@@ -4,6 +4,10 @@ import { getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { getStylePrompt, getValidStyleIds } from '@/lib/style-prompts';
 import { mergeImaginePrompt } from '@/lib/merge-imagine-prompt';
+import {
+    GROK_IMAGE_TEMPORARILY_UNAVAILABLE_MESSAGE,
+    isGrokImageGenerationEnabled,
+} from '@/lib/grok-image-availability';
 import { z } from 'zod';
 
 // Grok Imagine Image model
@@ -44,6 +48,13 @@ export async function POST(req: NextRequest) {
     const breakerKey = 'xai:imagine-image';
 
     try {
+        if (!isGrokImageGenerationEnabled()) {
+            return NextResponse.json(
+                { error: GROK_IMAGE_TEMPORARILY_UNAVAILABLE_MESSAGE },
+                { status: 503, headers: corsHeaders }
+            );
+        }
+
         const body = await req.json();
 
         // Validate request

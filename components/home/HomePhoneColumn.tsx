@@ -11,6 +11,12 @@ import {
   Users,
   Video,
 } from 'lucide-react';
+import {
+  getHomePhotoUnavailableMessage,
+  getHomeVideoUnavailableMessage,
+  isGrokImageGenerationEnabled,
+  isGrokVideoGenerationEnabled,
+} from '@/lib/grok-image-availability';
 
 const StyleSelectorTrigger = dynamic(
   () => import('@/components/StyleSelectorModal').then((mod) => mod.StyleSelectorTrigger),
@@ -51,6 +57,8 @@ function HomePhoneColumnInner({
 }: HomePhoneColumnProps) {
   const [handle, setHandle] = useState('');
   const [inputError, setInputError] = useState('');
+  const grokImageGenerationEnabled = isGrokImageGenerationEnabled();
+  const grokVideoGenerationEnabled = isGrokVideoGenerationEnabled();
 
   useEffect(() => {
     if (clearUsernameSignal === 0) return;
@@ -166,16 +174,25 @@ function HomePhoneColumnInner({
                   <button
                     type="button"
                     onClick={() => onSelectedModelChange('grok-imagine')}
-                    disabled={isBusy}
+                    disabled={isBusy || !grokImageGenerationEnabled}
+                    title={grokImageGenerationEnabled ? 'Use Grok Imagine' : getHomePhotoUnavailableMessage()}
                     className={`flex-1 px-3 py-2.5 text-xs font-medium rounded-xl border transition-all duration-200 ${
                       selectedModel === 'grok-imagine'
                         ? 'bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 border-violet-500/50 text-violet-400'
-                        : 'bg-white/[0.05] border-white/[0.08] text-neutral-400 hover:text-white hover:bg-white/[0.08]'
+                        : grokImageGenerationEnabled
+                          ? 'bg-white/[0.05] border-white/[0.08] text-neutral-400 hover:text-white hover:bg-white/[0.08]'
+                          : 'bg-white/[0.03] border-white/[0.06] text-neutral-500 cursor-not-allowed opacity-60'
                     }`}
                   >
                     ⚡ Grok Imagine
                   </button>
                 </div>
+
+                {!grokImageGenerationEnabled && (
+                  <p className="text-xs text-violet-300/80 text-center bg-violet-500/10 border border-violet-500/20 rounded-xl px-3 py-2">
+                    {getHomePhotoUnavailableMessage()}
+                  </p>
+                )}
 
                 <div className="space-y-3">
                   <button
@@ -190,7 +207,8 @@ function HomePhoneColumnInner({
                   <button
                     type="button"
                     onClick={wrapVideo}
-                    disabled={isBusy}
+                    disabled={isBusy || !grokVideoGenerationEnabled}
+                    title={grokVideoGenerationEnabled ? 'Generate video' : getHomeVideoUnavailableMessage()}
                     className="w-full px-4 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-xl shadow-lg shadow-black/25 hover:shadow-xl hover:shadow-cyan-500/20 hover:brightness-110 transition-all duration-200 disabled:opacity-50 text-sm flex items-center justify-center gap-2 relative"
                   >
                     <Video className="w-4 h-4" />
@@ -200,6 +218,11 @@ function HomePhoneColumnInner({
                       BETA
                     </span>
                   </button>
+                  {!grokVideoGenerationEnabled && (
+                    <p className="text-xs text-cyan-300/80 text-center bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-3 py-2">
+                      {getHomeVideoUnavailableMessage()}
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={wrapFbi}

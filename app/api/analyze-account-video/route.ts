@@ -3,6 +3,10 @@ import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
+import {
+    GROK_VIDEO_TEMPORARILY_UNAVAILABLE_MESSAGE,
+    isGrokVideoGenerationEnabled,
+} from '@/lib/grok-image-availability';
 
 export async function OPTIONS() {
     return NextResponse.json(null, { headers: getCorsHeaders() });
@@ -12,6 +16,13 @@ export async function POST(req: NextRequest) {
     const corsHeaders = getCorsHeaders();
 
     try {
+        if (!isGrokVideoGenerationEnabled()) {
+            return NextResponse.json(
+                { error: GROK_VIDEO_TEMPORARILY_UNAVAILABLE_MESSAGE },
+                { status: 503, headers: corsHeaders }
+            );
+        }
+
         const { handle } = await req.json();
 
         // Validate X handle format (1-15 alphanumeric characters + underscores)

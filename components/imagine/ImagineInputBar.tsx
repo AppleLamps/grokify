@@ -19,6 +19,12 @@ import { IMAGE_ASPECT_RATIOS, VIDEO_ASPECT_RATIOS } from './types';
 import { StyleSelectorModal, ART_STYLES } from '@/components/StyleSelectorModal';
 import { getDroppedFiles, hasFilesInTransfer } from '@/lib/drag-drop-utils';
 import { consumeImagineHandoff, IMAGINE_HANDOFF_QUERY } from '@/lib/imagine-handoff';
+import {
+    getImagineImageUnavailableMessage,
+    getImagineVideoUnavailableMessage,
+    isGrokImageGenerationEnabled,
+    isGrokVideoGenerationEnabled,
+} from '@/lib/grok-image-availability';
 import ImagineExtendDialog from './ImagineExtendDialog';
 
 interface ImagineInputBarProps {
@@ -62,7 +68,11 @@ export default function ImagineInputBar({
 }: ImagineInputBarProps) {
     const searchParams = useSearchParams();
     const [prompt, setPrompt] = useState('');
-    const [type, setType] = useState<GenerationType>('image');
+    const grokImageGenerationEnabled = isGrokImageGenerationEnabled();
+    const grokVideoGenerationEnabled = isGrokVideoGenerationEnabled();
+    const [type, setType] = useState<GenerationType>(
+        grokImageGenerationEnabled ? 'image' : grokVideoGenerationEnabled ? 'video' : 'image'
+    );
     const [aspectRatio, setAspectRatio] = useState<AspectRatio>('auto');
     const [imageCount, setImageCount] = useState(2);
     const [videoDuration, setVideoDuration] = useState(8);
@@ -100,6 +110,13 @@ export default function ImagineInputBar({
     }, [aspectRatio, type]);
 
     useEffect(() => {
+        if (grokImageGenerationEnabled || type !== 'image') return;
+        if (grokVideoGenerationEnabled) {
+            setType('video');
+        }
+    }, [grokImageGenerationEnabled, grokVideoGenerationEnabled, type]);
+
+    useEffect(() => {
         if (hasConsumedHandoffRef.current) return;
         if (searchParams.get('handoff') !== IMAGINE_HANDOFF_QUERY) return;
 
@@ -110,7 +127,7 @@ export default function ImagineInputBar({
 
         setPrompt(handoff.prompt);
 
-        if (handoff.autogenerate) {
+        if (handoff.autogenerate && grokImageGenerationEnabled) {
             requestAnimationFrame(() => {
                 onGenerate({
                     prompt: handoff.prompt,
@@ -127,10 +144,12 @@ export default function ImagineInputBar({
                 });
             });
         }
-    }, [onGenerate, searchParams]);
+    }, [grokImageGenerationEnabled, onGenerate, searchParams]);
 
     const handleSubmit = () => {
         if (!prompt.trim() || isGenerating) return;
+        if (type === 'image' && !grokImageGenerationEnabled) return;
+        if (type === 'video' && !grokVideoGenerationEnabled) return;
         onGenerate({
             prompt: prompt.trim(),
             type,
@@ -255,11 +274,13 @@ export default function ImagineInputBar({
                             multiple={type === 'video'}
                             className="hidden"
                             onChange={handleFileUpload}
+                            aria-label={type === 'video' ? 'Upload image or video attachment' : 'Upload image attachment'}
                         />
                         <button
                             onClick={() => fileInputRef.current?.click()}
                             className={`imagine-input-bar__icon-btn imagine-input-bar__icon-btn--attach ${isUploadDragActive ? 'imagine-input-bar__icon-btn--drag-active' : ''}`}
                             title={type === 'video' ? 'Add image/video (image-to-video or video edit)' : 'Attach image for editing'}
+                            aria-label={type === 'video' ? 'Add image or video attachment' : 'Attach image for editing'}
                             disabled={isGenerating}
                             onDragEnter={handleUploadDragEnter}
                             onDragOver={handleUploadDragOver}
@@ -288,14 +309,33 @@ export default function ImagineInputBar({
                     />
 
                     {isGenerating ? (
-                        <button onClick={onCancel} className="imagine-input-bar__cancel-btn imagine-input-bar__primary-action">
+                        <button
+                            onClick={onCancel}
+                            className="imagine-input-bar__cancel-btn imagine-input-bar__primary-action"
+                            aria-label="Cancel generation"
+                            title="Cancel generation"
+                        >
                             <X className="w-4 h-4" />
                         </button>
                     ) : (
                         <button
                             onClick={handleSubmit}
-                            disabled={!prompt.trim()}
+                            disabled={!prompt.trim() || (type === 'image' && !grokImageGenerationEnabled) || (type === 'video' && !grokVideoGenerationEnabled)}
                             className="imagine-input-bar__generate-btn imagine-input-bar__primary-action"
+                            title={
+                                type === 'image' && !grokImageGenerationEnabled
+                                    ? getImagineImageUnavailableMessage()
+                                    : type === 'video' && !grokVideoGenerationEnabled
+                                        ? getImagineVideoUnavailableMessage()
+                                        : 'Generate'
+                            }
+                            aria-label={
+                                type === 'image' && !grokImageGenerationEnabled
+                                    ? getImagineImageUnavailableMessage()
+                                    : type === 'video' && !grokVideoGenerationEnabled
+                                        ? getImagineVideoUnavailableMessage()
+                                        : 'Generate'
+                            }
                         >
                             <Send className="w-4 h-4" />
                         </button>
@@ -329,7 +369,12 @@ export default function ImagineInputBar({
                         ) : editVideo ? (
                             <video src={editVideo} className="imagine-input-bar__attachment-img" muted />
                         ) : null}
-                        <button onClick={clearAttachment} className="imagine-input-bar__attachment-remove">
+                        <button
+                            onClick={clearAttachment}
+                            className="imagine-input-bar__attachment-remove"
+                            aria-label="Remove attachment"
+                            title="Remove attachment"
+                        >
                             <X className="w-3 h-3" />
                         </button>
                     </div>
@@ -344,6 +389,7 @@ export default function ImagineInputBar({
                                 onClick={onOpenSettings}
                                 className="imagine-input-bar__icon-btn"
                                 title="Settings"
+                                aria-label="Open settings"
                             >
                                 <Settings2 className="w-5 h-5" />
                             </button>
@@ -351,16 +397,23 @@ export default function ImagineInputBar({
                             {/* Type toggle */}
                             <div className="imagine-input-bar__type-toggle">
                                 <button
-                                    onClick={() => setType('image')}
+                                    onClick={() => {
+                                        if (!grokImageGenerationEnabled) return;
+                                        setType('image');
+                                    }}
+                                    disabled={!grokImageGenerationEnabled}
                                     className={`imagine-input-bar__type-btn ${type === 'image' ? 'active' : ''}`}
                                     title="Image mode"
+                                    aria-label={grokImageGenerationEnabled ? 'Switch to image mode' : getImagineImageUnavailableMessage()}
                                 >
                                     <ImageIcon className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => setType('video')}
+                                    disabled={!grokVideoGenerationEnabled}
                                     className={`imagine-input-bar__type-btn ${type === 'video' ? 'active' : ''}`}
                                     title="Video mode"
+                                    aria-label={grokVideoGenerationEnabled ? 'Switch to video mode' : getImagineVideoUnavailableMessage()}
                                 >
                                     <Video className="w-4 h-4" />
                                 </button>
@@ -371,6 +424,7 @@ export default function ImagineInputBar({
                             onClick={() => setStyleModalOpen(true)}
                             className={`imagine-input-bar__icon-btn imagine-input-bar__style-icon ${selectedStyle ? 'imagine-input-bar__style-icon--active' : ''}`}
                             title="Choose style"
+                            aria-label="Choose style"
                             disabled={isGenerating}
                         >
                             <Palette className="w-4 h-4" />
@@ -379,6 +433,16 @@ export default function ImagineInputBar({
 
                     {/* Center: Dropdowns */}
                     <div className="imagine-input-bar__center">
+                        {(!grokImageGenerationEnabled || !grokVideoGenerationEnabled) && (
+                            <div className="imagine-input-bar__hint" aria-live="polite">
+                                {!grokImageGenerationEnabled && !grokVideoGenerationEnabled
+                                    ? `${getImagineImageUnavailableMessage()} ${getImagineVideoUnavailableMessage()}`
+                                    : !grokImageGenerationEnabled
+                                        ? getImagineImageUnavailableMessage()
+                                        : getImagineVideoUnavailableMessage()}
+                            </div>
+                        )}
+
                         {/* Folder selector */}
                         <div className="imagine-input-bar__dropdown">
                             <button
