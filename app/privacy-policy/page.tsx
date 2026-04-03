@@ -1,206 +1,263 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { SITE_NAME, SITE_URL } from '@/lib/site';
+import type { ReactNode } from "react";
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: `Privacy Policy for ${SITE_NAME} (${SITE_URL}). Learn how we handle your data when you use our AI-powered tools.`,
-  alternates: {
-    canonical: '/privacy-policy',
-  },
-};
-
-export default function PrivacyPolicyPage() {
+export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-gray-200">
-      <header className="border-b border-white/10 bg-black/30">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+    <div
+      style={{
+        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        backgroundColor: "#FFFFFF",
+        color: "#000000",
+        minHeight: "100vh",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          backgroundColor: "#000000",
+          padding: "40px 24px",
+        }}
+      >
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div
+            style={{
+              fontWeight: 900,
+              fontSize: 28,
+              color: "#FFFFFF",
+              letterSpacing: -0.5,
+              lineHeight: 1,
+            }}
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Back to {SITE_NAME}</span>
-          </Link>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-        <h1 className="text-3xl font-bold text-white mb-2">Privacy Policy</h1>
-        <p className="text-sm text-gray-500 mb-10">Last updated: April 3, 2025</p>
-
-        <div className="space-y-8 text-gray-300 leading-relaxed">
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">1. Overview</h2>
-            <p>
-              {SITE_NAME} (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) operates{' '}
-              <span className="text-white">grokify.ai</span>. This Privacy Policy explains what
-              information we collect when you use our AI-powered tools, how we use it, and your
-              rights regarding that information. By using our site you agree to the practices
-              described here.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">2. Information We Collect</h2>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>
-                <span className="text-white font-medium">User inputs.</span> When you use our
-                tools (e.g., X/Twitter usernames, post URLs, or custom prompts) we transmit that
-                input to third-party AI providers (xAI Grok, Google Gemini) solely to generate
-                your requested output. We do not store these inputs on our servers beyond the
-                lifetime of your request.
-              </li>
-              <li>
-                <span className="text-white font-medium">Generated content.</span> When you create
-                shareable images or results, we store the generated output and a unique share ID
-                in our database so the share link can be resolved. No personal account information
-                is attached to shared content.
-              </li>
-              <li>
-                <span className="text-white font-medium">Usage data.</span> Like most websites we
-                receive standard server log data (IP address, browser type, referring URL,
-                timestamp) through our hosting provider (Vercel). This data is used for
-                security and performance monitoring only.
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">3. How We Use Your Information</h2>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>To provide and improve our AI-powered tools and features.</li>
-              <li>To generate and serve shareable content you explicitly request.</li>
-              <li>To monitor for abuse, security incidents, and service reliability.</li>
-              <li>We do not sell, rent, or trade your information to third parties.</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">4. Third-Party Services</h2>
-            <p className="mb-3">
-              We rely on the following third-party services to operate {SITE_NAME}. Each has its
-              own privacy policy and data practices:
-            </p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>
-                <span className="text-white font-medium">xAI (Grok API)</span> — processes
-                prompts and generates text/image outputs.{' '}
-                <a
-                  href="https://x.ai/legal/privacy-policy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-amber-400 hover:text-amber-300 transition-colors"
-                >
-                  xAI Privacy Policy
-                </a>
-              </li>
-              <li>
-                <span className="text-white font-medium">Google (Gemini API)</span> — used for
-                select AI features.{' '}
-                <a
-                  href="https://policies.google.com/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-amber-400 hover:text-amber-300 transition-colors"
-                >
-                  Google Privacy Policy
-                </a>
-              </li>
-              <li>
-                <span className="text-white font-medium">Vercel</span> — our hosting and
-                infrastructure provider.{' '}
-                <a
-                  href="https://vercel.com/legal/privacy-policy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-amber-400 hover:text-amber-300 transition-colors"
-                >
-                  Vercel Privacy Policy
-                </a>
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">5. Cookies</h2>
-            <p>
-              {SITE_NAME} does not use tracking or advertising cookies. Our hosting provider
-              (Vercel) may set essential cookies for infrastructure purposes (e.g., load
-              balancing). No cookies are used to track you across other websites.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">6. Data Retention</h2>
-            <p>
-              User inputs (usernames, prompts, URLs) are not persisted after your request is
-              fulfilled. Shared results are stored indefinitely so share links continue to work;
-              you can request deletion at any time by contacting us. Server logs are retained for
-              up to 30 days.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">7. Children&apos;s Privacy</h2>
-            <p>
-              {SITE_NAME} is not directed at children under 13. We do not knowingly collect
-              personal information from children. If you believe a child has provided us with
-              personal information, please contact us and we will delete it promptly.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">8. Your Rights</h2>
-            <p>
-              Depending on your jurisdiction you may have rights to access, correct, or delete
-              personal data we hold about you. Because we collect minimal personal data, most
-              requests can be fulfilled quickly. To exercise any right, please contact us at the
-              address below.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">9. Changes to This Policy</h2>
-            <p>
-              We may update this Privacy Policy from time to time. When we do, we will revise the
-              &ldquo;Last updated&rdquo; date at the top of this page. Continued use of{' '}
-              {SITE_NAME} after any changes constitutes acceptance of the updated policy.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-white mb-3">10. Contact</h2>
-            <p>
-              For privacy-related questions or requests, reach us on X (Twitter) at{' '}
-              <a
-                href="https://x.com/lamps_apple"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-amber-400 hover:text-amber-300 transition-colors"
-              >
-                @lamps_apple
-              </a>
-              .
-            </p>
-          </section>
-        </div>
-      </main>
-
-      <footer className="mt-12 text-center py-6 border-t border-white/10">
-        <p className="text-xs text-gray-600">
-          &copy; {new Date().getFullYear()} {SITE_NAME} · Built by{' '}
-          <a
-            href="https://x.com/lamps_apple"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-white transition-colors"
+            SEISMIC
+          </div>
+          <div
+            style={{
+              fontWeight: 900,
+              fontSize: 28,
+              color: "#FF3000",
+              letterSpacing: -0.5,
+              lineHeight: 1,
+              marginTop: 2,
+            }}
           >
-            @lamps_apple
-          </a>
+            ALERTS
+          </div>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: 10,
+              color: "#999999",
+              letterSpacing: 3,
+              marginTop: 16,
+              textTransform: "uppercase",
+            }}
+          >
+            Privacy Policy
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 24px 80px" }}>
+        <p
+          style={{
+            fontSize: 11,
+            color: "#999999",
+            letterSpacing: 1,
+            fontWeight: 700,
+            marginBottom: 32,
+          }}
+        >
+          EFFECTIVE DATE: APRIL 3, 2026
         </p>
-      </footer>
+
+        <Section title="OVERVIEW">
+          <P>
+            Seismic Alerts is an earthquake monitoring application that displays
+            real-time seismic data from the United States Geological Survey
+            (USGS). This privacy policy explains what information the app
+            collects, how it is stored, and how it is used.
+          </P>
+        </Section>
+
+        <Section title="DATA WE COLLECT">
+          <P>
+            Seismic Alerts collects only the information you voluntarily provide
+            within the app&apos;s notification settings:
+          </P>
+          <Ul>
+            <Li>
+              <Strong>Postal code</Strong> &mdash; the postal or ZIP code you
+              enter to set a location-based alert filter.
+            </Li>
+            <Li>
+              <Strong>Alert radius</Strong> &mdash; your chosen distance
+              threshold (e.g., 100, 250, 500, or 1,000 miles) for filtering
+              earthquake alerts around your entered postal code.
+            </Li>
+            <Li>
+              <Strong>Magnitude threshold</Strong> &mdash; your preferred
+              minimum earthquake magnitude for receiving notifications.
+            </Li>
+          </Ul>
+        </Section>
+
+        <Section title="HOW YOUR DATA IS STORED">
+          <P>
+            All data is stored <Strong>locally on your device</Strong> using
+            on-device storage. Your postal code, alert radius, and notification
+            preferences never leave your device and are not transmitted to any
+            external server controlled by us.
+          </P>
+        </Section>
+
+        <Section title="HOW YOUR DATA IS USED">
+          <P>Your locally stored information is used solely to:</P>
+          <Ul>
+            <Li>
+              Filter earthquake notifications so you only receive alerts
+              relevant to your specified area and magnitude preference.
+            </Li>
+            <Li>
+              Resolve your entered postal code to geographic coordinates using
+              the OpenStreetMap Nominatim geocoding service, so that distance
+              calculations can be performed on-device.
+            </Li>
+          </Ul>
+        </Section>
+
+        <Section title="THIRD-PARTY SERVICES">
+          <P>Seismic Alerts uses the following third-party services:</P>
+          <Ul>
+            <Li>
+              <Strong>USGS Earthquake Hazards Program</Strong> &mdash; provides
+              the real-time earthquake data displayed in the app. No personal
+              information is sent to USGS.
+            </Li>
+            <Li>
+              <Strong>OpenStreetMap Nominatim</Strong> &mdash; used to convert
+              the postal code you enter into geographic coordinates. The postal
+              code is sent to the Nominatim API for geocoding. No other personal
+              data is included in this request.
+            </Li>
+          </Ul>
+        </Section>
+
+        <Section title="DATA SHARING">
+          <P>
+            We do not sell, trade, or otherwise transfer your information to
+            third parties. Your postal code and alert radius are stored only on
+            your device and are not collected by us.
+          </P>
+        </Section>
+
+        <Section title="DATA RETENTION & DELETION">
+          <P>
+            Because all data is stored locally on your device, you have full
+            control over it at all times. You can clear your location data
+            directly within the app&apos;s notification settings, or by uninstalling
+            the app, which removes all stored data.
+          </P>
+        </Section>
+
+        <Section title="CHILDREN'S PRIVACY">
+          <P>
+            Seismic Alerts does not knowingly collect personal information from
+            children under the age of 13. The app does not require account
+            creation or collect any identifying information.
+          </P>
+        </Section>
+
+        <Section title="CHANGES TO THIS POLICY">
+          <P>
+            We may update this privacy policy from time to time. Any changes
+            will be reflected on this page with an updated effective date.
+          </P>
+        </Section>
+
+        <Section title="CONTACT">
+          <P>
+            If you have questions about this privacy policy or the app&apos;s data
+            practices, please contact us at{" "}
+            <a
+              href="mailto:privacy@grokify.ai"
+              style={{ color: "#FF3000", fontWeight: 700 }}
+            >
+              privacy@grokify.ai
+            </a>
+            .
+          </P>
+        </Section>
+      </div>
     </div>
   );
+}
+
+interface SectionProps {
+  title: string;
+  children: ReactNode;
+}
+
+function Section({ title, children }: SectionProps) {
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <h2
+        style={{
+          fontWeight: 900,
+          fontSize: 13,
+          letterSpacing: 2,
+          marginBottom: 12,
+          color: "#000000",
+        }}
+      >
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+interface ChildrenProps {
+  children: ReactNode;
+}
+
+function P({ children }: ChildrenProps) {
+  return (
+    <p
+      style={{
+        fontSize: 14,
+        lineHeight: 1.7,
+        color: "#333333",
+        marginBottom: 12,
+      }}
+    >
+      {children}
+    </p>
+  );
+}
+
+function Ul({ children }: ChildrenProps) {
+  return (
+    <ul style={{ paddingLeft: 20, marginTop: 8, marginBottom: 12 }}>
+      {children}
+    </ul>
+  );
+}
+
+function Li({ children }: ChildrenProps) {
+  return (
+    <li
+      style={{
+        fontSize: 14,
+        lineHeight: 1.7,
+        color: "#333333",
+        marginBottom: 8,
+      }}
+    >
+      {children}
+    </li>
+  );
+}
+
+function Strong({ children }: ChildrenProps) {
+  return <strong style={{ fontWeight: 700, color: "#000000" }}>{children}</strong>;
 }
