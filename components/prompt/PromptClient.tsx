@@ -787,7 +787,8 @@ export default function PromptClient() {
                 06 // OUTPUT_STREAM
               </span>
               <div className="flex items-center gap-2">
-                {imaginePrompt && (
+                {/* GENERATE with Imagine button — temporarily hidden */}
+                {/* {imaginePrompt && (
                   <button
                     type="button"
                     onClick={handleGenerateWithImagine}
@@ -796,7 +797,7 @@ export default function PromptClient() {
                     <Sparkles className="w-4 h-4" />
                     GENERATE
                   </button>
-                )}
+                )} */}
                 <button
                   type="button"
                   onClick={handleCopyDefault}

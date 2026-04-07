@@ -151,7 +151,8 @@ function HomeHeroColumnInner({
         </Link>
       </div>
 
-      <div className="flex justify-center lg:justify-start">
+      {/* Grok Imagine nav card — temporarily hidden */}
+      {/* <div className="flex justify-center lg:justify-start">
         <Link
           href="/imagine"
           className="group block w-[280px] sm:w-auto sm:max-w-sm p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-pink-500/10 border border-violet-500/30 backdrop-blur-sm hover:from-violet-500/20 hover:via-fuchsia-500/10 hover:to-pink-500/20 hover:border-violet-500/50 transition-all shadow-[0_0_20px_rgba(139,92,246,0.15)] hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]"
@@ -171,7 +172,7 @@ function HomeHeroColumnInner({
               : `${getImagineImageUnavailableMessage()} ${getImagineVideoUnavailableMessage()}`}
           </p>
         </Link>
-      </div>
+      </div> */}
 
       <Dialog
         open={isCaricatureModalOpen}

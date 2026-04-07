@@ -204,7 +204,8 @@ function HomePhoneColumnInner({
                     <Sparkles className="w-4 h-4" />
                     Generate Photo
                   </button>
-                  <button
+                  {/* Generate Video button — temporarily hidden */}
+                  {/* <button
                     type="button"
                     onClick={wrapVideo}
                     disabled={isBusy || !grokVideoGenerationEnabled}
@@ -222,7 +223,7 @@ function HomePhoneColumnInner({
                     <p className="text-xs text-cyan-300/80 text-center bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-3 py-2">
                       {getHomeVideoUnavailableMessage()}
                     </p>
-                  )}
+                  )} */}
                   <button
                     type="button"
                     onClick={wrapFbi}
