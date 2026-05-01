@@ -89,13 +89,13 @@ function HomeHeroColumnInner({
         href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-base sm:text-lg text-neutral-400 hover:text-emerald-400 transition-colors inline-flex items-center justify-center lg:justify-start gap-2 group w-full lg:w-auto"
+        className="text-base sm:text-lg text-neutral-400 hover:text-emerald-400 transition-colors inline-flex flex-wrap items-center justify-center lg:justify-start gap-x-2 gap-y-1 group w-full lg:w-auto"
       >
         <DollarSign className="w-5 h-5 group-hover:text-emerald-400 transition-colors" />
         Funded by fees from <span className="font-bold text-emerald-400 group-hover:text-emerald-300">$GROKIFY</span>
       </a>
 
-      <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center lg:justify-start gap-2">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs font-medium text-amber-400/90 backdrop-blur-sm">
           <Flame className="w-3 h-3" />
           Powered by Grok AI
@@ -104,10 +104,10 @@ function HomeHeroColumnInner({
           href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/40 text-sm font-semibold text-emerald-400 backdrop-blur-sm hover:from-emerald-500/25 hover:to-teal-500/25 hover:border-emerald-400/60 transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]"
+          className="inline-flex max-w-full items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/40 text-sm font-semibold text-emerald-400 backdrop-blur-sm hover:from-emerald-500/25 hover:to-teal-500/25 hover:border-emerald-400/60 transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]"
         >
           <DollarSign className="w-4 h-4" />
-          <span className="font-mono tracking-wide">8F2Fvu...BAGs</span>
+          <span className="min-w-0 truncate font-mono tracking-wide">8F2Fvu...BAGs</span>
         </a>
       </div>
 

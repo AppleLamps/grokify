@@ -313,7 +313,7 @@ input:focus {
 
 /* Container with perspective */
 .iphone-container {
-  --phone-width: min(320px, 85vw);
+  --phone-width: min(300px, 82vw);
   position: relative;
   perspective: 1000px;
 }

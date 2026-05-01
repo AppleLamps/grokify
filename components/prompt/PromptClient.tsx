@@ -74,6 +74,7 @@ export default function PromptClient() {
   const [realismBias, setRealismBias] = useState(false);
   const [lightingMode, setLightingMode] = useState<LightingMode>('AUTO');
   const [imageIntent, setImageIntent] = useState<ImageIntent>('RECREATE_CLOSELY');
+  const [showAdvancedConfig, setShowAdvancedConfig] = useState(false);
 
   // Output state
   const [generatedPrompt, setGeneratedPrompt] = useState<string | JsonPromptPayload | null>(null);
@@ -118,6 +119,18 @@ export default function PromptClient() {
     const prompt = generatedPrompt.scene.trim();
     return prompt || null;
   }, [generatedPrompt]);
+
+  const activeConfigCount = useMemo(() => {
+    return [
+      isJsonMode,
+      isTestMode,
+      isVideoPrompt,
+      detailBoost,
+      realismBias,
+      lightingMode !== 'AUTO',
+      imageIntent !== 'RECREATE_CLOSELY',
+    ].filter(Boolean).length;
+  }, [detailBoost, imageIntent, isJsonMode, isTestMode, isVideoPrompt, lightingMode, realismBias]);
 
   // Toggle style preset
   const toggleStyle = useCallback((styleName: string) => {
@@ -551,10 +564,21 @@ export default function PromptClient() {
 
               {/* Config Flags */}
               <div className="p-5 bg-black/20 border border-amber-500/15">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">
-                  05 // CONFIG_FLAGS
-                </h2>
-                <div className="space-y-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedConfig((v) => !v)}
+                  className="mb-0 flex w-full items-center justify-between gap-3 text-left transition-colors hover:text-amber-300"
+                >
+                  <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+                    05 // CONFIG_FLAGS
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-gray-500">
+                    {activeConfigCount} active
+                    <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedConfig ? 'rotate-180' : ''}`} />
+                  </span>
+                </button>
+                {showAdvancedConfig ? (
+                  <div className="mt-4 space-y-4">
                   {/* Emily's JSON Mode */}
                   <div className="flex items-center justify-between group">
                     <div>
@@ -715,6 +739,11 @@ export default function PromptClient() {
                     </div>
                   </div>
                 </div>
+                ) : (
+                  <div className="mt-4 border border-white/10 bg-black/30 px-3 py-2 font-mono text-xs uppercase tracking-wider text-gray-500">
+                    Optional tuning collapsed
+                  </div>
+                )}
               </div>
             </div>
           </div>

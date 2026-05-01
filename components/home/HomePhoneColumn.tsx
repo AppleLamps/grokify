@@ -189,8 +189,11 @@ function HomePhoneColumnInner({
                 </div>
 
                 {!grokImageGenerationEnabled && (
-                  <p className="text-xs text-violet-300/80 text-center bg-violet-500/10 border border-violet-500/20 rounded-xl px-3 py-2">
-                    {getHomePhotoUnavailableMessage()}
+                  <p
+                    className="text-[11px] leading-snug text-violet-300/80 text-center bg-violet-500/10 border border-violet-500/20 rounded-xl px-3 py-2"
+                    title={getHomePhotoUnavailableMessage()}
+                  >
+                    Grok Imagine is paused. Nano Banana Pro is active.
                   </p>
                 )}
 
