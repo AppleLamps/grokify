@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   PROMPT_CONFIG,
   API_CONFIG,
-  XAI_MODELS,
+  PROMPT_MODELS,
   SYSTEM_PROMPTS,
   getPromptMode,
   DEFAULT_PROMPT_SCHEMA,
@@ -18,6 +18,7 @@ import { appendHiddenReasoningInstructions } from '@/lib/grok-config';
 import { buildPromptControlBlock, normalizeLightingMode } from '@/lib/prompt-controls';
 import { getRetryDelayMs, shouldRetryPromptRequest } from '@/lib/prompt-route-utils';
 import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
+import { SITE_URL } from '@/lib/site';
 import type { ImageIntent, LightingMode } from '@/lib/prompt-config-shared';
 
 const NO_STORE_HEADERS = {
@@ -40,16 +41,16 @@ interface GenerateRequestBody {
   imageMimeType?: string;
 }
 
-type XaiContent =
+type ChatContent =
   | string
   | Array<
       | { type: 'text'; text: string }
       | { type: 'image_url'; image_url: { url: string } }
     >;
 
-interface XaiMessage {
+interface ChatMessage {
   role: 'system' | 'user';
-  content: XaiContent;
+  content: ChatContent;
 }
 
 interface JsonSchemaResponseFormat {
@@ -61,9 +62,9 @@ interface JsonSchemaResponseFormat {
   };
 }
 
-interface XaiRequestBody {
+interface ChatRequestBody {
   model: string;
-  messages: XaiMessage[];
+  messages: ChatMessage[];
   temperature?: number;
   max_tokens?: number;
   top_p?: number;
@@ -82,7 +83,7 @@ const buildUserContent = (
   text: string,
   imageBase64?: string | null,
   mimeType?: string
-): XaiContent => {
+): ChatContent => {
   if (imageBase64) {
     return [
       { type: 'text', text },
@@ -95,17 +96,19 @@ const buildUserContent = (
   return text;
 };
 
-async function makeXaiCall(
+async function makeOpenRouterCall(
   apiKey: string,
-  body: XaiRequestBody
+  body: ChatRequestBody
 ): Promise<Response> {
   return fetchWithTimeout(
-    'https://api.x.ai/v1/chat/completions',
+    'https://openrouter.ai/api/v1/chat/completions',
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || SITE_URL,
+        'X-Title': 'Grokify Prompt Generator',
       },
       body: JSON.stringify(body),
     },
@@ -115,15 +118,15 @@ async function makeXaiCall(
 
 const RETRY_DELAYS_MS = [250, 750];
 
-async function makeXaiCallWithRetry(
+async function makeOpenRouterCallWithRetry(
   apiKey: string,
-  body: XaiRequestBody,
+  body: ChatRequestBody,
   hasInlineImage: boolean
 ): Promise<Response> {
   let lastResponse: Response | null = null;
 
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
-    lastResponse = await makeXaiCall(apiKey, body);
+    lastResponse = await makeOpenRouterCall(apiKey, body);
 
     if (lastResponse.ok || !shouldRetryPromptRequest(lastResponse.status, hasInlineImage)) {
       return lastResponse;
@@ -135,11 +138,11 @@ async function makeXaiCallWithRetry(
     }
   }
 
-  return lastResponse ?? makeXaiCall(apiKey, body);
+  return lastResponse ?? makeOpenRouterCall(apiKey, body);
 }
 
 export async function POST(request: NextRequest) {
-  const breakerKey = 'xai:prompt';
+  const breakerKey = 'openrouter:prompt';
 
   try {
     const body: GenerateRequestBody = await request.json();
@@ -180,9 +183,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.XAI_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-      console.error('XAI_API_KEY environment variable is not set');
+      console.error('OPENROUTER_API_KEY environment variable is not set');
       return NextResponse.json(
         { error: 'API key is not configured. Please contact the administrator.' },
         { status: 500, headers: NO_STORE_HEADERS }
@@ -231,8 +234,8 @@ export async function POST(request: NextRequest) {
       json_schema: isJsonMode ? JSON_MODE_SCHEMA : DEFAULT_PROMPT_SCHEMA,
     };
 
-    const requestBody: XaiRequestBody = {
-      model: XAI_MODELS.PRIMARY,
+    const requestBody: ChatRequestBody = {
+      model: PROMPT_MODELS.PRIMARY,
       messages: [
         { role: 'system', content: finalSystemPrompt },
         {
@@ -253,14 +256,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const xaiResponse = await makeXaiCallWithRetry(apiKey, requestBody, Boolean(imageBase64));
+    const openRouterResponse = await makeOpenRouterCallWithRetry(apiKey, requestBody, Boolean(imageBase64));
 
-    if (!xaiResponse.ok) {
-      const errorText = await xaiResponse.text();
-      console.error('xAI API error:', xaiResponse.status, errorText);
+    if (!openRouterResponse.ok) {
+      const errorText = await openRouterResponse.text();
+      console.error('OpenRouter API error:', openRouterResponse.status, errorText);
       recordFailure(breakerKey);
 
-      if (xaiResponse.status === 429) {
+      if (openRouterResponse.status === 429) {
         return NextResponse.json(
           { error: 'Too many requests. Please wait a moment before trying again.' },
           { status: 429, headers: NO_STORE_HEADERS }
@@ -273,10 +276,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data: ChatCompletionResponse = await xaiResponse.json();
+    const data: ChatCompletionResponse = await openRouterResponse.json();
 
     if (!data?.choices?.[0]?.message?.content) {
-      console.error('Invalid xAI API response structure:', data);
+      console.error('Invalid OpenRouter API response structure:', data);
       return NextResponse.json(
         { error: 'Received an invalid response from the AI service. Please try again.' },
         { status: 500, headers: NO_STORE_HEADERS }

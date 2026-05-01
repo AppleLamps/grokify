@@ -3,12 +3,17 @@ import assert from 'node:assert/strict';
 
 import {
   HIDDEN_REASONING_INSTRUCTIONS,
+  OPENROUTER_REASONING_MODEL,
   XAI_REASONING_MODEL,
   appendHiddenReasoningInstructions,
 } from '@/lib/grok-config';
 
-test('XAI Grok model is pinned to grok-4.20-0309-reasoning', () => {
-  assert.equal(XAI_REASONING_MODEL, 'grok-4.20-0309-reasoning');
+test('XAI Grok model is pinned to the direct xAI reasoning model', () => {
+  assert.equal(XAI_REASONING_MODEL, 'grok-4.20-reasoning');
+});
+
+test('OpenRouter prompt model is pinned to Grok 4.3', () => {
+  assert.equal(OPENROUTER_REASONING_MODEL, 'x-ai/grok-4.3');
 });
 
 test('appendHiddenReasoningInstructions preserves the base prompt and suppresses reasoning output', () => {

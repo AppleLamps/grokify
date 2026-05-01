@@ -1,6 +1,6 @@
 export const XAI_REASONING_MODEL = 'grok-4.20-reasoning';
 
-export const OPENROUTER_REASONING_MODEL = 'x-ai/grok-4.20-beta';
+export const OPENROUTER_REASONING_MODEL = 'x-ai/grok-4.3';
 
 export const HIDDEN_REASONING_INSTRUCTIONS = [
   'Reason privately before answering.',
