@@ -8,6 +8,7 @@ import {
     GROK_IMAGE_TEMPORARILY_UNAVAILABLE_MESSAGE,
     isGrokImageGenerationEnabled,
 } from '@/lib/grok-image-availability';
+import { canLogAiPayloads, serverLogger } from '@/lib/server-logger';
 import { z } from 'zod';
 
 // Grok Imagine Image model
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
 
         const xaiApiKey = process.env.XAI_API_KEY;
         if (!xaiApiKey) {
-            console.error('XAI_API_KEY is not configured');
+            serverLogger.error('XAI_API_KEY is not configured');
             return NextResponse.json(
                 { error: 'API key not configured' },
                 { status: 500, headers: corsHeaders }
@@ -106,11 +107,15 @@ export async function POST(req: NextRequest) {
             ? 'https://api.x.ai/v1/images/edits'
             : 'https://api.x.ai/v1/images/generations';
 
-        console.log(`${isEditRequest ? 'Editing' : 'Generating'} ${n} image(s) with Grok Imagine, aspect ratio: ${aspect_ratio}${selectedStyle ? `, style: ${selectedStyle}` : ''}`);
-        if (isEditRequest && imageBase64) {
-            console.log(`Image data length: ${imageBase64.length} chars`);
-            console.log(`Image data prefix: ${imageBase64.substring(0, 50)}...`);
-        }
+        serverLogger.info('Grok Imagine request started', {
+            mode: isEditRequest ? 'edit' : 'generate',
+            count: n,
+            aspectRatio: aspect_ratio,
+            style: selectedStyle,
+            hasImageUrl: Boolean(imageUrl),
+            hasInlineMedia: Boolean(imageBase64),
+            inlineMediaChars: imageBase64?.length ?? 0,
+        });
 
         // Build request body
         const requestBody: Record<string, unknown> = {
@@ -132,13 +137,20 @@ export async function POST(req: NextRequest) {
             // imageBase64 is a data URL like "data:image/png;base64,ABC..."
             // xAI expects image to be an object with url property
             requestBody.image = { url: imageBase64 };
-            console.log('Using data URL format for image edit');
         }
 
-        console.log(`Sending request to ${endpoint}, request body keys: ${Object.keys(requestBody).join(', ')}`);
-
         const requestBodyJson = JSON.stringify(requestBody);
-        console.log(`Request body size: ${requestBodyJson.length} bytes`);
+        serverLogger.info('Grok Imagine upstream request metadata', {
+            endpoint,
+            requestKeys: Object.keys(requestBody),
+            requestBytes: requestBodyJson.length,
+        });
+        if (canLogAiPayloads()) {
+            serverLogger.info('Grok Imagine debug payload metadata', {
+                promptChars: enhancedPrompt.length,
+                mediaChars: imageBase64?.length ?? 0,
+            });
+        }
 
         const response = await fetchWithTimeout(
             endpoint,
@@ -155,8 +167,10 @@ export async function POST(req: NextRequest) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            // Truncate error text to avoid spamming console with large responses
-            console.error('xAI Image API error:', response.status, errorText.substring(0, 500));
+            serverLogger.error('xAI Image API error', {
+                status: response.status,
+                upstreamBytes: errorText.length,
+            });
             recordFailure(breakerKey);
 
             // Parse error message if possible
@@ -178,7 +192,7 @@ export async function POST(req: NextRequest) {
         const dataValidation = XaiImageResponseSchema.safeParse(rawData);
 
         if (!dataValidation.success) {
-            console.error('Invalid xAI image response:', dataValidation.error);
+            serverLogger.error('Invalid xAI image response', { error: dataValidation.error });
             recordFailure(breakerKey);
             return NextResponse.json(
                 { error: 'Invalid response from image generation API' },
@@ -187,7 +201,9 @@ export async function POST(req: NextRequest) {
         }
 
         recordSuccess(breakerKey);
-        console.log(`Successfully generated ${dataValidation.data.data.length} image(s)`);
+        serverLogger.info('Grok Imagine request completed', {
+            count: dataValidation.data.data.length,
+        });
 
         return NextResponse.json(
             {
@@ -200,7 +216,7 @@ export async function POST(req: NextRequest) {
             { headers: corsHeaders }
         );
     } catch (error) {
-        console.error('Error in imagine image generation:', error);
+        serverLogger.error('Error in imagine image generation', { error });
         recordFailure(breakerKey);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : 'Unknown error occurred' },

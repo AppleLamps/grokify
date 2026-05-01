@@ -1,15 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+  // Keep Turbopack rooted to this app even when parent folders contain lockfiles.
+  turbopack: {
+    root: __dirname,
   },
-  // Silence Turbopack warning - empty config is fine
-  turbopack: {},
   // Allow larger request bodies for image/video editing
   experimental: {
     serverActions: {

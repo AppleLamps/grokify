@@ -34,6 +34,25 @@ export default function ImagineClient() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const abortControllerRef = useRef<AbortController | null>(null);
 
+    const createVideoUploadIntent = useCallback(async (videoFile: File) => {
+        const res = await fetch('/api/upload-video/intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contentType: videoFile.type,
+                size: videoFile.size,
+            }),
+            signal: abortControllerRef.current?.signal,
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.intent) {
+            throw new Error(data.error || 'Failed to prepare video upload');
+        }
+
+        return data.intent as string;
+    }, []);
+
     const handleGenerate = useCallback(
         async (settings: {
             prompt: string;
@@ -94,9 +113,11 @@ export default function ImagineClient() {
                         const videoFile = new File([videoBlob], `video.${videoType}`, { type: `video/${videoType}` });
 
                         // Use client-side upload to bypass serverless payload limits
+                        const intent = await createVideoUploadIntent(videoFile);
                         const blob = await upload(videoFile.name, videoFile, {
                             access: 'public',
                             handleUploadUrl: '/api/upload-video/token',
+                            clientPayload: intent,
                         });
                         videoUrl = blob.url;
                     } else if (settings.editImageBase64) {
@@ -202,7 +223,7 @@ export default function ImagineClient() {
                 abortControllerRef.current = null;
             }
         },
-        [isGenerating, store]
+        [createVideoUploadIntent, isGenerating, store]
     );
 
     const handleCancel = useCallback(() => {
@@ -228,13 +249,15 @@ export default function ImagineClient() {
         const safeExtension = videoType.replace(/[^a-zA-Z0-9]/g, '') || 'mp4';
         const videoFile = new File([videoBlob], `video.${safeExtension}`, { type: `video/${videoType}` });
 
+        const intent = await createVideoUploadIntent(videoFile);
         const blob = await upload(videoFile.name, videoFile, {
             access: 'public',
             handleUploadUrl: '/api/upload-video/token',
+            clientPayload: intent,
         });
 
         return blob.url;
-    }, []);
+    }, [createVideoUploadIntent]);
 
     const handleExtendVideo = useCallback(
         async (settings: VideoExtendSettings) => {

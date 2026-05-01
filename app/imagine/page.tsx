@@ -1,10 +1,17 @@
-// import ImagineClient from '@/components/imagine/ImagineClient';
+import ImagineClient from '@/components/imagine/ImagineClient';
 import Link from 'next/link';
 import { Zap } from 'lucide-react';
+import {
+    isGrokImageGenerationEnabled,
+    isGrokVideoGenerationEnabled,
+} from '@/lib/grok-image-availability';
 
 export default function ImaginePage() {
+    if (isGrokImageGenerationEnabled() || isGrokVideoGenerationEnabled()) {
+        return <ImagineClient />;
+    }
+
     return (
-        // Grok Imagine page temporarily unavailable — restore by un-commenting ImagineClient above and replacing this block
         <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
             <div className="p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 mb-6 inline-flex">
                 <Zap className="w-10 h-10 text-violet-400" />

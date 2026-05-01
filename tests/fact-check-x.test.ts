@@ -1,14 +1,19 @@
 import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { runFactCheckX } from '@/lib/fact-check-x';
+import { runFactCheckX, XAI_FACT_CHECK_DEEP_MODEL } from '@/lib/fact-check-x';
 import { XAI_REASONING_MODEL } from '@/lib/grok-config';
 
 const originalFetch = global.fetch;
+const originalDeepModel = process.env.XAI_FACT_CHECK_DEEP_MODEL;
 
 afterEach(() => {
   global.fetch = originalFetch;
-  delete process.env.XAI_FACT_CHECK_DEEP_MODEL;
+  if (originalDeepModel === undefined) {
+    delete process.env.XAI_FACT_CHECK_DEEP_MODEL;
+  } else {
+    process.env.XAI_FACT_CHECK_DEEP_MODEL = originalDeepModel;
+  }
 });
 
 function createResponsesPayload(text: string) {
@@ -119,7 +124,7 @@ test('runFactCheckX uses reasoning model with deep reasoning effort in deep mode
   });
 
   assert.ok(capturedBody);
-  assert.equal(capturedBody.model, XAI_REASONING_MODEL);
+  assert.equal(capturedBody.model, XAI_FACT_CHECK_DEEP_MODEL);
   assert.deepEqual(capturedBody.reasoning, { effort: 'high' });
   assert.deepEqual(capturedBody.tools, [
     { type: 'web_search' },
@@ -129,6 +134,43 @@ test('runFactCheckX uses reasoning model with deep reasoning effort in deep mode
       enable_video_understanding: true,
     },
   ]);
+});
+
+test('runFactCheckX honors the deep model environment override', async () => {
+  let capturedBody:
+    | {
+        model?: unknown;
+      }
+    | undefined;
+
+  process.env.XAI_FACT_CHECK_DEEP_MODEL = 'grok-custom-deep';
+
+  global.fetch = async (_input, init) => {
+    capturedBody = JSON.parse(String(init?.body ?? '{}'));
+    return new Response(
+      JSON.stringify(
+        createResponsesPayload(
+          JSON.stringify({
+            summaryMd: 'The deep override model was used.',
+            claims: [],
+            sources: [],
+          }),
+        ),
+      ),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  };
+
+  await runFactCheckX({
+    apiKey: 'test-key',
+    mode: 'deep',
+    normalizedUrl: 'https://x.com/example/status/123',
+    handle: 'example',
+    postId: '123',
+  });
+
+  assert.ok(capturedBody);
+  assert.equal(capturedBody.model, 'grok-custom-deep');
 });
 
 test('runFactCheckX rejects malformed model output', async () => {

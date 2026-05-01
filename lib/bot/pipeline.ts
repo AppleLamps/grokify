@@ -10,6 +10,7 @@ import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/gr
 import { STYLE_PROMPTS, getStylePrompt } from '@/lib/style-prompts';
 import { VALID_STYLES, STYLE_DISPLAY_NAMES } from './constants';
 import { uploadMedia, postReply, postTextReply, type XMention } from './x-api';
+import { serverLogger } from '@/lib/server-logger';
 
 const GROK_IMAGE_MODEL = 'grok-imagine-image-pro';
 const GROK_IMAGE_TIMEOUT = 120000;
@@ -56,10 +57,10 @@ async function fetchWithRetry(url: string, init: RequestInit, timeoutMs: number)
       if (response.ok || !RETRYABLE_STATUS.has(response.status)) {
         return response;
       }
-      console.log(`[Bot] Retryable HTTP status ${response.status}, attempt ${attempt + 1}`);
+      serverLogger.warn('[Bot] Retryable HTTP status', { status: response.status, attempt: attempt + 1 });
     } catch (error) {
       if (isRetryableNetworkError(error)) {
-        console.log(`[Bot] Network error on attempt ${attempt + 1}:`, error instanceof Error ? error.message : error);
+        serverLogger.warn('[Bot] Retryable network error', { attempt: attempt + 1, error });
         lastError = error instanceof Error ? error : new Error(String(error));
       } else {
         throw error;
@@ -122,7 +123,7 @@ export async function analyzeAccountForBot(handle: string): Promise<string> {
 
   const today = new Date();
 
-  console.log(`[Bot] Performing agentic search for @${handle}`);
+  serverLogger.info('[Bot] Performing agentic search', { handle });
 
   const response = await fetchWithTimeout(
     'https://api.x.ai/v1/responses',
@@ -173,7 +174,10 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Bot] xAI API error:', response.status, errorText);
+    serverLogger.error('[Bot] xAI API error', {
+      status: response.status,
+      upstreamBytes: errorText.length,
+    });
     recordFailure(breakerKey);
     throw new Error(`xAI API error: ${response.status}`);
   }
@@ -182,7 +186,7 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
   const validationResult = GrokResponsesApiSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    console.error('[Bot] Invalid Grok API response:', validationResult.error);
+    serverLogger.error('[Bot] Invalid Grok API response', { error: validationResult.error });
     recordFailure(breakerKey);
     throw new Error('Invalid response from Grok API');
   }
@@ -194,7 +198,7 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
     throw new Error('No prompt generated from Grok');
   }
 
-  console.log('[Bot] Generated prompt:', imagePrompt);
+  serverLogger.info('[Bot] Generated prompt metadata', { promptChars: imagePrompt.length });
   return imagePrompt;
 }
 
@@ -209,7 +213,7 @@ async function generateSaferPrompt(handle: string, originalPrompt: string): Prom
   const xaiApiKey = process.env.XAI_API_KEY;
   if (!xaiApiKey) throw new Error('XAI_API_KEY is not configured');
 
-  console.log(`[Bot] Generating safer prompt for @${handle}`);
+  serverLogger.info('[Bot] Generating safer prompt', { handle });
 
   const response = await fetchWithTimeout(
     'https://api.x.ai/v1/chat/completions',
@@ -282,7 +286,7 @@ export async function generateImageForBot(
   const selectedStyle = STYLE_PROMPTS[style] ? style : 'default';
 
   const attemptGeneration = async (currentPrompt: string, isRetry: boolean): Promise<string> => {
-    console.log(`[Bot] Attempting image generation with Grok Imagine Pro (retry: ${isRetry})`);
+    serverLogger.info('[Bot] Attempting image generation', { isRetry, model: GROK_IMAGE_MODEL });
 
     const finalPrompt = enhancePrompt(currentPrompt, selectedStyle);
     const breakerKey = 'xai:imagine-image';
@@ -312,12 +316,15 @@ export async function generateImageForBot(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Bot] xAI Image API error:', response.status, errorText.substring(0, 500));
+      serverLogger.error('[Bot] xAI Image API error', {
+        status: response.status,
+        upstreamBytes: errorText.length,
+      });
       recordFailure(breakerKey);
 
       // If not a retry, try with a safer prompt
       if (!isRetry) {
-        console.log('[Bot] Image generation failed - trying with safer prompt');
+        serverLogger.info('[Bot] Image generation failed; retrying with safer prompt');
         const saferPrompt = await generateSaferPrompt(handle, currentPrompt);
         return attemptGeneration(saferPrompt, true);
       }
@@ -330,7 +337,7 @@ export async function generateImageForBot(
       recordFailure(breakerKey);
 
       if (!isRetry) {
-        console.log('[Bot] No image URL in response - trying with safer prompt');
+        serverLogger.info('[Bot] No image URL in response; retrying with safer prompt');
         const saferPrompt = await generateSaferPrompt(handle, currentPrompt);
         return attemptGeneration(saferPrompt, true);
       }
@@ -338,7 +345,7 @@ export async function generateImageForBot(
     }
 
     recordSuccess(breakerKey);
-    console.log('[Bot] Image generated successfully with Grok Imagine Pro');
+    serverLogger.info('[Bot] Image generated successfully');
     return rawData.data[0].url;
   };
 
@@ -421,7 +428,7 @@ export async function generateCaricatureForBot(
   if (!xaiApiKey) throw new Error('XAI_API_KEY is not configured');
 
   // 1. Download the photo from the tweet
-  console.log('[Bot] Downloading attached photo for caricature');
+  serverLogger.info('[Bot] Downloading attached photo for caricature');
   const photoResponse = await fetch(photoUrl);
   if (!photoResponse.ok) {
     throw new Error(`Failed to download attached photo: ${photoResponse.status}`);
@@ -432,7 +439,10 @@ export async function generateCaricatureForBot(
   const imageDataUrl = `data:${photoMimeType};base64,${photoBase64}`;
 
   // 2. Send image to Grok for analysis and prompt generation
-  console.log('[Bot] Analyzing photo with Grok for caricature');
+  serverLogger.info('[Bot] Analyzing photo with Grok for caricature', {
+    photoMimeType,
+    photoBytes: photoBuffer.byteLength,
+  });
   const grokBreakerKey = 'xai:bot-caricature';
   if (!canProceed(grokBreakerKey)) {
     throw new Error('AI analysis service is temporarily unavailable');
@@ -471,7 +481,10 @@ export async function generateCaricatureForBot(
 
   if (!grokResponse.ok) {
     const errorText = await grokResponse.text();
-    console.error('[Bot] Grok caricature API error:', grokResponse.status, errorText);
+    serverLogger.error('[Bot] Grok caricature API error', {
+      status: grokResponse.status,
+      upstreamBytes: errorText.length,
+    });
     recordFailure(grokBreakerKey);
     throw new Error(`Grok caricature analysis failed: ${grokResponse.status}`);
   }
@@ -480,7 +493,7 @@ export async function generateCaricatureForBot(
   const grokValidation = GrokResponseSchema.safeParse(grokRawData);
 
   if (!grokValidation.success) {
-    console.error('[Bot] Invalid Grok caricature response:', grokValidation.error);
+    serverLogger.error('[Bot] Invalid Grok caricature response', { error: grokValidation.error });
     recordFailure(grokBreakerKey);
     throw new Error('Invalid response from Grok API');
   }
@@ -507,12 +520,15 @@ export async function generateCaricatureForBot(
       throw new Error('Missing required fields in response');
     }
   } catch (parseError) {
-    console.error('[Bot] Failed to parse Grok caricature JSON:', parseError, grokContent);
+    serverLogger.error('[Bot] Failed to parse Grok caricature JSON', {
+      error: parseError,
+      responseChars: grokContent.length,
+    });
     throw new Error('Failed to parse caricature analysis');
   }
 
   // 3. Generate the caricature image with Grok Imagine Pro using the prompt
-  console.log('[Bot] Generating caricature image with Grok Imagine Pro');
+  serverLogger.info('[Bot] Generating caricature image', { model: GROK_IMAGE_MODEL });
   const imagineBreakerKey = 'xai:imagine-image';
   if (!canProceed(imagineBreakerKey)) {
     throw new Error('Image generation service is temporarily unavailable');
@@ -549,7 +565,10 @@ IMPORTANT STYLE REQUIREMENTS:
 
   if (!imagineResponse.ok) {
     const errorText = await imagineResponse.text();
-    console.error('[Bot] Grok Imagine caricature API error:', imagineResponse.status, errorText.substring(0, 500));
+    serverLogger.error('[Bot] Grok Imagine caricature API error', {
+      status: imagineResponse.status,
+      upstreamBytes: errorText.length,
+    });
     recordFailure(imagineBreakerKey);
     throw new Error(`Grok Imagine caricature generation failed: ${imagineResponse.status}`);
   }
@@ -562,7 +581,7 @@ IMPORTANT STYLE REQUIREMENTS:
   }
 
   recordSuccess(imagineBreakerKey);
-  console.log('[Bot] Caricature generated successfully with Grok Imagine Pro');
+  serverLogger.info('[Bot] Caricature generated successfully');
 
   return { comment: analysisResult.comment, imageUrl: imagineRawData.data[0].url };
 }

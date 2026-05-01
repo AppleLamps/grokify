@@ -10,6 +10,7 @@ import {
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { STYLE_PROMPTS, getStylePrompt } from '@/lib/style-prompts';
 import { SITE_URL } from '@/lib/site';
+import { canLogAiPayloads, serverLogger } from '@/lib/server-logger';
 
 // Image model
 const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
@@ -60,11 +61,11 @@ const fetchWithRetry = async (url: string, init: RequestInit, timeoutMs: number)
         return response;
       }
 
-      console.log(`Retryable HTTP status ${response.status}, attempt ${attempt + 1}`);
+      serverLogger.warn('Retryable OpenRouter HTTP status', { status: response.status, attempt: attempt + 1 });
     } catch (error) {
       // Retry on network errors (socket closed, terminated, etc.)
       if (isRetryableNetworkError(error)) {
-        console.log(`Network error on attempt ${attempt + 1}, will retry:`, error instanceof Error ? error.message : error);
+        serverLogger.warn('Retryable OpenRouter network error', { attempt: attempt + 1, error });
         lastError = error instanceof Error ? error : new Error(String(error));
       } else {
         throw error;
@@ -96,7 +97,7 @@ const generateSaferPromptWithGrok = async (handle: string, originalPrompt: strin
     throw new Error('XAI_API_KEY is not configured for safety rewrite');
   }
 
-  console.log(`Generating safer prompt for @${handle} using Grok`);
+  serverLogger.info('Generating safer prompt with Grok', { handle });
 
   const safetySystemPrompt = `You are an expert at rewriting image generation prompts to be safer while maintaining their essence and humor.
 
@@ -136,7 +137,10 @@ Output ONLY the rewritten prompt. No explanations, no preamble.`;
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('xAI API error for safety rewrite:', response.status, errorText);
+    serverLogger.error('xAI API error for safety rewrite', {
+      status: response.status,
+      upstreamBytes: errorText.length,
+    });
     recordFailure(breakerKey);
     throw new Error(`Failed to generate safer prompt: ${response.status}`);
   }
@@ -145,7 +149,7 @@ Output ONLY the rewritten prompt. No explanations, no preamble.`;
   const validationResult = GrokResponseSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    console.error('Invalid Grok response for safety rewrite:', validationResult.error);
+    serverLogger.error('Invalid Grok response for safety rewrite', { error: validationResult.error });
     recordFailure(breakerKey);
     throw new Error('Invalid response from Grok API');
   }
@@ -157,7 +161,7 @@ Output ONLY the rewritten prompt. No explanations, no preamble.`;
   }
 
   recordSuccess(breakerKey);
-  console.log('Generated safer prompt:', saferPrompt);
+  serverLogger.info('Generated safer prompt', { promptChars: saferPrompt.length });
   return saferPrompt;
 };
 
@@ -174,7 +178,7 @@ export async function POST(req: NextRequest) {
     // Validate handle format - allows single handles (1-15 chars) or combined handles for joint pics (up to 31 chars: handle1_handle2)
     const HANDLE_REGEX = /^[a-zA-Z0-9_]{1,31}$/;
     if (!handle || !HANDLE_REGEX.test(handle)) {
-      console.error('Invalid handle format:', handle);
+      serverLogger.warn('Invalid handle format', { handle });
       return NextResponse.json(
         { error: 'Invalid handle format.' },
         { status: 400, headers: corsHeaders }
@@ -182,7 +186,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!prompt) {
-      console.error('Missing prompt');
+      serverLogger.warn('Missing prompt');
       return NextResponse.json(
         { error: 'Prompt is required' },
         { status: 400, headers: corsHeaders }
@@ -192,11 +196,11 @@ export async function POST(req: NextRequest) {
     // Validate style (optional, defaults to 'default')
     const validStyles = Object.keys(STYLE_PROMPTS);
     const selectedStyle = style && validStyles.includes(style) ? style : 'default';
-    console.log(`Using art style: ${selectedStyle}`);
+    serverLogger.info('Using art style', { style: selectedStyle });
 
     const openrouterApiKey = process.env.OPENROUTER_API_KEY;
     if (!openrouterApiKey) {
-      console.error('OPENROUTER_API_KEY is not configured');
+      serverLogger.error('OPENROUTER_API_KEY is not configured');
       return NextResponse.json(
         { error: 'OPENROUTER_API_KEY is not configured' },
         { status: 500, headers: corsHeaders }
@@ -205,13 +209,14 @@ export async function POST(req: NextRequest) {
 
     // Attempt image generation with retry logic
     const attemptImageGeneration = async (currentPrompt: string, isRetry: boolean): Promise<string> => {
-      console.log(`Attempting image generation (retry: ${isRetry})`);
-      console.log(`Using model (OpenRouter): ${IMAGE_MODEL}`);
+      serverLogger.info('Attempting image generation', { isRetry, model: IMAGE_MODEL });
 
       const finalPrompt = enhancePrompt(currentPrompt, selectedStyle);
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Enhanced prompt:', finalPrompt);
+      if (canLogAiPayloads()) {
+        serverLogger.info('Enhanced image prompt debug metadata', {
+          promptChars: finalPrompt.length,
+        });
       }
 
       const breakerKey = 'openrouter:image';
@@ -245,7 +250,10 @@ export async function POST(req: NextRequest) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('OpenRouter API error:', response.status, errorText);
+        serverLogger.error('OpenRouter API error', {
+          status: response.status,
+          upstreamBytes: errorText.length,
+        });
         recordFailure(breakerKey);
         throw new Error(`OpenRouter API error: ${response.status}`);
       }
@@ -255,13 +263,12 @@ export async function POST(req: NextRequest) {
 
       // Handle validation failure - likely a safety filter blocking the response
       if (!validationResult.success) {
-        console.error('Invalid Gemini API response structure:', validationResult.error);
-        console.log('Raw response:', JSON.stringify(rawData).substring(0, 500));
+        serverLogger.error('Invalid Gemini API response structure', { error: validationResult.error });
         recordFailure(breakerKey);
 
         // Treat validation failure as potential safety block - retry with safer prompt
         if (!isRetry) {
-          console.log('Validation failed (likely safety filter) - regenerating prompt with safety guidelines');
+          serverLogger.info('Image response validation failed; retrying with safer prompt');
           const saferPrompt = await generateSaferPromptWithGrok(handle, currentPrompt);
           return attemptImageGeneration(saferPrompt, true);
         }
@@ -274,23 +281,23 @@ export async function POST(req: NextRequest) {
       // Check for explicit safety block
       if (imageResult && 'safetyBlocked' in imageResult) {
         if (isRetry) {
-          console.error('Image blocked by safety even after regenerating with guidelines');
+          serverLogger.error('Image blocked by safety after retry');
           throw new Error('Content cannot be safely generated - blocked by safety filters');
         }
 
-        console.log('Safety block detected - regenerating prompt with safety guidelines');
+        serverLogger.info('Safety block detected; retrying with safer prompt');
         const saferPrompt = await generateSaferPromptWithGrok(handle, currentPrompt);
         return attemptImageGeneration(saferPrompt, true);
       }
 
       if (!imageResult || !('url' in imageResult)) {
-        console.error('No image URL in validated response');
+        serverLogger.error('No image URL in validated response');
         recordFailure(breakerKey);
         throw new Error('Failed to generate image - no image URL in response');
       }
 
       recordSuccess(breakerKey);
-      console.log('Image generated successfully');
+      serverLogger.info('Image generated successfully');
       return imageResult.url;
     };
 
@@ -299,7 +306,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ imageUrl }, { headers: corsHeaders });
   } catch (error) {
-    console.error('Error in generate-image function:', error);
+    serverLogger.error('Error in generate-image function', { error });
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500, headers: getCorsHeaders() }

@@ -6,7 +6,7 @@ import { getDroppedFiles, hasFilesInTransfer } from '@/lib/drag-drop-utils';
 test('hasFilesInTransfer returns true when the drag payload contains files', () => {
   const hasFiles = hasFilesInTransfer({
     types: ['Files', 'text/plain'],
-  } as DataTransfer);
+  } as unknown as DataTransfer);
 
   assert.equal(hasFiles, true);
 });
@@ -14,7 +14,7 @@ test('hasFilesInTransfer returns true when the drag payload contains files', () 
 test('hasFilesInTransfer returns false when the drag payload contains no files', () => {
   const hasFiles = hasFilesInTransfer({
     types: ['text/plain'],
-  } as DataTransfer);
+  } as unknown as DataTransfer);
 
   assert.equal(hasFiles, false);
 });

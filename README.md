@@ -133,7 +133,8 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | **UI Components** | [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) |
 | **Database** | [Neon](https://neon.tech/) (Serverless Postgres) |
 | **ORM** | [Drizzle ORM](https://orm.drizzle.team/) |
-| **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4.20-0309-reasoning) |
+| **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4.20-reasoning) |
+| **Prompt Generation** | [xAI Grok 4.3](https://openrouter.ai/x-ai/grok-4.3) via [OpenRouter](https://openrouter.ai/) |
 | **Image Generation** | [xAI Grok Imagine](https://x.ai/) + [Google Gemini](https://ai.google.dev/) via [OpenRouter](https://openrouter.ai/) |
 | **Video Generation** | [xAI Grok Imagine Video](https://x.ai/) |
 | **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) + IndexedDB (local) |
@@ -189,14 +190,26 @@ DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
 # xAI API (Grok analysis + X search)
 XAI_API_KEY="xai-..."
 
+# Grok Imagine feature flags (disabled unless explicitly true)
+NEXT_PUBLIC_GROK_IMAGE_GENERATION_ENABLED="false"
+NEXT_PUBLIC_GROK_VIDEO_GENERATION_ENABLED="false"
+
 # Optional: override the fact-checker deep research model
 XAI_FACT_CHECK_DEEP_MODEL="grok-4.20-multi-agent"
 
-# OpenRouter API (Gemini image generation)
+# OpenRouter API (Gemini image generation + Grokify Prompt)
 OPENROUTER_API_KEY="sk-or-..."
 
-# Vercel Blob (image storage)
+# Vercel Blob (image/video upload storage and abuse controls)
 BLOB_READ_WRITE_TOKEN="vercel_blob_..."
+UPLOAD_INTENT_SECRET="a-long-random-secret"
+UPLOAD_IMAGE_DAILY_LIMIT="20"
+UPLOAD_VIDEO_DAILY_LIMIT="10"
+UPLOAD_VIDEO_INTENT_DAILY_LIMIT="20"
+UPLOAD_VIDEO_TOKEN_DAILY_LIMIT="20"
+
+# Optional: only logs AI payload metadata outside production
+DEBUG_AI_PAYLOADS="false"
 
 # Optional: GetImg.ai API (Flux fallback)
 GETIMG_API_KEY="key-..."
@@ -264,8 +277,10 @@ Content-Type: application/json
 POST /api/prompt-generate
 Content-Type: application/json
 
-{ "idea": "A dragon fighting a robot", "style": "cinematic" }
+{ "idea": "A dragon fighting a robot", "directions": "cinematic lighting" }
 ```
+
+Uses `x-ai/grok-4.3` via OpenRouter with strict structured output parsing.
 
 ### X Post Fact Checker
 
@@ -277,7 +292,7 @@ Content-Type: application/json
 ```
 
 Modes:
-- `quick` uses `grok-4.20-0309-reasoning`
+- `quick` uses `grok-4.20-reasoning`
 - `deep` uses `grok-4.20-multi-agent` by default
 
 ### Grok Imagine (Image)

@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put, list } from '@vercel/blob';
 import { customAlphabet } from 'nanoid';
+import {
+  consumeAnonymousRateLimit,
+  getRateLimit,
+  IMAGE_UPLOAD_MAX_BYTES,
+  IMAGE_UPLOAD_MIME_TYPES,
+  parseUploadDataUrl,
+} from '@/lib/upload-security';
+import { serverLogger } from '@/lib/server-logger';
 
 // Use alphanumeric only (no underscores or dashes) to avoid filename parsing issues
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 10);
@@ -11,6 +19,18 @@ const NO_STORE_HEADERS = {
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimit = await consumeAnonymousRateLimit(
+      req,
+      'upload-image',
+      getRateLimit('UPLOAD_IMAGE_DAILY_LIMIT', 20)
+    );
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { error: 'Too many uploads. Please try again later.' },
+        { status: 429, headers: NO_STORE_HEADERS }
+      );
+    }
+
     const { imageDataUrl, username } = await req.json();
 
     if (!imageDataUrl) {
@@ -20,19 +40,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Extract base64 data from data URL
-    const base64Match = imageDataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
-    if (!base64Match) {
+    let parsed;
+    try {
+      parsed = parseUploadDataUrl(imageDataUrl, IMAGE_UPLOAD_MIME_TYPES, IMAGE_UPLOAD_MAX_BYTES);
+    } catch (validationError) {
       return NextResponse.json(
-        { error: 'Invalid image data format' },
+        { error: validationError instanceof Error ? validationError.message : 'Invalid image data format' },
         { status: 400, headers: NO_STORE_HEADERS }
       );
     }
-
-    const [, imageType, base64Data] = base64Match;
-
-    // Convert base64 to buffer
-    const buffer = Buffer.from(base64Data, 'base64');
 
     // Generate unique ID for the image (alphanumeric only)
     const imageId = nanoid();
@@ -40,12 +56,12 @@ export async function POST(req: NextRequest) {
     // Include username in filename for later retrieval
     // Use double underscore as separator since username won't have underscores after sanitization
     const usernameSlug = username ? `__${username.replace(/[^a-zA-Z0-9]/g, '')}` : '';
-    const filename = `xpressionist/${imageId}${usernameSlug}.${imageType}`;
+    const filename = `xpressionist/${imageId}${usernameSlug}.${parsed.extension}`;
 
     // Upload to Vercel Blob
-    const blob = await put(filename, buffer, {
+    const blob = await put(filename, parsed.buffer, {
       access: 'public',
-      contentType: `image/${imageType}`,
+      contentType: parsed.mimeType,
     });
 
     return NextResponse.json({
@@ -55,7 +71,7 @@ export async function POST(req: NextRequest) {
       shareUrl: `/share/${imageId}`,
     }, { headers: NO_STORE_HEADERS });
   } catch (error) {
-    console.error('Upload error:', error);
+    serverLogger.error('Upload image error', { error });
     return NextResponse.json(
       { error: 'Failed to upload image' },
       { status: 500, headers: NO_STORE_HEADERS }
@@ -102,7 +118,7 @@ export async function GET(req: NextRequest) {
       uploadedAt: blob.uploadedAt,
     }, { headers: NO_STORE_HEADERS });
   } catch (error) {
-    console.error('Get image error:', error);
+    serverLogger.error('Get image error', { error });
     return NextResponse.json(
       { error: 'Failed to retrieve image' },
       { status: 500, headers: NO_STORE_HEADERS }

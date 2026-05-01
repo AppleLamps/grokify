@@ -8,6 +8,7 @@ import {
   getImagineImageUnavailableMessage,
   isGrokImageGenerationEnabled,
   isGrokVideoGenerationEnabled,
+  parseGrokAvailabilityFlag,
 } from '@/lib/grok-image-availability';
 
 test('Grok image generation is disabled globally', () => {
@@ -16,6 +17,16 @@ test('Grok image generation is disabled globally', () => {
 
 test('Grok video generation is disabled globally', () => {
   assert.equal(isGrokVideoGenerationEnabled(), false);
+});
+
+test('parseGrokAvailabilityFlag accepts explicit enabled values only', () => {
+  assert.equal(parseGrokAvailabilityFlag('true'), true);
+  assert.equal(parseGrokAvailabilityFlag('1'), true);
+  assert.equal(parseGrokAvailabilityFlag('yes'), true);
+  assert.equal(parseGrokAvailabilityFlag('on'), true);
+  assert.equal(parseGrokAvailabilityFlag('false'), false);
+  assert.equal(parseGrokAvailabilityFlag(''), false);
+  assert.equal(parseGrokAvailabilityFlag(undefined), false);
 });
 
 test('home page unavailable message directs users to Nano Banana Pro', () => {

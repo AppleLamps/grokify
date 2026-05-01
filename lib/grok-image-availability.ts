@@ -1,5 +1,13 @@
-export const GROK_IMAGE_GENERATION_ENABLED = true;
-export const GROK_VIDEO_GENERATION_ENABLED = false;
+export function parseGrokAvailabilityFlag(value: string | undefined): boolean {
+  return ['1', 'true', 'yes', 'on'].includes((value ?? '').trim().toLowerCase());
+}
+
+export const GROK_IMAGE_GENERATION_ENABLED = parseGrokAvailabilityFlag(
+  process.env.NEXT_PUBLIC_GROK_IMAGE_GENERATION_ENABLED,
+);
+export const GROK_VIDEO_GENERATION_ENABLED = parseGrokAvailabilityFlag(
+  process.env.NEXT_PUBLIC_GROK_VIDEO_GENERATION_ENABLED,
+);
 
 export const GROK_IMAGE_TEMPORARILY_UNAVAILABLE_MESSAGE =
   'Grok image generation is temporarily unavailable. Please try again later.';

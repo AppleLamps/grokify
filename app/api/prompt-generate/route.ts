@@ -65,6 +65,9 @@ interface JsonSchemaResponseFormat {
 interface ChatRequestBody {
   model: string;
   messages: ChatMessage[];
+  provider?: {
+    require_parameters: boolean;
+  };
   temperature?: number;
   max_tokens?: number;
   top_p?: number;
@@ -236,6 +239,9 @@ export async function POST(request: NextRequest) {
 
     const requestBody: ChatRequestBody = {
       model: PROMPT_MODELS.PRIMARY,
+      provider: {
+        require_parameters: true,
+      },
       messages: [
         { role: 'system', content: finalSystemPrompt },
         {
