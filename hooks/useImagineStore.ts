@@ -77,11 +77,12 @@ export function useImagineStore(): UseImagineStoreReturn {
         };
 
         loadData();
+        const blobUrls = blobUrlsRef.current;
 
         // Cleanup blob URLs on unmount
         return () => {
-            blobUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-            blobUrlsRef.current.clear();
+            blobUrls.forEach((url) => URL.revokeObjectURL(url));
+            blobUrls.clear();
         };
     }, []);
 

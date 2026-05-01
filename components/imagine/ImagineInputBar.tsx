@@ -364,7 +364,6 @@ export default function ImagineInputBar({
                                 </div>
                             </div>
                         ) : editImage ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={editImage} alt="Edit" className="imagine-input-bar__attachment-img" />
                         ) : editVideo ? (
                             <video src={editVideo} className="imagine-input-bar__attachment-img" muted />

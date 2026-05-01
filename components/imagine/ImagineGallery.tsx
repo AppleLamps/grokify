@@ -77,7 +77,6 @@ export default function ImagineGallery({
 
                     {/* Image */}
                     {image.thumbnailUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                             src={image.thumbnailUrl}
                             alt={image.prompt}

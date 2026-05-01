@@ -122,7 +122,6 @@ export default function ImagineLightbox({
                             className="imagine-lightbox__video"
                         />
                     ) : (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                             src={fullUrl || image.thumbnailUrl}
                             alt={image.prompt}

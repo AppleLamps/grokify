@@ -30,7 +30,6 @@ export default function CaricatureSection({
 
       <div className="flex justify-center">
         <div className="relative inline-block rounded-2xl overflow-hidden border border-purple-500/20 shadow-2xl shadow-purple-900/30 bg-white">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={result.imageUrl}
             alt="Your caricature"

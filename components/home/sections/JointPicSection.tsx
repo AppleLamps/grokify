@@ -48,7 +48,6 @@ export default function JointPicSection({
               <Loader2 className="w-8 h-8 animate-spin text-neutral-500" />
             </div>
           )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={result.imageUrl}
             alt={`Joint artwork for @${result.username1} and @${result.username2}`}

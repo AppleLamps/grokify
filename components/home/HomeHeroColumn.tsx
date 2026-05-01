@@ -201,7 +201,6 @@ function HomeHeroColumnInner({
               >
                 {caricaturePreview ? (
                   <div className="space-y-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={caricaturePreview} alt="Preview" className="max-h-48 mx-auto rounded-lg" />
                     <p className="text-sm text-neutral-400">Click to change photo</p>
                   </div>

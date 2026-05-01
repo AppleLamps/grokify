@@ -199,7 +199,6 @@ export function PromptHistorySidebar({ history, onDelete, onClearAll }: PromptHi
             <div className="space-y-4">
               {selectedItem.imageUrl && (
                 <div className="rounded-lg overflow-hidden border border-border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={selectedItem.imageUrl} alt={`Generated for @${selectedItem.username}`} className="w-full h-auto" />
                 </div>
               )}

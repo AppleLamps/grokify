@@ -111,6 +111,22 @@ interface XMentionsResponse {
 
 // ─── API Functions ────────────────────────────────────────────────────
 
+export class XApiError extends Error {
+  constructor(
+    public readonly operation: string,
+    public readonly status: number,
+    public readonly upstreamBytes: number
+  ) {
+    super(`${operation} failed with status ${status}`);
+    this.name = 'XApiError';
+  }
+}
+
+async function throwXApiError(operation: string, response: Response): Promise<never> {
+  const errorText = await response.text();
+  throw new XApiError(operation, response.status, errorText.length);
+}
+
 /**
  * Fetch recent @mentions of the bot account from X API v2
  */
@@ -141,8 +157,7 @@ export async function fetchMentions(sinceId?: string): Promise<XMention[]> {
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`X API mentions error: ${response.status} ${errorText}`);
+    await throwXApiError('X API mentions request', response);
   }
 
   const data: XMentionsResponse = await response.json();
@@ -219,8 +234,7 @@ export async function uploadMedia(
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`X media upload error: ${response.status} ${errorText}`);
+    await throwXApiError('X media upload request', response);
   }
 
   const data = await response.json();
@@ -257,8 +271,7 @@ export async function postReply(
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`X tweet creation error: ${response.status} ${errorText}`);
+    await throwXApiError('X tweet creation request', response);
   }
 
   const data = await response.json();
@@ -292,8 +305,7 @@ export async function postTextReply(
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`X text reply error: ${response.status} ${errorText}`);
+    await throwXApiError('X text reply request', response);
   }
 
   const data = await response.json();

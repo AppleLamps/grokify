@@ -49,7 +49,6 @@ export default function ResultSection({
               <Loader2 className="w-8 h-8 animate-spin text-neutral-500" />
             </div>
           )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={result.imageUrl}
             alt={`Generated artwork for @${result.username}`}
@@ -108,7 +107,6 @@ export default function ResultSection({
             <Download className="w-4 h-4" />
             Download
           </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={result.imageUrl}
             alt={`Generated artwork for @${result.username}`}

@@ -138,7 +138,6 @@ export default async function SharePage({ params }: PageProps) {
           {/* Image */}
           <div className="flex justify-center">
             <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imageData.url}
                 alt={imageData.username ? `Artwork for @${imageData.username}` : 'Generated artwork'}

@@ -4,6 +4,7 @@ import { eq, and, gt } from 'drizzle-orm';
 import { fetchMentions } from '@/lib/bot/x-api';
 import { processMention } from '@/lib/bot/pipeline';
 import { AUTHOR_RATE_LIMIT, TIME_BUDGET_MS } from '@/lib/bot/constants';
+import { serverLogger } from '@/lib/server-logger';
 
 export const maxDuration = 300;
 
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
   try {
     mentions = await fetchMentions(sinceId);
   } catch (error) {
-    console.error('[Bot] Failed to fetch mentions:', error);
+    serverLogger.error('[Bot] Failed to fetch mentions', { error });
     return NextResponse.json(
       { error: 'Failed to fetch mentions' },
       { status: 500 }
@@ -85,7 +86,7 @@ export async function GET(req: NextRequest) {
   for (const mention of sorted) {
     // Time budget check
     if (Date.now() - startTime > TIME_BUDGET_MS) {
-      console.log('[Bot] Time budget exhausted, remaining will process next cron');
+      serverLogger.info('[Bot] Time budget exhausted, remaining will process next cron');
       break;
     }
 
@@ -123,7 +124,10 @@ export async function GET(req: NextRequest) {
       );
 
     if (recentByAuthor.length >= AUTHOR_RATE_LIMIT) {
-      console.log(`[Bot] Rate limited @${mention.authorHandle} (${recentByAuthor.length} requests in last hour)`);
+      serverLogger.info('[Bot] Rate limited author', {
+        authorHandle: mention.authorHandle,
+        recentCount: recentByAuthor.length,
+      });
       continue;
     }
 
@@ -151,10 +155,16 @@ export async function GET(req: NextRequest) {
         .where(eq(botMentions.tweetId, mention.id));
 
       processedCount++;
-      console.log(`[Bot] Successfully processed mention ${mention.id} -> reply ${result.replyTweetId}`);
+      serverLogger.info('[Bot] Successfully processed mention', {
+        mentionId: mention.id,
+        replyTweetId: result.replyTweetId,
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`[Bot] Failed to process mention ${mention.id}:`, errorMessage);
+      serverLogger.error('[Bot] Failed to process mention', {
+        mentionId: mention.id,
+        error,
+      });
 
       await db
         .update(botMentions)
@@ -170,7 +180,10 @@ export async function GET(req: NextRequest) {
   // 5. Update bot state with latest ID
   await upsertBotState(db, latestId, new Date());
 
-  console.log(`[Bot] Poll complete: ${processedCount}/${sorted.length} processed`);
+  serverLogger.info('[Bot] Poll complete', {
+    processedCount,
+    total: sorted.length,
+  });
   return NextResponse.json({
     processed: processedCount,
     total: sorted.length,

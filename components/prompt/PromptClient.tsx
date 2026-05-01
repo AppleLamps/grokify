@@ -492,7 +492,6 @@ export default function PromptClient() {
                     onDrop={handleImageDrop}
                   >
                     <div className="relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={imagePreview}
                         alt="Upload preview"
