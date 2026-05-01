@@ -22,7 +22,7 @@ export interface LoadingOverlayProgressResult {
 
 const SINGLE_STAGE_CONFIG: Record<Exclude<LoadingType, 'photo' | 'jointpic' | 'video'>, ProgressConfig> = {
   roast: { start: 6, end: 99, duration: 30, phaseLabel: 'Roast Synthesis' },
-  fbi: { start: 7, end: 99, duration: 34, phaseLabel: 'Behavioral Profile' },
+  fbi: { start: 7, end: 99, duration: 120, phaseLabel: 'Behavioral Profile' },
   osint: { start: 5, end: 99, duration: 90, phaseLabel: 'Intelligence Sweep' },
   caricature: { start: 8, end: 99, duration: 42, phaseLabel: 'Caricature Render' },
 };

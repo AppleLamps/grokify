@@ -4,6 +4,9 @@ import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } f
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { stripCitations } from '@/lib/report-parser';
 import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
+import { serverLogger } from '@/lib/server-logger';
+
+export const maxDuration = 180;
 
 // FBI Behavioral Analysis Unit – Digital Profiler
 const systemPrompt = `You are Special Agent Dr. [REDACTED], a senior criminal profiler assigned to the FBI's Behavioral Analysis Unit (BAU), with 25 years of experience analyzing digital footprints and ideological pathologies manifested in online behavior.
@@ -73,6 +76,7 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   const corsHeaders = getCorsHeaders();
+  const breakerKey = 'xai:fbi';
 
   try {
     const { handle } = await req.json();
@@ -80,7 +84,7 @@ export async function POST(req: NextRequest) {
     // Validate X handle format (1-15 alphanumeric characters + underscores)
     const HANDLE_REGEX = /^[a-zA-Z0-9_]{1,15}$/;
     if (!handle || !HANDLE_REGEX.test(handle)) {
-      console.error('Invalid handle format:', handle);
+      serverLogger.warn('Invalid FBI profile handle format', { handle });
       return NextResponse.json(
         { error: 'Invalid X handle format. Handles must be 1-15 characters and contain only letters, numbers, and underscores.' },
         { status: 400, headers: corsHeaders }
@@ -97,7 +101,6 @@ export async function POST(req: NextRequest) {
 
     const today = new Date();
 
-    const breakerKey = 'xai:fbi';
     if (!canProceed(breakerKey)) {
       return NextResponse.json(
         { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
@@ -127,12 +130,12 @@ export async function POST(req: NextRequest) {
           ],
         }),
       },
-      API_TIMEOUTS.GROK_ANALYSIS
+      API_TIMEOUTS.FBI_PROFILE_ANALYSIS
     );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('xAI API error:', response.status, errorText);
+      await response.text();
+      serverLogger.error('xAI FBI profile request failed', { status: response.status });
       recordFailure(breakerKey);
       return NextResponse.json(
         { error: `xAI API error: ${response.status}` },
@@ -144,7 +147,7 @@ export async function POST(req: NextRequest) {
     const validationResult = GrokResponsesApiSchema.safeParse(rawData);
 
     if (!validationResult.success) {
-      console.error('Invalid Grok API response structure:', validationResult.error);
+      serverLogger.error('Invalid Grok API response structure for FBI profile', { error: validationResult.error });
       recordFailure(breakerKey);
       return NextResponse.json(
         { error: 'Invalid response from Grok API' },
@@ -164,7 +167,15 @@ export async function POST(req: NextRequest) {
     recordSuccess(breakerKey);
     return NextResponse.json({ profileReport }, { headers: corsHeaders });
   } catch (error) {
-    console.error('Error in fbi-profile function:', error);
+    serverLogger.error('Error in fbi-profile function', { error });
+    if (error instanceof Error && error.message.includes('Request timed out after')) {
+      recordFailure(breakerKey);
+      return NextResponse.json(
+        { error: 'Profile generation timed out. Please try again in a moment.' },
+        { status: 504, headers: corsHeaders }
+      );
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500, headers: getCorsHeaders() }
