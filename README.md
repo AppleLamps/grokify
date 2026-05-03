@@ -347,8 +347,7 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   │   ├── prompt-generate/    # Grokify Prompt generator
 │   │   ├── proxy-image/       # CORS-safe image fetch
 │   │   ├── upload-image/       # Vercel Blob storage
-│   │   ├── upload-video/       # Video upload (token route for client uploads)
-│   │   └── bot/poll-mentions/  # X bot cron / mentions (optional)
+│   │   └── upload-video/       # Video upload (token route for client uploads)
 │   ├── imagine/                # Grok Imagine gallery page
 │   ├── fact-check/             # X post fact-check page
 │   ├── prompt/                 # Grokify Prompt page

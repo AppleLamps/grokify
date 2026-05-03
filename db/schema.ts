@@ -29,47 +29,9 @@ export const usageTracking = pgTable('usage_tracking', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-/**
- * Bot Mentions Table
- * Tracks X mentions processed by the bot to prevent duplicates
- */
-export const botMentions = pgTable('bot_mentions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  tweetId: text('tweet_id').unique().notNull(),
-  authorId: text('author_id').notNull(),
-  authorHandle: text('author_handle'),
-  targetHandle: text('target_handle').notNull(),
-  artStyle: text('art_style').default('default'),
-  status: text('status').notNull().default('pending'),
-  replyTweetId: text('reply_tweet_id'),
-  imageUrl: text('image_url'),
-  errorMessage: text('error_message'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  processedAt: timestamp('processed_at', { withTimezone: true }),
-}, (table) => [
-  index('idx_bot_tweet_id').on(table.tweetId),
-  index('idx_bot_status').on(table.status),
-]);
-
-/**
- * Bot State Table
- * Singleton row tracking the last processed mention ID for polling
- */
-export const botState = pgTable('bot_state', {
-  id: text('id').primaryKey().default('singleton'),
-  lastMentionId: text('last_mention_id'),
-  lastPollAt: timestamp('last_poll_at', { withTimezone: true }),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
-
 // Type exports for use in API routes
 export type XAccountCache = typeof xAccountCache.$inferSelect;
 export type NewXAccountCache = typeof xAccountCache.$inferInsert;
 
 export type UsageTracking = typeof usageTracking.$inferSelect;
 export type NewUsageTracking = typeof usageTracking.$inferInsert;
-
-export type BotMention = typeof botMentions.$inferSelect;
-export type NewBotMention = typeof botMentions.$inferInsert;
-
-export type BotState = typeof botState.$inferSelect;

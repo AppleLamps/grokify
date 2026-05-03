@@ -1,16 +1,7 @@
 {
-  "crons": [
-    {
-      "path": "/api/bot/poll-mentions",
-      "schedule": "*/2 * * * *"
-    }
-  ],
   "functions": {
     "app/api/fbi-profile/route.ts": {
       "maxDuration": 180
-    },
-    "app/api/bot/poll-mentions/route.ts": {
-      "maxDuration": 300
     }
   }
 }
