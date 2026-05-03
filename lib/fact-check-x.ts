@@ -64,6 +64,45 @@ Output requirements:
 - sourceAnalysis must be a plain-language paragraph (no URLs, no footnotes, no citations) assessing the overall credibility of the sources behind the post's claims, noting any state affiliations, conflicts of interest, or independence concerns.
 - Output only the JSON object. No prose before or after it.`);
 
+const FACT_CHECK_RESPONSE_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    summaryMd: { type: 'string' },
+    claims: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          claim: { type: 'string' },
+          verdict: {
+            type: 'string',
+            enum: ['supported', 'contradicted', 'unclear', 'not_checkable'],
+          },
+          rationale: { type: 'string' },
+        },
+        required: ['claim', 'verdict', 'rationale'],
+      },
+    },
+    sources: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          title: { type: 'string' },
+          url: { type: 'string' },
+          note: { type: 'string' },
+        },
+        required: ['title', 'url'],
+      },
+    },
+    sourceAnalysis: { type: 'string' },
+  },
+  required: ['summaryMd', 'claims', 'sources', 'sourceAnalysis'],
+} as const;
+
 export interface RunFactCheckXInput {
   apiKey: string;
   mode: FactCheckXMode;
@@ -131,14 +170,13 @@ Return exactly one JSON object matching:
 function parseFactCheckOutput(rawContent: string): FactCheckXOutput {
   const trimmed = rawContent.trim();
   const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const jsonText = fencedMatch?.[1]?.trim() || trimmed;
+  const candidateText = fencedMatch?.[1]?.trim() || trimmed;
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(jsonText);
+    parsed = JSON.parse(candidateText);
   } catch {
-    console.error('Fact check JSON parse failed. Raw content (first 500 chars):', rawContent.slice(0, 500));
-    throw new Error('Invalid fact check response');
+    parsed = parseEmbeddedJsonObject(candidateText);
   }
 
   const validation = factCheckXOutputSchema.safeParse(parsed);
@@ -148,6 +186,58 @@ function parseFactCheckOutput(rawContent: string): FactCheckXOutput {
   }
 
   return sanitizeFactCheckXOutput(validation.data);
+}
+
+function parseEmbeddedJsonObject(text: string): unknown {
+  for (let start = text.indexOf('{'); start >= 0; start = text.indexOf('{', start + 1)) {
+    const end = findMatchingJsonObjectEnd(text, start);
+    if (end === -1) {
+      continue;
+    }
+
+    try {
+      return JSON.parse(text.slice(start, end + 1));
+    } catch {
+      // Keep looking for another balanced object.
+    }
+  }
+
+  console.error('Fact check JSON parse failed. Raw content (first 500 chars):', text.slice(0, 500));
+  throw new Error('Invalid fact check response');
+}
+
+function findMatchingJsonObjectEnd(text: string, start: number): number {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < text.length; index += 1) {
+    const char = text[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+    } else if (char === '{') {
+      depth += 1;
+    } else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return -1;
 }
 
 export async function runFactCheckX({
@@ -179,6 +269,14 @@ export async function runFactCheckX({
         enable_video_understanding: true,
       },
     ],
+    text: {
+      format: {
+        type: 'json_schema',
+        name: 'fact_check_x_output',
+        schema: FACT_CHECK_RESPONSE_SCHEMA,
+        strict: true,
+      },
+    },
   };
 
   if (mode === 'deep') {

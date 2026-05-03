@@ -38,6 +38,7 @@ test('runFactCheckX uses the standard reasoning model and both server-side searc
         model?: unknown;
         tools?: unknown;
         reasoning?: unknown;
+        text?: unknown;
       }
     | undefined;
 
@@ -79,6 +80,51 @@ test('runFactCheckX uses the standard reasoning model and both server-side searc
   assert.equal(result.summaryMd, 'The claim is partly supported but missing important context.');
   assert.ok(capturedBody);
   assert.equal(capturedBody.model, XAI_REASONING_MODEL);
+  assert.deepEqual(capturedBody.text, {
+    format: {
+      type: 'json_schema',
+      name: 'fact_check_x_output',
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          summaryMd: { type: 'string' },
+          claims: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                claim: { type: 'string' },
+                verdict: {
+                  type: 'string',
+                  enum: ['supported', 'contradicted', 'unclear', 'not_checkable'],
+                },
+                rationale: { type: 'string' },
+              },
+              required: ['claim', 'verdict', 'rationale'],
+            },
+          },
+          sources: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                title: { type: 'string' },
+                url: { type: 'string' },
+                note: { type: 'string' },
+              },
+              required: ['title', 'url'],
+            },
+          },
+          sourceAnalysis: { type: 'string' },
+        },
+        required: ['summaryMd', 'claims', 'sources', 'sourceAnalysis'],
+      },
+      strict: true,
+    },
+  });
   assert.deepEqual(capturedBody.tools, [
     { type: 'web_search' },
     {
@@ -88,6 +134,44 @@ test('runFactCheckX uses the standard reasoning model and both server-side searc
     },
   ]);
   assert.equal(capturedBody.reasoning, undefined);
+});
+
+test('runFactCheckX accepts a JSON object wrapped in model prose', async () => {
+  global.fetch = async () =>
+    new Response(
+      JSON.stringify(
+        createResponsesPayload(
+          `Here is the fact check:\n${JSON.stringify({
+            summaryMd: 'The post needs context.',
+            claims: [
+              {
+                claim: 'The post makes one factual claim.',
+                verdict: 'unclear',
+                rationale: 'The available sources do not settle it.',
+              },
+            ],
+            sources: [
+              {
+                title: 'Reference',
+                url: 'https://example.com/reference',
+              },
+            ],
+          })}\nHope this helps.`,
+        ),
+      ),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+
+  const result = await runFactCheckX({
+    apiKey: 'test-key',
+    mode: 'quick',
+    normalizedUrl: 'https://x.com/example/status/123',
+    handle: 'example',
+    postId: '123',
+  });
+
+  assert.equal(result.summaryMd, 'The post needs context.');
+  assert.equal(result.claims[0].verdict, 'unclear');
 });
 
 test('runFactCheckX uses reasoning model with deep reasoning effort in deep mode', async () => {

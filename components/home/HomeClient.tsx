@@ -60,7 +60,9 @@ function HistoryTrigger() {
 export default function Home() {
   const [clearUsernameSignal, setClearUsernameSignal] = useState(0);
   const [selectedStyle, setSelectedStyle] = useState<string>('default');
-  const [selectedModel, setSelectedModel] = useState<'nano-banana' | 'grok-imagine'>('nano-banana');
+  const [selectedModel, setSelectedModel] = useState<'nano-banana' | 'grok-imagine'>(
+    isGrokImageGenerationEnabled() ? 'grok-imagine' : 'nano-banana'
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isRoasting, setIsRoasting] = useState(false);
   const [isProfiling, setIsProfiling] = useState(false);
@@ -161,7 +163,7 @@ export default function Home() {
           }),
         });
       } else {
-        // Use Nano Banana Pro (default)
+        // Use Nano Banana Pro fallback
         imageResponse = await fetch('/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
