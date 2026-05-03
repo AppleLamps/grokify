@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
-import { AlertTriangle, ExternalLink, Loader2, Search, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ExternalLink, FileSearch, Link2, Loader2, Search, ShieldCheck, Timer } from 'lucide-react';
 import type {
   FactCheckXApiResponse,
   FactCheckXMode,
@@ -23,6 +23,24 @@ const MODE_OPTIONS: Array<{
     value: 'deep',
     label: 'Deep',
     description: 'Multi-agent research with more scrutiny and higher latency.',
+  },
+];
+
+const REPORT_PREVIEW = [
+  {
+    icon: CheckCircle2,
+    title: 'Bottom line',
+    description: 'A short read on whether the post holds up, needs context, or falls apart.',
+  },
+  {
+    icon: FileSearch,
+    title: 'Claim breakdown',
+    description: 'Each factual claim gets its own verdict: supported, contradicted, unclear, or not checkable.',
+  },
+  {
+    icon: Link2,
+    title: 'Source trail',
+    description: 'Open the references when you want to inspect the evidence yourself.',
   },
 ];
 
@@ -129,8 +147,8 @@ export default function FactCheckClient() {
                 Check the post, not the vibe.
               </h1>
               <p className="max-w-2xl text-sm leading-7 text-neutral-300 sm:text-base">
-                Paste an X or Twitter post URL and get a structured research pass with a clean summary,
-                claim-by-claim verdicts, and optional sources tucked away below.
+                Paste an X or Twitter post URL and get a plain-English read on what is true,
+                what needs context, and what cannot be verified.
               </p>
             </div>
           </div>
@@ -209,30 +227,47 @@ export default function FactCheckClient() {
           ) : null}
         </div>
 
-        <div className="glass-card rounded-[2rem] p-6 sm:p-8">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-neutral-200">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-neutral-500">
-                What You Get
-              </p>
-              <h2 className="text-xl font-semibold text-white">Clean analysis first, sources second</h2>
-            </div>
+        <div className="glass-card overflow-hidden rounded-[2rem] p-6 sm:p-8">
+          <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-neutral-500">
+              Before You Share It
+            </p>
+            <h2 className="mt-3 max-w-sm text-3xl font-semibold tracking-tight text-white">
+              Get a quick read on what the post actually claims.
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-neutral-300">
+              The report is built for skimming first, then digging deeper only when a claim deserves it.
+            </p>
           </div>
 
-          <div className="space-y-4 text-sm leading-7 text-neutral-300">
-            <p>
-              The main panel stays readable on purpose: no inline URLs, no citation clutter, and no fake certainty.
-            </p>
-            <p>
-              Every link lives in a collapsed sources block, while the claim section separates what is supported,
-              contradicted, unclear, or not actually checkable.
-            </p>
-            <p className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-neutral-400">
-              Deep mode uses a multi-agent model and will usually take longer. Use it when the post is dense, statistical,
-              or obviously wrapped in narrative framing.
+          <div className="space-y-3">
+            {REPORT_PREVIEW.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.title}
+                  className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4"
+                >
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-amber-200">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-6 text-neutral-400">{item.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-amber-400/15 bg-amber-400/[0.07] px-4 py-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-100">
+              <Timer className="h-4 w-4" />
+              Quick or deep research
+            </div>
+            <p className="text-sm leading-6 text-neutral-300">
+              Use Quick for everyday posts. Use Deep when the post is dense, statistical, or likely to be missing context.
             </p>
           </div>
         </div>
