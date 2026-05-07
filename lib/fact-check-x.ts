@@ -12,7 +12,7 @@ import {
 } from '@/lib/fact-check-x-schema';
 import { sanitizeFactCheckXOutput } from '@/lib/fact-check-x-sanitize';
 
-export const XAI_FACT_CHECK_DEEP_MODEL = 'grok-4.20-multi-agent';
+export const XAI_FACT_CHECK_DEEP_MODEL = XAI_REASONING_MODEL;
 export const FACT_CHECK_X_DISCLAIMER =
   'Research assistance only. It can be wrong and is not legal, medical, or financial advice.';
 

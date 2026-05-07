@@ -9,7 +9,7 @@ import {
 } from '@/lib/grok-config';
 
 test('XAI Grok model is pinned to the direct xAI reasoning model', () => {
-  assert.equal(XAI_REASONING_MODEL, 'grok-4.20-reasoning');
+  assert.equal(XAI_REASONING_MODEL, 'grok-4.3');
 });
 
 test('OpenRouter prompt model is pinned to Grok 4.3', () => {

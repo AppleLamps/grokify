@@ -11,6 +11,7 @@ import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker'
 import { STYLE_PROMPTS, getStylePrompt } from '@/lib/style-prompts';
 import { SITE_URL } from '@/lib/site';
 import { canLogAiPayloads, serverLogger } from '@/lib/server-logger';
+import { XAI_REASONING_MODEL } from '@/lib/grok-config';
 
 // Image model
 const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
@@ -122,7 +123,7 @@ Output ONLY the rewritten prompt. No explanations, no preamble.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'grok-3-fast',
+        model: XAI_REASONING_MODEL,
         messages: [
           { role: 'system', content: safetySystemPrompt },
           {

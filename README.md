@@ -133,7 +133,7 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | **UI Components** | [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) |
 | **Database** | [Neon](https://neon.tech/) (Serverless Postgres) |
 | **ORM** | [Drizzle ORM](https://orm.drizzle.team/) |
-| **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4.20-reasoning) |
+| **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4.3) |
 | **Prompt Generation** | [xAI Grok 4.3](https://openrouter.ai/x-ai/grok-4.3) via [OpenRouter](https://openrouter.ai/) |
 | **Image Generation** | [xAI Grok Imagine](https://x.ai/) + [Google Gemini](https://ai.google.dev/) via [OpenRouter](https://openrouter.ai/) |
 | **Video Generation** | [xAI Grok Imagine Video](https://x.ai/) |
@@ -195,7 +195,7 @@ NEXT_PUBLIC_GROK_IMAGE_GENERATION_ENABLED="false"
 NEXT_PUBLIC_GROK_VIDEO_GENERATION_ENABLED="false"
 
 # Optional: override the fact-checker deep research model
-XAI_FACT_CHECK_DEEP_MODEL="grok-4.20-multi-agent"
+XAI_FACT_CHECK_DEEP_MODEL="grok-4.3"
 
 # OpenRouter API (Gemini image generation + Grokify Prompt)
 OPENROUTER_API_KEY="sk-or-..."
@@ -292,8 +292,8 @@ Content-Type: application/json
 ```
 
 Modes:
-- `quick` uses `grok-4.20-reasoning`
-- `deep` uses `grok-4.20-multi-agent` by default
+- `quick` uses `grok-4.3`
+- `deep` uses `grok-4.3` by default
 
 ### Grok Imagine (Image)
 
