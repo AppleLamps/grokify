@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import PromptClient from '@/components/prompt/PromptClient';
 
 export default function PromptPage() {
@@ -14,13 +14,6 @@ export default function PromptPage() {
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm">Back to X-pressionist</span>
-            </Link>
-            <Link
-              href="/imagine"
-              className="inline-flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-amber-400 transition-all hover:border-amber-400/40 hover:bg-amber-500/15 hover:text-amber-300"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Imagine
             </Link>
           </div>
           <div className="flex items-center gap-4">
