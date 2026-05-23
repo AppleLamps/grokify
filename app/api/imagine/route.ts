@@ -9,6 +9,11 @@ import {
     isGrokImageGenerationEnabled,
 } from '@/lib/grok-image-availability';
 import { canLogAiPayloads, serverLogger } from '@/lib/server-logger';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import {
+  aiUnavailableResponse,
+  routeErrorResponse,
+} from '@/lib/api-route-error';
 import { z } from 'zod';
 
 // Grok Imagine Image model
@@ -40,12 +45,12 @@ const XaiImageResponseSchema = z.object({
     ),
 });
 
-export async function OPTIONS() {
-    return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+    return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-    const corsHeaders = getCorsHeaders();
+    const corsHeaders = getCorsHeaders(req.headers.get('origin'));
     const breakerKey = 'xai:imagine-image';
 
     try {
@@ -55,6 +60,9 @@ export async function POST(req: NextRequest) {
                 { status: 503, headers: corsHeaders }
             );
         }
+
+        const rateLimited = await enforceAiRateLimit(req, 'imagine', corsHeaders);
+        if (rateLimited) return rateLimited;
 
         const body = await req.json();
 
@@ -172,20 +180,7 @@ export async function POST(req: NextRequest) {
                 upstreamBytes: errorText.length,
             });
             recordFailure(breakerKey);
-
-            // Parse error message if possible
-            let errorMessage = 'Failed to generate image';
-            try {
-                const errorJson = JSON.parse(errorText);
-                errorMessage = errorJson.error?.message || errorJson.message || errorMessage;
-            } catch {
-                // Use default error message
-            }
-
-            return NextResponse.json(
-                { error: errorMessage },
-                { status: response.status, headers: corsHeaders }
-            );
+            return aiUnavailableResponse(corsHeaders);
         }
 
         const rawData = await response.json();
@@ -218,9 +213,6 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         serverLogger.error('Error in imagine image generation', { error });
         recordFailure(breakerKey);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Unknown error occurred' },
-            { status: 500, headers: corsHeaders }
-        );
+        return routeErrorResponse(error, corsHeaders);
     }
 }

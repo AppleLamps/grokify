@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.grokify.ai">Live Demo</a> •
+  <a href="https://www.grokify.com">Live Demo</a> •
   <a href="https://github.com/AppleLamps/grokify">GitHub</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
@@ -23,7 +23,7 @@
 
 ## Overview
 
-**X-pressionist** analyzes public X (Twitter) accounts using xAI's Grok model with real-time search capabilities, then generates unique AI-powered content including satirical artwork, comedy roasts, FBI-style profiles, comprehensive OSINT dossiers, and street-style caricatures.
+**Grokify** analyzes public X (Twitter) accounts using xAI's Grok model with real-time search capabilities, then generates unique AI-powered content including satirical artwork, comedy roasts, FBI-style profiles, comprehensive OSINT dossiers, and street-style caricatures.
 
 No login required. No API keys needed from users. Just enter a username and go.
 
@@ -51,7 +51,7 @@ No login required. No API keys needed from users. Just enter a username and go.
 
 ## Art Styles
 
-X-pressionist offers **38 unique art styles** organized into 5 categories:
+Grokify offers **38 unique art styles** organized into 5 categories:
 
 ### Classic (8 styles)
 
@@ -180,9 +180,9 @@ npm test
 Create a `.env.local` file with the following:
 
 ```env
-# Public site (metadata, Open Graph, OpenRouter HTTP-Referer). Use https://www.grokify.ai in production.
-NEXT_PUBLIC_BASE_URL="https://www.grokify.ai"
-NEXT_PUBLIC_APP_URL="https://www.grokify.ai"
+# Public site (metadata, Open Graph, OpenRouter HTTP-Referer). Use https://www.grokify.com in production.
+NEXT_PUBLIC_BASE_URL="https://www.grokify.com"
+NEXT_PUBLIC_APP_URL="https://www.grokify.com"
 
 # Database (Neon Postgres)
 DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
@@ -207,6 +207,24 @@ UPLOAD_IMAGE_DAILY_LIMIT="20"
 UPLOAD_VIDEO_DAILY_LIMIT="10"
 UPLOAD_VIDEO_INTENT_DAILY_LIMIT="20"
 UPLOAD_VIDEO_TOKEN_DAILY_LIMIT="20"
+
+# Anonymous AI endpoint rate limits (requests per 24 hours per IP + user-agent hash)
+AI_ANALYZE_ACCOUNT_DAILY_LIMIT="10"
+AI_ANALYZE_ACCOUNT_VIDEO_DAILY_LIMIT="5"
+AI_ROAST_ACCOUNT_DAILY_LIMIT="10"
+AI_FBI_PROFILE_DAILY_LIMIT="5"
+AI_OSINT_PROFILE_DAILY_LIMIT="5"
+AI_GENERATE_IMAGE_DAILY_LIMIT="5"
+AI_FACT_CHECK_DAILY_LIMIT="15"
+AI_PROMPT_GENERATE_DAILY_LIMIT="30"
+AI_IMAGINE_DAILY_LIMIT="5"
+AI_IMAGINE_VIDEO_DAILY_LIMIT="3"
+AI_IMAGINE_VIDEO_EXTEND_DAILY_LIMIT="3"
+AI_CARICATURE_DAILY_LIMIT="5"
+AI_JOINT_PIC_DAILY_LIMIT="10"
+
+# Comma-separated browser origins allowed to call API routes (defaults to https://www.grokify.com)
+ALLOWED_ORIGINS="https://www.grokify.com"
 
 # Optional: only logs AI payload metadata outside production
 DEBUG_AI_PAYLOADS="false"
@@ -355,7 +373,7 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── page.tsx
-│   ├── robots.ts               # robots.txt (sitemap URL on grokify.ai)
+│   ├── robots.ts               # robots.txt (sitemap URL on grokify.com)
 │   └── sitemap.ts              # sitemap.xml for main routes
 ├── components/
 │   ├── home/
@@ -382,7 +400,7 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   ├── prompt-client-utils.test.ts  # Tests for prompt UI helpers
 │   └── prompt-route-utils.test.ts    # Tests for prompt-generate retry logic
 └── lib/
-    ├── site.ts                 # SITE_URL / SITE_NAME (grokify.ai) for SEO & APIs
+    ├── site.ts                 # SITE_URL / SITE_NAME (grokify.com) for SEO & APIs
     ├── prompt-client-utils.ts  # Grokify Prompt: image compression & preview URL helpers
     ├── prompt-route-utils.ts   # Grokify Prompt API: retryable status / backoff helpers
     ├── circuit-breaker.ts      # API resilience
@@ -428,7 +446,7 @@ The database schema auto-applies on first request with Neon's serverless driver.
 
 ## AI Personas
 
-X-pressionist uses specialized AI personas powered by Grok:
+Grokify uses specialized AI personas powered by Grok:
 
 | Persona | Endpoint | Description |
 |---------|----------|-------------|
@@ -463,7 +481,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
-X-pressionist is funded by fees from **$GROKIFY** token.
+Grokify is funded by fees from **$GROKIFY** token.
 
 <p align="center">
   <a href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS">

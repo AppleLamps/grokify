@@ -12,6 +12,11 @@ import { STYLE_PROMPTS, getStylePrompt } from '@/lib/style-prompts';
 import { SITE_URL } from '@/lib/site';
 import { canLogAiPayloads, serverLogger } from '@/lib/server-logger';
 import { XAI_REASONING_MODEL } from '@/lib/grok-config';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import {
+  aiUnavailableResponse,
+  routeErrorResponse,
+} from '@/lib/api-route-error';
 
 // Image model
 const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
@@ -166,12 +171,15 @@ Output ONLY the rewritten prompt. No explanations, no preamble.`;
   return saferPrompt;
 };
 
-export async function OPTIONS() {
-  return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-  const corsHeaders = getCorsHeaders();
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
+
+  const rateLimited = await enforceAiRateLimit(req, 'generate-image', corsHeaders);
+  if (rateLimited) return rateLimited;
 
   try {
     const { prompt, handle, style } = await req.json();
@@ -308,10 +316,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ imageUrl }, { headers: corsHeaders });
   } catch (error) {
     serverLogger.error('Error in generate-image function', { error });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: getCorsHeaders() }
-    );
+    return routeErrorResponse(error, corsHeaders);
   }
 }
 

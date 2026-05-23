@@ -3,13 +3,18 @@ import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import { aiUnavailableResponse, routeErrorResponse } from '@/lib/api-route-error';
 
-export async function OPTIONS() {
-  return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-  const corsHeaders = getCorsHeaders();
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
+
+  const rateLimited = await enforceAiRateLimit(req, 'joint-pic', corsHeaders);
+  if (rateLimited) return rateLimited;
 
   try {
     const { handle1, handle2 } = await req.json();
@@ -161,12 +166,9 @@ Based on this deep analysis of BOTH accounts, create a creative, humorous image 
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('xAI API error:', response.status, errorText);
+      console.error('xAI API error:', response.status, errorText.length);
       recordFailure(breakerKey);
-      return NextResponse.json(
-        { error: `xAI API error: ${response.status}`, details: errorText },
-        { status: response.status, headers: corsHeaders }
-      );
+      return aiUnavailableResponse(corsHeaders);
     }
 
     const rawData = await response.json();
@@ -197,9 +199,6 @@ Based on this deep analysis of BOTH accounts, create a creative, humorous image 
     return NextResponse.json({ imagePrompt }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in joint-pic function:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: getCorsHeaders() }
-    );
+    return routeErrorResponse(error, corsHeaders);
   }
 }

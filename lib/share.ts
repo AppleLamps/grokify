@@ -112,8 +112,8 @@ export async function shareOnX(
  */
 export function getDefaultShareText(username?: string): string {
   if (username) {
-    return `Check out my @${username} X profile artwork, created by Xpressionist! Funded by $GROKIFY 🎨`;
+    return `Check out my @${username} X profile artwork, created by Grokify! Funded by $GROKIFY 🎨`;
   }
-  return 'Check out this AI-generated artwork from my X profile, created by Xpressionist! Funded by $GROKIFY 🎨';
+  return 'Check out this AI-generated artwork from my X profile, created by Grokify! Funded by $GROKIFY 🎨';
 }
 

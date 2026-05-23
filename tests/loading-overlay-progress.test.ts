@@ -10,7 +10,7 @@ test('photo analyze stage stays in the first-stage range', () => {
     elapsedSeconds: 12,
   });
 
-  assert.equal(result.phaseLabel, 'Profile Analysis');
+  assert.equal(result.phaseLabel, 'SIGNAL ACQUISITION');
   assert.ok(result.progress >= 8);
   assert.ok(result.progress < 70);
 });
@@ -22,7 +22,7 @@ test('photo image stage starts after analyze-stage progress', () => {
     elapsedSeconds: 2,
   });
 
-  assert.equal(result.phaseLabel, 'Artwork Render');
+  assert.equal(result.phaseLabel, 'VISUAL SYNTHESIS');
   assert.ok(result.progress >= 70);
   assert.ok(result.progress < 97);
 });
@@ -40,8 +40,8 @@ test('video analyze stage remains clearly below render stage', () => {
   });
 
   assert.ok(analyze.progress < render.progress);
-  assert.equal(analyze.phaseLabel, 'Narrative Scan');
-  assert.equal(render.phaseLabel, 'Video Render');
+  assert.equal(analyze.phaseLabel, 'NARRATIVE SCAN');
+  assert.equal(render.phaseLabel, 'MOTION RENDER');
 });
 
 test('single-stage loaders do not claim completion early', () => {
@@ -52,7 +52,7 @@ test('single-stage loaders do not claim completion early', () => {
 
   assert.ok(result.progress >= 6);
   assert.ok(result.progress < 35);
-  assert.equal(result.statusLabel, 'Collecting signal');
+  assert.equal(result.statusLabel, 'ACQUIRING');
 });
 
 test('progress is capped below 100 until the request finishes', () => {

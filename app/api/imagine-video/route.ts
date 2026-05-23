@@ -8,6 +8,12 @@ import {
     GROK_VIDEO_TEMPORARILY_UNAVAILABLE_MESSAGE,
     isGrokVideoGenerationEnabled,
 } from '@/lib/grok-image-availability';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import {
+  API_ERROR_MESSAGES,
+  aiUnavailableResponse,
+  routeErrorResponse,
+} from '@/lib/api-route-error';
 import { z } from 'zod';
 
 // Grok Imagine Video model
@@ -43,12 +49,12 @@ const VideoRequestResponseSchema = z.object({
     request_id: z.string(),
 });
 
-export async function OPTIONS() {
-    return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+    return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-    const corsHeaders = getCorsHeaders();
+    const corsHeaders = getCorsHeaders(req.headers.get('origin'));
     const breakerKey = 'xai:imagine-video';
 
     try {
@@ -65,6 +71,9 @@ export async function POST(req: NextRequest) {
                 { status: 503, headers: corsHeaders }
             );
         }
+
+        const rateLimited = await enforceAiRateLimit(req, 'imagine-video', corsHeaders);
+        if (rateLimited) return rateLimited;
 
         const body = await req.json();
 
@@ -174,21 +183,9 @@ export async function POST(req: NextRequest) {
 
         if (!startResponse.ok) {
             const errorText = await startResponse.text();
-            console.error('xAI Video API error:', startResponse.status, errorText);
+            console.error('xAI Video API error:', startResponse.status, errorText.length);
             recordFailure(breakerKey);
-
-            let errorMessage = 'Failed to start video generation';
-            try {
-                const errorJson = JSON.parse(errorText);
-                errorMessage = errorJson.error?.message || errorJson.message || errorMessage;
-            } catch {
-                // Use default error message
-            }
-
-            return NextResponse.json(
-                { error: errorMessage },
-                { status: startResponse.status, headers: corsHeaders }
-            );
+            return aiUnavailableResponse(corsHeaders);
         }
 
         const startData = await startResponse.json();
@@ -295,8 +292,8 @@ export async function POST(req: NextRequest) {
         recordFailure(breakerKey);
         return NextResponse.json(
             {
-                error: lastError || 'Video generation timed out. Please try again.',
-                requestId: request_id, // Return request ID in case they want to check later
+                error: API_ERROR_MESSAGES.VIDEO_GENERATION_FAILED,
+                requestId: request_id,
                 progress: lastProgress,
             },
             { status: 504, headers: corsHeaders }
@@ -304,9 +301,6 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         console.error('Error in imagine video generation:', error);
         recordFailure(breakerKey);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Unknown error occurred' },
-            { status: 500, headers: corsHeaders }
-        );
+        return routeErrorResponse(error, corsHeaders);
     }
 }

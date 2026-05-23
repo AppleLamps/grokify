@@ -8,6 +8,12 @@ import {
   GROK_VIDEO_TEMPORARILY_UNAVAILABLE_MESSAGE,
   isGrokVideoGenerationEnabled,
 } from '@/lib/grok-image-availability';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import {
+  API_ERROR_MESSAGES,
+  aiUnavailableResponse,
+  routeErrorResponse,
+} from '@/lib/api-route-error';
 import { z } from 'zod';
 
 const VIDEO_MODEL = 'grok-imagine-video';
@@ -27,12 +33,12 @@ const VideoRequestResponseSchema = z.object({
   request_id: z.string(),
 });
 
-export async function OPTIONS() {
-  return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-  const corsHeaders = getCorsHeaders();
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   const breakerKey = 'xai:imagine-video';
 
   try {
@@ -49,6 +55,9 @@ export async function POST(req: NextRequest) {
         { status: 503, headers: corsHeaders }
       );
     }
+
+    const rateLimited = await enforceAiRateLimit(req, 'imagine-video-extend', corsHeaders);
+    if (rateLimited) return rateLimited;
 
     const body = await req.json();
     const validationResult = VideoExtensionSchema.safeParse(body);
@@ -105,10 +114,8 @@ export async function POST(req: NextRequest) {
     if (!startResponse.ok) {
       const errorText = await startResponse.text();
       recordFailure(breakerKey);
-      return NextResponse.json(
-        { error: errorText || 'Failed to start video extension' },
-        { status: startResponse.status, headers: corsHeaders }
-      );
+      console.error('xAI video extension start failed:', startResponse.status, errorText.length);
+      return aiUnavailableResponse(corsHeaders);
     }
 
     const startData = await startResponse.json();
@@ -195,7 +202,7 @@ export async function POST(req: NextRequest) {
     recordFailure(breakerKey);
     return NextResponse.json(
       {
-        error: lastError || 'Video extension timed out. Please try again.',
+        error: API_ERROR_MESSAGES.VIDEO_GENERATION_FAILED,
         requestId: request_id,
         progress: lastProgress,
       },
@@ -203,9 +210,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     recordFailure(breakerKey);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error occurred' },
-      { status: 500, headers: getCorsHeaders() }
-    );
+    return routeErrorResponse(error, corsHeaders);
   }
 }

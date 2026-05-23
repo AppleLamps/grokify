@@ -7,13 +7,18 @@ import {
 } from '@/lib/fact-check-x-schema';
 import { normalizeFactCheckXUrl } from '@/lib/fact-check-x-url';
 import { getCorsHeaders } from '@/lib/schemas';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import { unexpectedErrorResponse } from '@/lib/api-route-error';
 
-export async function OPTIONS() {
-  return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(request: NextRequest) {
-  const corsHeaders = getCorsHeaders();
+  const corsHeaders = getCorsHeaders(request.headers.get('origin'));
+
+  const rateLimited = await enforceAiRateLimit(request, 'fact-check-x', corsHeaders);
+  if (rateLimited) return rateLimited;
 
   try {
     const rawBody = await request.json();
@@ -92,9 +97,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: message },
-      { status: 500, headers: corsHeaders },
-    );
+    return unexpectedErrorResponse(corsHeaders);
   }
 }

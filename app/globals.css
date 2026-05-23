@@ -602,3 +602,94 @@ input:focus {
    Grok Imagine Styles - Moved to app/imagine/*.css
    ======================================== */
 /* Styles are now modularized in app/imagine/ folder */
+
+/* ========================================
+   Intel loading overlay (CIA terminal vibe)
+   ======================================== */
+
+.intel-overlay {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.intel-classification-banner {
+  background: linear-gradient(180deg, #7a1c1c 0%, #5c1010 100%);
+  color: #f6d0a2;
+  border-block: 1px solid rgba(255, 196, 120, 0.35);
+}
+
+.intel-scanlines {
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.18) 3px,
+    rgba(0, 0, 0, 0.18) 4px
+  );
+  opacity: 0.35;
+}
+
+.intel-grid {
+  background-image:
+    linear-gradient(rgba(61, 255, 163, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61, 255, 163, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.intel-live-dot {
+  animation: intel-pulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(61, 255, 163, 0.8);
+}
+
+.intel-cursor {
+  animation: intel-blink 1s step-end infinite;
+}
+
+.intel-radar-sweep {
+  background: linear-gradient(180deg, transparent 0%, rgba(61, 255, 163, 0.18) 50%, transparent 100%);
+  animation: intel-radar-sweep 3.8s linear infinite;
+}
+
+@keyframes intel-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes intel-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes intel-radar-sweep {
+  0% {
+    transform: translateY(-120%);
+  }
+
+  100% {
+    transform: translateY(120%);
+  }
+}
+
+@keyframes intel-signal-bar {
+  from {
+    transform: scaleY(0.68);
+    opacity: 0.55;
+  }
+
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}

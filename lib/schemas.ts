@@ -139,16 +139,32 @@ export function extractGetImgUrl(data: z.infer<typeof GetImgResponseSchema>): st
   return data.image || data.url || data.data?.[0]?.url || null;
 }
 
+import { SITE_URL } from '@/lib/site';
+
 /**
- * CORS configuration helper
- * Returns appropriate origin based on environment
+ * CORS configuration helper.
+ * Defaults to the production site origin only — never `*`.
+ * Set ALLOWED_ORIGINS (comma-separated) to permit additional browser origins.
  */
-export function getCorsHeaders(): Record<string, string> {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*'];
-  return {
-    'Access-Control-Allow-Origin': allowedOrigins[0],
+export function getCorsHeaders(requestOrigin?: string | null): Record<string, string> {
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? SITE_URL)
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Cache-Control': 'no-store, max-age=0',
     Pragma: 'no-cache',
   };
+
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    headers['Access-Control-Allow-Origin'] = requestOrigin;
+    headers.Vary = 'Origin';
+  } else if (!requestOrigin && allowedOrigins.length === 1) {
+    headers['Access-Control-Allow-Origin'] = allowedOrigins[0];
+  }
+
+  return headers;
 }

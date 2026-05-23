@@ -1,54 +1,42 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
+import { SITE_DOMAIN, SITE_NAME, SITE_URL } from '@/lib/site';
 
 export default function PrivacyPolicy() {
   return (
     <div
       style={{
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-        backgroundColor: "#FFFFFF",
-        color: "#000000",
-        minHeight: "100vh",
+        backgroundColor: '#FFFFFF',
+        color: '#000000',
+        minHeight: '100vh',
       }}
     >
-      {/* Header */}
       <div
         style={{
-          backgroundColor: "#000000",
-          padding: "40px 24px",
+          backgroundColor: '#000000',
+          padding: '40px 24px',
         }}
       >
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
           <div
             style={{
               fontWeight: 900,
               fontSize: 28,
-              color: "#FFFFFF",
+              color: '#FFFFFF',
               letterSpacing: -0.5,
               lineHeight: 1,
             }}
           >
-            SEISMIC
-          </div>
-          <div
-            style={{
-              fontWeight: 900,
-              fontSize: 28,
-              color: "#FF3000",
-              letterSpacing: -0.5,
-              lineHeight: 1,
-              marginTop: 2,
-            }}
-          >
-            ALERTS
+            {SITE_NAME.toUpperCase()}
           </div>
           <div
             style={{
               fontWeight: 700,
               fontSize: 10,
-              color: "#999999",
+              color: '#999999',
               letterSpacing: 3,
               marginTop: 16,
-              textTransform: "uppercase",
+              textTransform: 'uppercase',
             }}
           >
             Privacy Policy
@@ -56,133 +44,195 @@ export default function PrivacyPolicy() {
         </div>
       </div>
 
-      {/* Content */}
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 24px 80px" }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '40px 24px 80px' }}>
         <p
           style={{
             fontSize: 11,
-            color: "#999999",
+            color: '#999999',
             letterSpacing: 1,
             fontWeight: 700,
             marginBottom: 32,
           }}
         >
-          EFFECTIVE DATE: APRIL 3, 2026
+          EFFECTIVE DATE: MAY 23, 2026
         </p>
 
         <Section title="OVERVIEW">
           <P>
-            Seismic Alerts is an earthquake monitoring application that displays
-            real-time seismic data from the United States Geological Survey
-            (USGS). This privacy policy explains what information the app
-            collects, how it is stored, and how it is used.
+            {SITE_NAME} ({SITE_DOMAIN}) is a web application that turns public X (Twitter)
+            profile activity into AI-generated artwork, roasts, satirical profiles, and related
+            creative outputs. This policy explains what information we process, how it is stored,
+            which third-party services we use, and what choices you have.
+          </P>
+          <P>
+            {SITE_NAME} does not require you to create an account or sign in. You use the service
+            by submitting a public X username, optional image uploads, or other inputs described
+            on the site.
           </P>
         </Section>
 
-        <Section title="DATA WE COLLECT">
-          <P>
-            Seismic Alerts collects only the information you voluntarily provide
-            within the app&apos;s notification settings:
-          </P>
+        <Section title="INFORMATION YOU PROVIDE">
+          <P>Depending on which feature you use, you may provide:</P>
           <Ul>
             <Li>
-              <Strong>Postal code</Strong> &mdash; the postal or ZIP code you
-              enter to set a location-based alert filter.
+              <Strong>Public X usernames</Strong> &mdash; used to analyze publicly available
+              profile and post data through our AI providers.
             </Li>
             <Li>
-              <Strong>Alert radius</Strong> &mdash; your chosen distance
-              threshold (e.g., 100, 250, 500, or 1,000 miles) for filtering
-              earthquake alerts around your entered postal code.
+              <Strong>Image uploads</Strong> &mdash; for caricature generation, prompt assistance,
+              or related image features. Uploads are validated for type and size before processing.
             </Li>
             <Li>
-              <Strong>Magnitude threshold</Strong> &mdash; your preferred
-              minimum earthquake magnitude for receiving notifications.
+              <Strong>Text prompts and URLs</Strong> &mdash; for image generation, fact checking,
+              or prompt tools.
+            </Li>
+          </Ul>
+          <P>
+            We do not ask for your X password, private messages, or access to non-public account
+            data.
+          </P>
+        </Section>
+
+        <Section title="INFORMATION GENERATED BY THE SERVICE">
+          <P>When you use {SITE_NAME}, we may create and store:</P>
+          <Ul>
+            <Li>
+              <Strong>AI-generated outputs</Strong> &mdash; artwork, text roasts, profiles,
+              fact-check summaries, video prompts, and similar results.
+            </Li>
+            <Li>
+              <Strong>Public share links</Strong> &mdash; if you choose to share generated artwork,
+              we store the image in cloud object storage and assign a public URL and share page
+              (for example, {SITE_URL}/share/[id]). Anyone with the link can view that artwork.
+            </Li>
+            <Li>
+              <Strong>Temporary processing data</Strong> &mdash; such as signed upload intents or
+              short-lived upload tokens used to complete image or video uploads securely.
             </Li>
           </Ul>
         </Section>
 
-        <Section title="HOW YOUR DATA IS STORED">
+        <Section title="ANONYMOUS USAGE TRACKING & RATE LIMITS">
           <P>
-            All data is stored <Strong>locally on your device</Strong> using
-            on-device storage. Your postal code, alert radius, and notification
-            preferences never leave your device and are not transmitted to any
-            external server controlled by us.
+            To control cost and abuse, {SITE_NAME} applies daily rate limits to API requests and
+            uploads. We do not require login for this tracking. Instead, we derive an anonymous
+            identifier by hashing your IP address and browser user-agent string. That identifier:
+          </P>
+          <Ul>
+            <Li>Is not intended to identify you personally.</Li>
+            <Li>Is used only to count usage against configured daily limits.</Li>
+            <Li>May be stored in our database or in temporary in-memory counters when no database is configured.</Li>
+          </Ul>
+          <P>
+            Because the identifier is based on network and browser signals, it can change if those
+            signals change. It is not a durable account identity.
           </P>
         </Section>
 
-        <Section title="HOW YOUR DATA IS USED">
-          <P>Your locally stored information is used solely to:</P>
-          <Ul>
-            <Li>
-              Filter earthquake notifications so you only receive alerts
-              relevant to your specified area and magnitude preference.
-            </Li>
-            <Li>
-              Resolve your entered postal code to geographic coordinates using
-              the OpenStreetMap Nominatim geocoding service, so that distance
-              calculations can be performed on-device.
-            </Li>
-          </Ul>
+        <Section title="LOCAL BROWSER STORAGE">
+          <P>
+            Some features may store preferences or recent activity in your browser&apos;s local
+            storage (for example, prompt history). That data stays on your device unless you clear
+            it through your browser settings.
+          </P>
         </Section>
 
-        <Section title="THIRD-PARTY SERVICES">
-          <P>Seismic Alerts uses the following third-party services:</P>
+        <Section title="THIRD-PARTY AI & INFRASTRUCTURE PROVIDERS">
+          <P>
+            {SITE_NAME} sends necessary inputs to third-party providers to deliver its features.
+            Depending on the tool you use, this may include:
+          </P>
           <Ul>
             <Li>
-              <Strong>USGS Earthquake Hazards Program</Strong> &mdash; provides
-              the real-time earthquake data displayed in the app. No personal
-              information is sent to USGS.
+              <Strong>xAI (Grok)</Strong> &mdash; account analysis, roasts, FBI/OSINT-style
+              profiles, fact checking, Grok Imagine image/video generation, and related text
+              generation.
             </Li>
             <Li>
-              <Strong>OpenStreetMap Nominatim</Strong> &mdash; used to convert
-              the postal code you enter into geographic coordinates. The postal
-              code is sent to the Nominatim API for geocoding. No other personal
-              data is included in this request.
+              <Strong>OpenRouter</Strong> &mdash; image generation and prompt-generation features
+              that route to models such as Google Gemini.
+            </Li>
+            <Li>
+              <Strong>Vercel Blob</Strong> &mdash; storage for uploaded and shareable artwork files.
+            </Li>
+            <Li>
+              <Strong>Other model providers</Strong> &mdash; optional fallback image services when
+              configured by the site operator.
+            </Li>
+          </Ul>
+          <P>
+            When you use a feature, relevant inputs (such as a public username, prompt text, or
+            uploaded image) are transmitted to the provider processing that request. Those
+            providers handle data under their own terms and privacy policies.
+          </P>
+        </Section>
+
+        <Section title="PUBLIC X DATA">
+          <P>
+            Features that analyze X accounts rely on publicly available information associated
+            with the username you submit. We do not guarantee completeness or accuracy of that
+            public data, and we do not control how X displays or retains it.
+          </P>
+        </Section>
+
+        <Section title="DATA RETENTION">
+          <Ul>
+            <Li>
+              <Strong>Shareable artwork</Strong> stored in Vercel Blob remains available at its
+              public URL until deleted by the site operator or removed through storage lifecycle
+              policies.
+            </Li>
+            <Li>
+              <Strong>Rate-limit counters</Strong> reset on a rolling basis (typically every 24
+              hours) and are used only for abuse prevention.
+            </Li>
+            <Li>
+              <Strong>Server logs</Strong> may retain redacted diagnostic metadata for a limited
+              period for security and reliability.
             </Li>
           </Ul>
         </Section>
 
         <Section title="DATA SHARING">
           <P>
-            We do not sell, trade, or otherwise transfer your information to
-            third parties. Your postal code and alert radius are stored only on
-            your device and are not collected by us.
+            We do not sell your personal information. We share data only with service providers
+            necessary to operate {SITE_NAME}, when you choose to publish a share link, or when
+            required by law.
           </P>
         </Section>
 
-        <Section title="DATA RETENTION & DELETION">
+        <Section title="SECURITY">
           <P>
-            Because all data is stored locally on your device, you have full
-            control over it at all times. You can clear your location data
-            directly within the app&apos;s notification settings, or by uninstalling
-            the app, which removes all stored data.
+            We use server-side API keys, upload validation, signed upload intents, rate limits,
+            and other controls to reduce abuse. No online service can guarantee absolute security,
+            but we work to keep keys and infrastructure credentials off the client and out of
+            public responses.
           </P>
         </Section>
 
         <Section title="CHILDREN'S PRIVACY">
           <P>
-            Seismic Alerts does not knowingly collect personal information from
-            children under the age of 13. The app does not require account
-            creation or collect any identifying information.
+            {SITE_NAME} is not directed at children under 13, and we do not knowingly collect
+            personal information from children. The service is intended for users who can lawfully
+            submit public usernames and creative prompts.
           </P>
         </Section>
 
         <Section title="CHANGES TO THIS POLICY">
           <P>
-            We may update this privacy policy from time to time. Any changes
-            will be reflected on this page with an updated effective date.
+            We may update this privacy policy from time to time. Changes will be posted on this
+            page with an updated effective date.
           </P>
         </Section>
 
         <Section title="CONTACT">
           <P>
-            If you have questions about this privacy policy or the app&apos;s data
-            practices, please contact us at{" "}
+            Questions about this policy or {SITE_NAME}&apos;s data practices can be sent to{' '}
             <a
-              href="mailto:privacy@grokify.ai"
-              style={{ color: "#FF3000", fontWeight: 700 }}
+              href="mailto:privacy@grokify.com"
+              style={{ color: '#FF3000', fontWeight: 700 }}
             >
-              privacy@grokify.ai
+              privacy@grokify.com
             </a>
             .
           </P>
@@ -206,7 +256,7 @@ function Section({ title, children }: SectionProps) {
           fontSize: 13,
           letterSpacing: 2,
           marginBottom: 12,
-          color: "#000000",
+          color: '#000000',
         }}
       >
         {title}
@@ -226,7 +276,7 @@ function P({ children }: ChildrenProps) {
       style={{
         fontSize: 14,
         lineHeight: 1.7,
-        color: "#333333",
+        color: '#333333',
         marginBottom: 12,
       }}
     >
@@ -249,7 +299,7 @@ function Li({ children }: ChildrenProps) {
       style={{
         fontSize: 14,
         lineHeight: 1.7,
-        color: "#333333",
+        color: '#333333',
         marginBottom: 8,
       }}
     >
@@ -259,5 +309,5 @@ function Li({ children }: ChildrenProps) {
 }
 
 function Strong({ children }: ChildrenProps) {
-  return <strong style={{ fontWeight: 700, color: "#000000" }}>{children}</strong>;
+  return <strong style={{ fontWeight: 700, color: '#000000' }}>{children}</strong>;
 }

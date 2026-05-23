@@ -7,13 +7,15 @@ import {
     GROK_VIDEO_TEMPORARILY_UNAVAILABLE_MESSAGE,
     isGrokVideoGenerationEnabled,
 } from '@/lib/grok-image-availability';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import { aiUnavailableResponse, routeErrorResponse } from '@/lib/api-route-error';
 
-export async function OPTIONS() {
-    return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+    return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-    const corsHeaders = getCorsHeaders();
+    const corsHeaders = getCorsHeaders(req.headers.get('origin'));
 
     try {
         if (!isGrokVideoGenerationEnabled()) {
@@ -22,6 +24,9 @@ export async function POST(req: NextRequest) {
                 { status: 503, headers: corsHeaders }
             );
         }
+
+        const rateLimited = await enforceAiRateLimit(req, 'analyze-account-video', corsHeaders);
+        if (rateLimited) return rateLimited;
 
         const { handle } = await req.json();
 
@@ -151,12 +156,9 @@ Use their ACTUAL quotes and takes as material for the satire. Create a funny 2D 
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('xAI API error:', response.status, errorText);
+            console.error('xAI API error:', response.status, errorText.length);
             recordFailure(breakerKey);
-            return NextResponse.json(
-                { error: `xAI API error: ${response.status}`, details: errorText },
-                { status: response.status, headers: corsHeaders }
-            );
+            return aiUnavailableResponse(corsHeaders);
         }
 
         const rawData = await response.json();
@@ -187,9 +189,6 @@ Use their ACTUAL quotes and takes as material for the satire. Create a funny 2D 
         return NextResponse.json({ videoPrompt }, { headers: corsHeaders });
     } catch (error) {
         console.error('Error in analyze-account-video function:', error);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Unknown error' },
-            { status: 500, headers: getCorsHeaders() }
-        );
+        return routeErrorResponse(error, corsHeaders);
     }
 }

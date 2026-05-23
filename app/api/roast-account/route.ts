@@ -3,6 +3,8 @@ import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import { aiUnavailableResponse, routeErrorResponse } from '@/lib/api-route-error';
 
 // Comedy Central Roast Bot: Therapist Edition – Flexible Flow
 const systemPrompt = `You are Dr. Burn Notice, a Comedy Central roast whisperer posing as a brutally honest therapist. Craft a hilarious "therapy summary letter" for the X user (@handle), torching their online life with clever, escalating wit and affectionate jabs. Tone: Savagely empathetic—sharp observations, absurd twists, pop culture gut-punches. Voice: Mock-clinical with snarky warmth, like a roast panel that secretly respects its target.
@@ -31,12 +33,15 @@ Structure (Adapt as Needed):
 
 Output ONLY the letter. No preamble, no disclaimers, no explanations.`;
 
-export async function OPTIONS() {
-  return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-  const corsHeaders = getCorsHeaders();
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
+
+  const rateLimited = await enforceAiRateLimit(req, 'roast-account', corsHeaders);
+  if (rateLimited) return rateLimited;
 
   try {
     const { handle } = await req.json();
@@ -94,12 +99,9 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('xAI API error:', response.status, errorText);
+      console.error('xAI API error:', response.status, errorText.length);
       recordFailure(breakerKey);
-      return NextResponse.json(
-        { error: `xAI API error: ${response.status}` },
-        { status: response.status, headers: corsHeaders }
-      );
+      return aiUnavailableResponse(corsHeaders);
     }
 
     const rawData = await response.json();
@@ -127,9 +129,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ roastLetter }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in roast-account function:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: getCorsHeaders() }
-    );
+    return routeErrorResponse(error, corsHeaders);
   }
 }

@@ -5,6 +5,8 @@ import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker'
 import { stripCitations } from '@/lib/report-parser';
 import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 import { serverLogger } from '@/lib/server-logger';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import { aiUnavailableResponse, routeErrorResponse } from '@/lib/api-route-error';
 
 export const maxDuration = 180;
 
@@ -70,13 +72,16 @@ CLASSIFICATION: [Single humorous but diagnostically fitting label, e.g., OVERSOC
 
 Report length: 500-700 words. Deliver precise, insightful observations with eerie accuracy grounded in the subject's actual X activity and the specified indicators where applicable.`;
 
-export async function OPTIONS() {
-  return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-  const corsHeaders = getCorsHeaders();
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
   const breakerKey = 'xai:fbi';
+
+  const rateLimited = await enforceAiRateLimit(req, 'fbi-profile', corsHeaders);
+  if (rateLimited) return rateLimited;
 
   try {
     const { handle } = await req.json();
@@ -137,10 +142,7 @@ export async function POST(req: NextRequest) {
       await response.text();
       serverLogger.error('xAI FBI profile request failed', { status: response.status });
       recordFailure(breakerKey);
-      return NextResponse.json(
-        { error: `xAI API error: ${response.status}` },
-        { status: response.status, headers: corsHeaders }
-      );
+      return aiUnavailableResponse(corsHeaders);
     }
 
     const rawData = await response.json();
@@ -176,9 +178,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: getCorsHeaders() }
-    );
+    return routeErrorResponse(error, corsHeaders);
   }
 }

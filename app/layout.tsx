@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { Toaster } from '@/components/ui/sonner';
-import { SITE_NAME, SITE_URL } from '@/lib/site';
+import { SITE_NAME, SITE_URL, SITE_DOMAIN } from '@/lib/site';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -16,14 +16,13 @@ export const metadata: Metadata = {
   authors: [{ name: 'Grokify', url: SITE_URL }],
   keywords: [
     'Grokify',
-    'grokify.ai',
+    'grokify.com',
     'X art',
     'Twitter art',
     'Grok',
     'xAI',
     'AI image',
     'profile picture',
-    'Xpressionist',
   ],
   icons: {
     icon: '/icon.svg',
@@ -36,13 +35,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: `${SITE_NAME} — AI art from your X profile`,
     description:
-      'Bespoke AI artwork, roasts, and creative tools from any public X account. Visit grokify.ai.',
+      `Bespoke AI artwork, roasts, and creative tools from any public X account. Visit ${SITE_DOMAIN}.`,
   },
   twitter: {
     card: 'summary_large_image',
     title: `${SITE_NAME} — AI art from your X profile`,
     description:
-      'Bespoke AI artwork and roasts from any public X timeline. Powered by Grok at grokify.ai.',
+      `Bespoke AI artwork and roasts from any public X timeline. Powered by Grok at ${SITE_DOMAIN}.`,
   },
   alternates: {
     canonical: '/',

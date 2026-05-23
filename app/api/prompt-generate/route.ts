@@ -20,6 +20,7 @@ import { getRetryDelayMs, shouldRetryPromptRequest } from '@/lib/prompt-route-ut
 import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 import { SITE_URL } from '@/lib/site';
 import type { ImageIntent, LightingMode } from '@/lib/prompt-config-shared';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
@@ -146,6 +147,9 @@ async function makeOpenRouterCallWithRetry(
 
 export async function POST(request: NextRequest) {
   const breakerKey = 'openrouter:prompt';
+
+  const rateLimited = await enforceAiRateLimit(request, 'prompt-generate', NO_STORE_HEADERS);
+  if (rateLimited) return rateLimited;
 
   try {
     const body: GenerateRequestBody = await request.json();

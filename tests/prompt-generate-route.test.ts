@@ -58,7 +58,7 @@ test('POST /api/prompt-generate sends the Grok 4.3 OpenRouter request shape', as
     | undefined;
 
   process.env.OPENROUTER_API_KEY = 'sk-or-test';
-  process.env.NEXT_PUBLIC_APP_URL = 'https://www.grokify.ai';
+  process.env.NEXT_PUBLIC_APP_URL = 'https://www.grokify.com';
 
   global.fetch = async (input, init) => {
     capturedUrl = String(input);
@@ -96,7 +96,7 @@ test('POST /api/prompt-generate sends the Grok 4.3 OpenRouter request shape', as
   assert.equal(payload.prompt, 'A polished cinematic prompt with crisp visual intent.');
   assert.equal(capturedUrl, 'https://openrouter.ai/api/v1/chat/completions');
   assert.equal(capturedHeaders?.get('authorization'), 'Bearer sk-or-test');
-  assert.equal(capturedHeaders?.get('http-referer'), 'https://www.grokify.ai');
+  assert.equal(capturedHeaders?.get('http-referer'), 'https://www.grokify.com');
   assert.equal(capturedHeaders?.get('x-title'), 'Grokify Prompt Generator');
   assert.ok(capturedBody);
   assert.equal(capturedBody.model, 'x-ai/grok-4.3');

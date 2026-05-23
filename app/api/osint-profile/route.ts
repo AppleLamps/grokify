@@ -3,6 +3,8 @@ import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import { aiUnavailableResponse, routeErrorResponse } from '@/lib/api-route-error';
 
 // OSINT-style Internal User Classification Analyst - Enhanced Edition
 const systemPrompt = `You are an elite OSINT analyst producing a comprehensive "Internal User Classification" dossier for a specified X (Twitter) username. You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduct multiple searches, gather hundreds of posts, find viral content, and leave no stone unturned. Your goal is the most complete public profile possible.
@@ -220,12 +222,15 @@ List 10+ specific unknowns that would improve the assessment:
 - Be comprehensive - this should be the definitive public profile
 - Length should be substantial - aim for thoroughness over brevity`;
 
-export async function OPTIONS() {
-  return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+  return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-  const corsHeaders = getCorsHeaders();
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
+
+  const rateLimited = await enforceAiRateLimit(req, 'osint-profile', corsHeaders);
+  if (rateLimited) return rateLimited;
 
   try {
     const { handle, timeRange = '90' } = await req.json();
@@ -296,12 +301,9 @@ Do NOT produce a shallow report. Use multiple searches. Find their greatest hits
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('xAI API error:', response.status, errorText);
+      console.error('xAI API error:', response.status, errorText.length);
       recordFailure(breakerKey);
-      return NextResponse.json(
-        { error: `xAI API error: ${response.status}` },
-        { status: response.status, headers: corsHeaders }
-      );
+      return aiUnavailableResponse(corsHeaders);
     }
 
     const rawData = await response.json();
@@ -329,9 +331,6 @@ Do NOT produce a shallow report. Use multiple searches. Find their greatest hits
     return NextResponse.json({ osintReport }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in osint-profile function:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: getCorsHeaders() }
-    );
+    return routeErrorResponse(error, corsHeaders);
   }
 }

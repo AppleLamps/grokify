@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { SITE_NAME } from '@/lib/site';
 import PromptClient from '@/components/prompt/PromptClient';
 
 export default function PromptPage() {
@@ -13,7 +14,7 @@ export default function PromptPage() {
               className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm">Back to X-pressionist</span>
+              <span className="text-sm">Back to {SITE_NAME}</span>
             </Link>
           </div>
           <div className="flex items-center gap-4">

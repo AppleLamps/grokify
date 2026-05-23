@@ -10,6 +10,8 @@ import {
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 import { SITE_URL } from '@/lib/site';
+import { routeErrorResponse } from '@/lib/api-route-error';
+import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
 
 // Image model for caricature generation
 const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
@@ -52,12 +54,15 @@ Example output:
 
 Output ONLY the JSON object. No additional text or explanation.`;
 
-export async function OPTIONS() {
-    return NextResponse.json(null, { headers: getCorsHeaders() });
+export async function OPTIONS(req: NextRequest) {
+    return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
 }
 
 export async function POST(req: NextRequest) {
-    const corsHeaders = getCorsHeaders();
+    const corsHeaders = getCorsHeaders(req.headers.get('origin'));
+
+    const rateLimited = await enforceAiRateLimit(req, 'caricature', corsHeaders);
+    if (rateLimited) return rateLimited;
 
     try {
         const { imageDataUrl } = await req.json();
@@ -212,7 +217,7 @@ export async function POST(req: NextRequest) {
                     Authorization: `Bearer ${openrouterApiKey}`,
                     'Content-Type': 'application/json',
                     'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || SITE_URL,
-                    'X-Title': 'X-pressionist Caricature Generator',
+                    'X-Title': 'Grokify Caricature Generator',
                 },
                 body: JSON.stringify({
                     model: IMAGE_MODEL,
@@ -302,9 +307,6 @@ IMPORTANT STYLE REQUIREMENTS:
         );
     } catch (error) {
         console.error('Error in caricature function:', error);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Unknown error' },
-            { status: 500, headers: corsHeaders }
-        );
+        return routeErrorResponse(error, corsHeaders);
     }
 }

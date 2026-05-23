@@ -21,36 +21,36 @@ export interface LoadingOverlayProgressResult {
 }
 
 const SINGLE_STAGE_CONFIG: Record<Exclude<LoadingType, 'photo' | 'jointpic' | 'video'>, ProgressConfig> = {
-  roast: { start: 6, end: 99, duration: 30, phaseLabel: 'Roast Synthesis' },
-  fbi: { start: 7, end: 99, duration: 120, phaseLabel: 'Behavioral Profile' },
-  osint: { start: 5, end: 99, duration: 90, phaseLabel: 'Intelligence Sweep' },
-  caricature: { start: 8, end: 99, duration: 42, phaseLabel: 'Caricature Render' },
+  roast: { start: 6, end: 99, duration: 30, phaseLabel: 'ROAST SYNTHESIS' },
+  fbi: { start: 7, end: 99, duration: 120, phaseLabel: 'BEHAVIORAL PROFILE' },
+  osint: { start: 5, end: 99, duration: 90, phaseLabel: 'INTEL SWEEP' },
+  caricature: { start: 8, end: 99, duration: 42, phaseLabel: 'PORTRAIT RENDER' },
 };
 
 const STAGED_CONFIG: Record<'photo' | 'jointpic' | 'video', Record<LoadingStage, ProgressConfig>> = {
   photo: {
-    analyze: { start: 8, end: 68, duration: 26, phaseLabel: 'Profile Analysis' },
-    image: { start: 70, end: 99, duration: 22, phaseLabel: 'Artwork Render' },
-    video: { start: 70, end: 99, duration: 22, phaseLabel: 'Artwork Render' },
+    analyze: { start: 8, end: 68, duration: 26, phaseLabel: 'SIGNAL ACQUISITION' },
+    image: { start: 70, end: 99, duration: 22, phaseLabel: 'VISUAL SYNTHESIS' },
+    video: { start: 70, end: 99, duration: 22, phaseLabel: 'VISUAL SYNTHESIS' },
   },
   jointpic: {
-    analyze: { start: 10, end: 64, duration: 38, phaseLabel: 'Dual Profile Sync' },
-    image: { start: 68, end: 99, duration: 24, phaseLabel: 'Crossover Render' },
-    video: { start: 68, end: 99, duration: 24, phaseLabel: 'Crossover Render' },
+    analyze: { start: 10, end: 64, duration: 38, phaseLabel: 'DUAL SUBJECT SCAN' },
+    image: { start: 68, end: 99, duration: 24, phaseLabel: 'CROSSOVER RENDER' },
+    video: { start: 68, end: 99, duration: 24, phaseLabel: 'CROSSOVER RENDER' },
   },
   video: {
-    analyze: { start: 7, end: 34, duration: 18, phaseLabel: 'Narrative Scan' },
-    image: { start: 38, end: 99, duration: 70, phaseLabel: 'Video Render' },
-    video: { start: 38, end: 99, duration: 70, phaseLabel: 'Video Render' },
+    analyze: { start: 7, end: 34, duration: 18, phaseLabel: 'NARRATIVE SCAN' },
+    image: { start: 38, end: 99, duration: 70, phaseLabel: 'MOTION RENDER' },
+    video: { start: 38, end: 99, duration: 70, phaseLabel: 'MOTION RENDER' },
   },
 };
 
 function getStatusLabel(progress: number): string {
-  if (progress < 18) return 'Calibrating';
-  if (progress < 42) return 'Collecting signal';
-  if (progress < 68) return 'Building output';
-  if (progress < 88) return 'Refining';
-  return 'Finalizing';
+  if (progress < 18) return 'STANDBY';
+  if (progress < 42) return 'ACQUIRING';
+  if (progress < 68) return 'PROCESSING';
+  if (progress < 88) return 'VALIDATING';
+  return 'FINALIZING';
 }
 
 function interpolateProgress(elapsedSeconds: number, config: ProgressConfig): number {

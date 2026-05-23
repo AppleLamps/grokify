@@ -285,7 +285,7 @@ export default function Home() {
 
     try {
       const link = document.createElement('a');
-      link.download = `xpressionist-${result.username}.png`;
+      link.download = `grokify-${result.username}.png`;
 
       if (result.imageUrl.startsWith('data:')) {
         // Data URL — use directly without proxying
@@ -511,7 +511,7 @@ export default function Home() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `xpressionist-caricature.png`;
+      link.download = `grokify-caricature.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -604,7 +604,7 @@ export default function Home() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `xpressionist-${jointPicResult.username1}-${jointPicResult.username2}.png`;
+      link.download = `grokify-${jointPicResult.username1}-${jointPicResult.username2}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

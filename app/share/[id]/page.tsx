@@ -1,9 +1,12 @@
 import { Metadata } from 'next';
-import { list } from '@vercel/blob';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Sparkles, Download } from 'lucide-react';
-import { SITE_NAME, SITE_URL } from '@/lib/site';
+import { SITE_NAME, SITE_URL, SITE_DOMAIN } from '@/lib/site';
+import {
+  extractUsernameFromArtworkPathname,
+  findArtworkBlob,
+} from '@/lib/blob-artwork';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -12,20 +15,13 @@ interface PageProps {
 // Get image data from Vercel Blob
 async function getImageData(imageId: string) {
   try {
-    const { blobs } = await list({
-      prefix: `xpressionist/${imageId}`,
-      limit: 1,
-    });
+    const blob = await findArtworkBlob(imageId);
 
-    if (blobs.length === 0) {
+    if (!blob) {
       return null;
     }
 
-    const blob = blobs[0];
-
-    // Extract username from filename if present (uses __ as separator)
-    const filenameMatch = blob.pathname.match(/xpressionist\/[A-Za-z0-9]+__([^.]+)\./);
-    const username = filenameMatch ? filenameMatch[1] : undefined;
+    const username = extractUsernameFromArtworkPathname(blob.pathname);
 
     return {
       imageId,
@@ -55,8 +51,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : 'X Profile Artwork';
 
   const description = imageData.username
-    ? `AI-generated satirical artwork of @${imageData.username}'s X profile — ${SITE_NAME} at grokify.ai`
-    : `AI-generated satirical artwork — ${SITE_NAME} at grokify.ai`;
+    ? `AI-generated satirical artwork of @${imageData.username}'s X profile — ${SITE_NAME} at ${SITE_DOMAIN}`
+    : `AI-generated satirical artwork — ${SITE_NAME} at ${SITE_DOMAIN}`;
 
   const shareUrl = `${SITE_URL}/share/${id}`;
 
@@ -116,10 +112,7 @@ export default async function SharePage({ params }: PageProps) {
         <div className="max-w-2xl w-full space-y-8">
           {/* Header */}
           <div className="text-center space-y-2">
-            <h1 className="text-3xl md:text-4xl font-bold">
-              <span className="text-white">X</span>
-              <span className="gradient-text">pressionist</span>
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold gradient-text">{SITE_NAME}</h1>
             {imageData.username && (
               <p className="text-neutral-400">
                 Artwork generated for{' '}
@@ -158,7 +151,7 @@ export default async function SharePage({ params }: PageProps) {
 
             <a
               href={imageData.url}
-              download={imageData.username ? `xpressionist-${imageData.username}.png` : 'xpressionist-artwork.png'}
+              download={imageData.username ? `grokify-${imageData.username}.png` : 'grokify-artwork.png'}
               className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 transition-all"
             >
               <Download className="w-5 h-5" />

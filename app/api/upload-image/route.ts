@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put, list } from '@vercel/blob';
+import { put } from '@vercel/blob';
 import { customAlphabet } from 'nanoid';
 import {
   consumeAnonymousRateLimit,
@@ -9,6 +9,11 @@ import {
   parseUploadDataUrl,
 } from '@/lib/upload-security';
 import { serverLogger } from '@/lib/server-logger';
+import {
+  buildArtworkBlobPath,
+  extractUsernameFromArtworkPathname,
+  findArtworkBlob,
+} from '@/lib/blob-artwork';
 
 // Use alphanumeric only (no underscores or dashes) to avoid filename parsing issues
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 10);
@@ -55,8 +60,7 @@ export async function POST(req: NextRequest) {
 
     // Include username in filename for later retrieval
     // Use double underscore as separator since username won't have underscores after sanitization
-    const usernameSlug = username ? `__${username.replace(/[^a-zA-Z0-9]/g, '')}` : '';
-    const filename = `xpressionist/${imageId}${usernameSlug}.${parsed.extension}`;
+    const filename = buildArtworkBlobPath(imageId, parsed.extension, username);
 
     // Upload to Vercel Blob
     const blob = await put(filename, parsed.buffer, {
@@ -93,23 +97,16 @@ export async function GET(req: NextRequest) {
 
   try {
     // Search for blobs with this ID prefix
-    const { blobs } = await list({
-      prefix: `xpressionist/${imageId}`,
-      limit: 1,
-    });
+    const blob = await findArtworkBlob(imageId);
 
-    if (blobs.length === 0) {
+    if (!blob) {
       return NextResponse.json(
         { error: 'Image not found' },
         { status: 404, headers: NO_STORE_HEADERS }
       );
     }
 
-    const blob = blobs[0];
-
-    // Extract username from filename if present (uses __ as separator)
-    const filenameMatch = blob.pathname.match(/xpressionist\/[A-Za-z0-9]+__([^.]+)\./);
-    const username = filenameMatch ? filenameMatch[1] : undefined;
+    const username = extractUsernameFromArtworkPathname(blob.pathname);
 
     return NextResponse.json({
       imageId,
