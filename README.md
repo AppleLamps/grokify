@@ -16,7 +16,8 @@
   <a href="https://github.com/AppleLamps/grokify">GitHub</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
-  <a href="#api-reference">API Reference</a>
+  <a href="#api-reference">API Reference</a> •
+  <a href="https://www.grokify.com/privacy-policy">Privacy Policy</a>
 </p>
 
 ---
@@ -40,7 +41,7 @@ No login required. No API keys needed from users. Just enter a username and go.
 | ✏️ **Caricature** | Upload a photo and get a Times Square street artist-style caricature |
 | ✨ **Grokify Prompt** | Transform any idea into a polished AI prompt with Grok |
 | 🧾 **X Post Fact Checker** | Paste an X post URL for a structured fact check with quick/deep research modes and optional sources |
-| ⚡ **Grok Imagine** | Generate images & videos with xAI's Grok Imagine model - local IndexedDB gallery |
+| ⚡ **Grok Imagine** | Feature-flagged xAI image & video generation from the home page (`/api/imagine`, `/api/imagine-video`, `/api/imagine-video/extend`) |
 | 👥 **Joint Picture** | Generate artwork combining two X accounts together |
 | 🖼️ **38 Art Styles** | 5 categories: Classic, Anime, Modern, Artistic, and Fun (see [full list](#art-styles)) |
 | 📜 **Prompt History** | Local storage-based history with copy/delete functionality |
@@ -171,7 +172,7 @@ npm run db:push
 # Start development server
 npm run dev
 
-# Run unit tests (prompt helpers)
+# Run unit tests (API routes, rate limits, prompt helpers, fact-check, uploads)
 npm test
 ```
 
@@ -193,9 +194,6 @@ XAI_API_KEY="xai-..."
 # Grok Imagine feature flags (disabled unless explicitly true)
 NEXT_PUBLIC_GROK_IMAGE_GENERATION_ENABLED="false"
 NEXT_PUBLIC_GROK_VIDEO_GENERATION_ENABLED="false"
-
-# Optional: override the fact-checker deep research model
-XAI_FACT_CHECK_DEEP_MODEL="grok-4.3"
 
 # OpenRouter API (Gemini image generation + Grokify Prompt)
 OPENROUTER_API_KEY="sk-or-..."
@@ -233,6 +231,10 @@ DEBUG_AI_PAYLOADS="false"
 GETIMG_API_KEY="key-..."
 ```
 
+### Rate Limiting
+
+Anonymous AI and upload endpoints are rate-limited per IP + user-agent hash over a 24-hour window. Limits are configurable via the `AI_*_DAILY_LIMIT` and `UPLOAD_*_DAILY_LIMIT` variables above. Exceeded limits return HTTP 429.
+
 ---
 
 ## API Reference
@@ -252,6 +254,17 @@ Content-Type: application/json
 
 { "prompt": "...", "handle": "username", "style": "ghibli" }
 ```
+
+### Analyze Account (Video Prompt)
+
+```http
+POST /api/analyze-account-video
+Content-Type: application/json
+
+{ "handle": "username" }
+```
+
+Returns a video prompt from the account profile. Requires `NEXT_PUBLIC_GROK_VIDEO_GENERATION_ENABLED=true`.
 
 ### Roast Letter
 
@@ -309,9 +322,9 @@ Content-Type: application/json
 { "url": "https://x.com/handle/status/1234567890", "mode": "quick" }
 ```
 
-Modes:
-- `quick` uses `grok-4.3`
-- `deep` uses `grok-4.3` by default
+Modes (both use `grok-4.3` via `lib/grok-config.ts`):
+- `quick` — standard timeout
+- `deep` — extended research timeout (240s)
 
 ### Grok Imagine (Image)
 
@@ -322,6 +335,8 @@ Content-Type: application/json
 { "prompt": "...", "n": 2, "aspect_ratio": "16:9", "response_format": "b64_json" }
 ```
 
+Requires `NEXT_PUBLIC_GROK_IMAGE_GENERATION_ENABLED=true`. Returns 503 when disabled.
+
 ### Grok Imagine (Video)
 
 ```http
@@ -330,6 +345,19 @@ Content-Type: application/json
 
 { "prompt": "...", "aspect_ratio": "16:9", "duration": 5 }
 ```
+
+Requires `NEXT_PUBLIC_GROK_VIDEO_GENERATION_ENABLED=true`.
+
+### Grok Imagine (Video Extend)
+
+```http
+POST /api/imagine-video/extend
+Content-Type: application/json
+
+{ "prompt": "...", "videoUrl": "https://...", "duration": 5 }
+```
+
+Extends an existing Grok Imagine video. Requires `NEXT_PUBLIC_GROK_VIDEO_GENERATION_ENABLED=true`.
 
 ### Joint Picture
 
@@ -344,31 +372,33 @@ Content-Type: application/json
 
 ## Project Structure
 
-Single **Next.js** application at the repo root. The older nested **`grok-4-prompt`** reference project has been removed; Grokify Prompt lives under `app/prompt/` and `components/prompt/`.
+Single **Next.js** application at the repo root. The older nested **`grok-4-prompt`** reference project has been removed; Grokify Prompt lives under `app/prompt/` and `components/prompt/`. The standalone `/imagine` gallery page was removed; Grok Imagine APIs remain and are used from the home flow when feature flags are enabled.
 
 ```
 .
-├── .agents/skills/             # Optional AI assistant skill docs (Cursor/Claude); not required to run the app
+├── .agents/skills/             # Optional AI assistant skill docs (Cursor); not required to run the app
+├── .claude/skills/             # Claude Code skill docs (mirror of .agents/skills/)
 ├── app/
 │   ├── api/
-│   │   ├── analyze-account/    # Profile analysis → image prompt
-│   │   ├── analyze-account-video/ # Profile → video prompt
-│   │   ├── generate-image/     # Prompt → Gemini image
-│   │   ├── imagine/            # Grok Imagine image generation
-│   │   ├── imagine-video/      # Grok Imagine video generation
-│   │   ├── joint-pic/          # Joint picture for two accounts
-│   │   ├── roast-account/      # Comedy roast generator
-│   │   ├── fbi-profile/        # Satirical FBI report
-│   │   ├── osint-profile/      # Intelligence dossier
-│   │   ├── caricature/         # Photo → caricature
-│   │   ├── fact-check-x/       # X post fact-check API
-│   │   ├── prompt-generate/    # Grokify Prompt generator
-│   │   ├── proxy-image/       # CORS-safe image fetch
-│   │   ├── upload-image/       # Vercel Blob storage
-│   │   └── upload-video/       # Video upload (token route for client uploads)
-│   ├── imagine/                # Grok Imagine gallery page
+│   │   ├── analyze-account/        # Profile analysis → image prompt
+│   │   ├── analyze-account-video/  # Profile analysis → video prompt
+│   │   ├── generate-image/         # Prompt → Gemini image
+│   │   ├── imagine/                # Grok Imagine image generation
+│   │   ├── imagine-video/          # Grok Imagine video generation
+│   │   │   └── extend/             # Extend an existing Grok Imagine video
+│   │   ├── joint-pic/              # Joint picture for two accounts
+│   │   ├── roast-account/          # Comedy roast generator
+│   │   ├── fbi-profile/            # Satirical FBI report
+│   │   ├── osint-profile/          # Intelligence dossier
+│   │   ├── caricature/             # Photo → caricature
+│   │   ├── fact-check-x/           # X post fact-check API
+│   │   ├── prompt-generate/        # Grokify Prompt generator
+│   │   ├── proxy-image/            # CORS-safe image fetch
+│   │   ├── upload-image/           # Vercel Blob storage
+│   │   └── upload-video/           # Video upload (token route for client uploads)
 │   ├── fact-check/             # X post fact-check page
 │   ├── prompt/                 # Grokify Prompt page
+│   ├── privacy-policy/         # Privacy policy page
 │   ├── share/[id]/             # Shareable artwork pages
 │   ├── globals.css
 │   ├── layout.tsx
@@ -381,7 +411,8 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   │   ├── HomeHeroColumn.tsx  # Landing hero, CTAs, modals (memoized)
 │   │   ├── HomePhoneColumn.tsx # iPhone-style form; local @username state (memoized)
 │   │   └── sections/           # ResultSection, RoastSection, etc.
-│   ├── imagine/                # Grok Imagine components (gallery, sidebar, input bar)
+│   ├── fact-check/             # Fact-check UI
+│   ├── imagine/                # Grok Imagine components (used when gallery is re-enabled)
 │   ├── prompt/                 # Grokify Prompt components
 │   ├── ui/                     # shadcn/ui components
 │   ├── LoadingOverlay.tsx      # Animated loading states
@@ -394,23 +425,22 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   └── schema.ts               # Drizzle schema
 ├── hooks/
 │   ├── usePromptHistory.ts     # Prompt history hook
-│   ├── useImagineStore.ts     # Grok Imagine gallery state
+│   ├── useImagineStore.ts      # Grok Imagine gallery state (IndexedDB)
 │   └── use-mobile.tsx          # Responsive breakpoint helper (sidebar/UI)
-├── tests/
-│   ├── prompt-client-utils.test.ts  # Tests for prompt UI helpers
-│   └── prompt-route-utils.test.ts    # Tests for prompt-generate retry logic
+├── tests/                      # 25+ unit/route tests (tsx + Node test runner)
 └── lib/
     ├── site.ts                 # SITE_URL / SITE_NAME (grokify.com) for SEO & APIs
+    ├── ai-rate-limit.ts        # Anonymous per-IP AI endpoint rate limits
+    ├── grok-config.ts          # Pinned Grok model IDs (grok-4.3)
+    ├── grok-image-availability.ts  # Grok Imagine feature flags
+    ├── fact-check-x.ts         # X post fact-check logic
     ├── prompt-client-utils.ts  # Grokify Prompt: image compression & preview URL helpers
     ├── prompt-route-utils.ts   # Grokify Prompt API: retryable status / backoff helpers
     ├── circuit-breaker.ts      # API resilience
     ├── fetchWithTimeout.ts     # API timeout handling
     ├── imagine-storage.ts      # IndexedDB storage for images
-    ├── prompt-config.ts        # Grokify Prompt configuration (server)
-    ├── prompt-config-shared.ts # Shared presets/types
-    ├── prompt-config-client.ts # Client-safe re-exports
-    ├── schemas.ts              # Zod validation schemas
-    └── utils.ts
+    ├── upload-security.ts      # Upload intent tokens & rate limits
+    └── schemas.ts              # Zod validation schemas
 ```
 
 ---
@@ -422,7 +452,7 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
-| `npm test` | Run unit tests (`tests/**/*.test.ts` via `tsx`) |
+| `npm test` | Run unit tests (`tests/**/*.test.ts` via `tsx`; 25+ test files) |
 | `npm run lint` | Run ESLint |
 | `npm run db:generate` | Generate Drizzle migrations |
 | `npm run db:migrate` | Run Drizzle migrations |
@@ -457,7 +487,7 @@ Grokify uses specialized AI personas powered by Grok:
 | **Street Artist** | `/api/caricature` | NYC Times Square caricature artist with quick wit |
 | **Prompt Alchemist** | `/api/prompt-generate` | Expert prompt engineer transforming ideas into polished AI prompts |
 | **Fact Checker** | `/api/fact-check-x` | Researches an X post with web/X search and returns a citation-clean structured verdict |
-| **Grok Imagine** | `/api/imagine` | xAI's native image generation with local gallery storage |
+| **Grok Imagine** | `/api/imagine`, `/api/imagine-video`, `/api/imagine-video/extend` | xAI native image/video generation (feature-flagged) |
 
 ---
 
