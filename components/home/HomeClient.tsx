@@ -24,6 +24,7 @@ import {
   isGrokImageGenerationEnabled,
   isGrokVideoGenerationEnabled,
 } from '@/lib/grok-image-availability';
+import { getApiErrorMessage } from '@/lib/api-error';
 
 const PromptHistorySidebar = dynamic(
   () => import('@/components/PromptHistorySidebar').then((mod) => mod.PromptHistorySidebar),
@@ -139,7 +140,7 @@ export default function Home() {
       });
 
       const analysisData = await analysisResponse.json();
-      if (!analysisResponse.ok) throw new Error(analysisData.error || 'Failed to analyze account');
+      if (!analysisResponse.ok) throw new Error(getApiErrorMessage(analysisData.error, 'Failed to analyze account'));
       if (!analysisData?.imagePrompt) throw new Error('Failed to generate image prompt');
 
       setLoadingStage('image');
@@ -176,7 +177,7 @@ export default function Home() {
       }
 
       const imageData = await imageResponse.json();
-      if (!imageResponse.ok) throw new Error(imageData.error || 'Failed to generate image');
+      if (!imageResponse.ok) throw new Error(getApiErrorMessage(imageData.error, 'Failed to generate image'));
 
       // Handle different response formats
       let imageUrl: string;
@@ -237,7 +238,7 @@ export default function Home() {
       });
 
       const analysisData = await analysisResponse.json();
-      if (!analysisResponse.ok) throw new Error(analysisData.error || 'Failed to analyze account');
+      if (!analysisResponse.ok) throw new Error(getApiErrorMessage(analysisData.error, 'Failed to analyze account'));
       if (!analysisData?.videoPrompt) throw new Error('Failed to generate video prompt');
 
       setVideoLoadingStage('video');
@@ -255,7 +256,7 @@ export default function Home() {
       });
 
       const videoData = await videoResponse.json();
-      if (!videoResponse.ok) throw new Error(videoData.error || 'Failed to generate video');
+      if (!videoResponse.ok) throw new Error(getApiErrorMessage(videoData.error, 'Failed to generate video'));
 
       const videoUrl = videoData.video?.url;
       if (!videoUrl) throw new Error('Failed to generate video');
@@ -326,7 +327,7 @@ export default function Home() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to generate roast');
+      if (!response.ok) throw new Error(getApiErrorMessage(data.error, 'Failed to generate roast'));
       if (!data?.roastLetter) throw new Error('Failed to generate roast letter');
 
       setRoast(data.roastLetter);
@@ -356,7 +357,7 @@ export default function Home() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to generate profile');
+      if (!response.ok) throw new Error(getApiErrorMessage(data.error, 'Failed to generate profile'));
       if (!data?.profileReport) throw new Error('Failed to generate profile');
 
       setFbiProfile(data.profileReport);
@@ -481,7 +482,7 @@ export default function Home() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to generate caricature');
+      if (!response.ok) throw new Error(getApiErrorMessage(data.error, 'Failed to generate caricature'));
       if (!data?.imageUrl) throw new Error('Failed to generate caricature image');
 
       setCaricatureResult({
@@ -551,7 +552,7 @@ export default function Home() {
       });
 
       const analysisData = await analysisResponse.json();
-      if (!analysisResponse.ok) throw new Error(analysisData.error || 'Failed to analyze accounts');
+      if (!analysisResponse.ok) throw new Error(getApiErrorMessage(analysisData.error, 'Failed to analyze accounts'));
       if (!analysisData?.imagePrompt) throw new Error('Failed to generate image prompt');
 
       // Step 2: Generate image
@@ -567,7 +568,7 @@ export default function Home() {
       });
 
       const imageData = await imageResponse.json();
-      if (!imageResponse.ok) throw new Error(imageData.error || 'Failed to generate image');
+      if (!imageResponse.ok) throw new Error(getApiErrorMessage(imageData.error, 'Failed to generate image'));
       if (!imageData?.imageUrl) throw new Error('Failed to generate image');
 
       setIsJointPicImageLoading(true);
