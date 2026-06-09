@@ -26,7 +26,7 @@
 
 **Grokify** analyzes public X (Twitter) accounts using xAI's Grok model with real-time search capabilities, then generates unique AI-powered content including satirical artwork, comedy roasts, FBI-style profiles, comprehensive OSINT dossiers, and street-style caricatures.
 
-No login required. No API keys needed from users. Just enter a username and go.
+No login required. No API keys needed from users. Just enter a username and go...
 
 ---
 
