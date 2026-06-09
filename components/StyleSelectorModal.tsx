@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, ChevronRight, Palette, Sparkles } from 'lucide-react';
+import { Check, ChevronRight, Palette } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
@@ -68,33 +68,90 @@ const CATEGORIES = [
 
 type CategoryId = typeof CATEGORIES[number]['id'];
 
-const CATEGORY_ACCENTS: Record<CategoryId, { tab: string; glow: string; badge: string }> = {
-  classic: {
-    tab: 'bg-gradient-to-r from-amber-400/22 via-yellow-300/14 to-amber-500/22 border-amber-300/40 text-white shadow-[0_0_0_1px_rgba(251,191,36,0.22),0_10px_30px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,248,220,0.12)]',
-    glow: 'bg-gradient-to-b from-rose-500/14 via-orange-500/8 to-transparent',
-    badge: 'border-rose-400/20 bg-rose-500/12 text-rose-200',
-  },
-  anime: {
-    tab: 'bg-gradient-to-r from-amber-400/22 via-yellow-300/14 to-amber-500/22 border-amber-300/40 text-white shadow-[0_0_0_1px_rgba(251,191,36,0.22),0_10px_30px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,248,220,0.12)]',
-    glow: 'bg-gradient-to-b from-fuchsia-500/14 via-pink-500/8 to-transparent',
-    badge: 'border-fuchsia-400/20 bg-fuchsia-500/12 text-fuchsia-200',
-  },
-  modern: {
-    tab: 'bg-gradient-to-r from-amber-400/22 via-yellow-300/14 to-amber-500/22 border-amber-300/40 text-white shadow-[0_0_0_1px_rgba(251,191,36,0.22),0_10px_30px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,248,220,0.12)]',
-    glow: 'bg-gradient-to-b from-cyan-500/14 via-sky-500/8 to-transparent',
-    badge: 'border-cyan-400/20 bg-cyan-500/12 text-cyan-200',
-  },
-  artistic: {
-    tab: 'bg-gradient-to-r from-amber-400/22 via-yellow-300/14 to-amber-500/22 border-amber-300/40 text-white shadow-[0_0_0_1px_rgba(251,191,36,0.22),0_10px_30px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,248,220,0.12)]',
-    glow: 'bg-gradient-to-b from-amber-500/14 via-orange-500/8 to-transparent',
-    badge: 'border-amber-400/20 bg-amber-500/12 text-amber-200',
-  },
-  fun: {
-    tab: 'bg-gradient-to-r from-amber-400/22 via-yellow-300/14 to-amber-500/22 border-amber-300/40 text-white shadow-[0_0_0_1px_rgba(251,191,36,0.22),0_10px_30px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,248,220,0.12)]',
-    glow: 'bg-gradient-to-b from-emerald-500/14 via-teal-500/8 to-transparent',
-    badge: 'border-emerald-400/20 bg-emerald-500/12 text-emerald-200',
-  },
+/**
+ * Fallback gradient shown behind each preview until the real image at
+ * /styles/{id}.webp loads (or if it is missing). See photoprompt.txt.
+ */
+const STYLE_PREVIEW_GRADIENTS: Record<string, string> = {
+  default: 'linear-gradient(135deg,#e8c25a,#b5852b)',
+  oil: 'linear-gradient(135deg,#7a5a36,#3e2a18)',
+  watercolor: 'linear-gradient(135deg,#8ec5d8,#e6a6b8)',
+  charcoal: 'linear-gradient(135deg,#4a4a4a,#0f0f0f)',
+  renaissance: 'linear-gradient(135deg,#6b4f2a,#241608)',
+  baroque: 'linear-gradient(135deg,#5a3b18,#120a04)',
+  pencil: 'linear-gradient(135deg,#c4c4c4,#6f6f6f)',
+  artdeco: 'linear-gradient(135deg,#caa24a,#1a2a2a)',
+  ghibli: 'linear-gradient(135deg,#8fd0a8,#6fb0d8)',
+  anime: 'linear-gradient(135deg,#ff9bc4,#7aa8ff)',
+  manga: 'linear-gradient(135deg,#e8e8e8,#202020)',
+  chibi: 'linear-gradient(135deg,#ffc0d8,#ffe7a8)',
+  ukiyo: 'linear-gradient(135deg,#cf8a5a,#2a4a6a)',
+  shonen: 'linear-gradient(135deg,#ff7a4d,#c0203a)',
+  manhwa: 'linear-gradient(135deg,#f0a8c0,#9a78d8)',
+  pixar: 'linear-gradient(135deg,#6fb0ff,#ffd07a)',
+  cyberpunk: 'linear-gradient(135deg,#ff37c6,#27e6ff)',
+  vaporwave: 'linear-gradient(135deg,#ff77d4,#79f5ff)',
+  lowpoly: 'linear-gradient(135deg,#5a8ac0,#28324a)',
+  neon: 'linear-gradient(135deg,#27e6ff,#a437ff)',
+  minimalist: 'linear-gradient(135deg,#e8e8e8,#a8a8a8)',
+  glitch: 'linear-gradient(135deg,#27ffd0,#ff2d6e)',
+  synthwave: 'linear-gradient(135deg,#ff5b8a,#5b5bff)',
+  hyperreal: 'linear-gradient(135deg,#9a9a9a,#2a2a2a)',
+  comic: 'linear-gradient(135deg,#ffcf3a,#e6322a)',
+  retro: 'linear-gradient(135deg,#ff5b8a,#ffcf3a)',
+  impressionist: 'linear-gradient(135deg,#8fb8d8,#bfd89a)',
+  surreal: 'linear-gradient(135deg,#d8a86a,#6a5ad8)',
+  warhol: 'linear-gradient(135deg,#ff37c6,#ffe53a)',
+  noir: 'linear-gradient(135deg,#d8d8d8,#101010)',
+  expressionist: 'linear-gradient(135deg,#ff6a3a,#3a4ad8)',
+  psychedelic: 'linear-gradient(135deg,#ff5bd0,#5bff9a)',
+  sticker: 'linear-gradient(135deg,#ff8fc4,#8fd0ff)',
+  claymation: 'linear-gradient(135deg,#e69a6a,#a86a4a)',
+  graffiti: 'linear-gradient(135deg,#ff37a6,#37c6ff)',
+  pixel: 'linear-gradient(135deg,#5ad8a8,#2a6ac0)',
+  lego: 'linear-gradient(135deg,#ffcf3a,#e6322a)',
+  papercut: 'linear-gradient(135deg,#f0c89a,#d89a6a)',
+  balloon: 'linear-gradient(135deg,#ff5b8a,#5bd8ff)',
+  plushie: 'linear-gradient(135deg,#ffc0a8,#c0a8ff)',
+  vintage: 'linear-gradient(135deg,#c8a878,#6a5238)',
+  steampunk: 'linear-gradient(135deg,#b8893a,#3a2a18)',
+  fantasy: 'linear-gradient(135deg,#8a6ad8,#d8a83a)',
 };
+
+const FALLBACK_GRADIENT = 'linear-gradient(135deg,#3a3a3f,#18181b)';
+
+function gradientFor(id: string): string {
+  return STYLE_PREVIEW_GRADIENTS[id] ?? FALLBACK_GRADIENT;
+}
+
+/** Preview thumbnail: gradient placeholder that real art fades over once it loads. */
+function StylePreview({ id, className }: { id: string; className?: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className={cn('relative h-full w-full overflow-hidden', className)} style={{ background: gradientFor(id) }}>
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.28) 1px, transparent 1.3px)', backgroundSize: '6px 6px' }}
+      />
+      <div className="pointer-events-none absolute inset-0 shadow-[inset_0_-26px_36px_-20px_rgba(0,0,0,0.6)]" />
+      {!failed && (
+        <img
+          src={`/styles/${id}.webp`}
+          alt=""
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+          className={cn(
+            'absolute inset-0 h-full w-full object-cover transition-opacity duration-500',
+            loaded ? 'opacity-100' : 'opacity-0'
+          )}
+        />
+      )}
+    </div>
+  );
+}
 
 interface StyleSelectorModalProps {
   open: boolean;
@@ -115,8 +172,6 @@ export function StyleSelectorModal({
 
   const filteredStyles = ART_STYLES.filter((style) => style.category === activeCategory);
   const selectedStyleData = ART_STYLES.find((style) => style.id === selectedStyle);
-  const activeCategoryData = CATEGORIES.find((category) => category.id === activeCategory) ?? CATEGORIES[0];
-  const activeAccent = CATEGORY_ACCENTS[activeCategory];
 
   const handleSelectStyle = (styleId: string) => {
     onSelectStyle(styleId);
@@ -125,81 +180,51 @@ export function StyleSelectorModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[88vh] flex-col overflow-hidden rounded-[28px] border-white/10 bg-[radial-gradient(circle_at_top,_rgba(244,63,94,0.14),_transparent_28%),linear-gradient(180deg,_rgba(24,24,27,0.96),_rgba(12,12,14,0.98))] p-0 text-white shadow-[0_30px_120px_rgba(0,0,0,0.65)] backdrop-blur-2xl sm:max-w-2xl [&>button]:right-5 [&>button]:top-5 [&>button]:rounded-full [&>button]:border [&>button]:border-white/10 [&>button]:bg-white/[0.04] [&>button]:p-1.5 [&>button]:text-neutral-400 [&>button]:opacity-100 [&>button]:transition-all [&>button]:hover:border-white/20 [&>button]:hover:bg-white/[0.08] [&>button]:hover:text-white">
-        <div className="relative overflow-hidden border-b border-white/8 px-6 pb-5 pt-6 sm:px-7">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-rose-500/10 via-orange-500/5 to-transparent" />
-          <DialogHeader className="relative space-y-4 text-left">
+      <DialogContent className="flex max-h-[88vh] flex-col gap-0 overflow-hidden rounded-3xl border-white/10 bg-[#0f0f12] p-0 text-white shadow-[0_40px_120px_rgba(0,0,0,0.7)] sm:max-w-3xl lg:max-w-4xl [&>button]:right-5 [&>button]:top-5 [&>button]:rounded-full [&>button]:border [&>button]:border-white/10 [&>button]:bg-white/[0.04] [&>button]:p-1.5 [&>button]:text-neutral-400 [&>button]:opacity-100 [&>button]:transition-all [&>button]:hover:border-white/20 [&>button]:hover:bg-white/[0.08] [&>button]:hover:text-white">
+        <div className="border-b border-white/[0.08] px-6 pb-5 pt-6 sm:px-7">
+          <DialogHeader className="space-y-0 text-left">
             <div className="flex items-start justify-between gap-4 pr-10">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-rose-400/20 bg-gradient-to-r from-rose-500/14 to-orange-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-200">
-                  <Sparkles className="h-3.5 w-3.5 text-rose-300" />
-                  Style System
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-orange-500/40 bg-orange-500/10 text-orange-400">
+                  <Palette className="h-5 w-5" />
                 </div>
-                <DialogTitle className="flex items-center gap-3 text-2xl font-semibold tracking-tight text-white">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-rose-400/20 bg-gradient-to-br from-rose-500/18 via-orange-500/10 to-transparent shadow-[0_12px_35px_rgba(244,63,94,0.16)]">
-                    <Palette className="h-5 w-5 text-rose-300" />
-                  </div>
-                  Choose Style
-                </DialogTitle>
+                <div className="space-y-1">
+                  <DialogTitle className="text-2xl font-extrabold tracking-tight text-white">Choose a style</DialogTitle>
+                  <DialogDescription className="text-sm leading-relaxed text-neutral-400">
+                    Pick the visual direction. You can change this before generating.
+                  </DialogDescription>
+                </div>
               </div>
-              <div className="hidden rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-right sm:block">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Current</p>
-                <p className="mt-1 text-sm font-medium text-white">{selectedStyleData?.name ?? 'No style'}</p>
+              <div className="hidden shrink-0 rounded-xl border border-orange-500/40 bg-orange-500/10 px-3.5 py-2 text-right sm:block">
+                <p className="text-[9px] font-mono font-semibold uppercase tracking-[0.16em] text-orange-400/90">Current</p>
+                <p className="mt-0.5 text-sm font-semibold text-white">{selectedStyleData?.name ?? 'None'}</p>
               </div>
             </div>
-            <DialogDescription className="max-w-xl text-sm leading-relaxed text-neutral-400">
-              Pick a visual direction that matches the energy of the image. The selector stays in Grokify&apos;s core brand language rather than changing identity per model.
-            </DialogDescription>
           </DialogHeader>
         </div>
 
-        <div className="flex flex-col gap-5 px-6 py-5 sm:px-7">
-          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-            <div className={cn('pointer-events-none absolute inset-x-0 top-0 h-24', activeAccent.glow)} />
-            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Featured Selection</p>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-black/20 shadow-inner shadow-black/20">
-                    <Palette className="h-4.5 w-4.5 text-rose-300" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-white">{selectedStyleData?.name ?? 'No style selected'}</p>
-                    <p className="text-sm text-neutral-400">{selectedStyleData?.description ?? 'Generate with the raw prompt only.'}</p>
-                  </div>
-                </div>
-              </div>
-              <div className={cn('inline-flex self-start rounded-full border px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.14em] sm:self-auto', activeAccent.badge)}>
-                {activeCategoryData.name} Collection
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto rounded-2xl border border-white/8 bg-black/20 p-1.5">
-            {CATEGORIES.map((category) => {
-              const isActive = activeCategory === category.id;
-              const categoryAccent = CATEGORY_ACCENTS[category.id];
-
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveCategory(category.id)}
-                  className={cn(
-                    'min-w-[74px] flex-1 rounded-xl border px-3 py-2.5 text-xs font-semibold tracking-[0.08em] transition-all duration-200',
-                    isActive
-                      ? categoryAccent.tab
-                      : 'border-transparent bg-transparent text-neutral-500 hover:border-white/10 hover:bg-white/[0.04] hover:text-white'
-                  )}
-                >
-                  {category.name}
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex gap-1 overflow-x-auto border-b border-white/[0.08] px-5 pt-3 sm:px-6">
+          {CATEGORIES.map((category) => {
+            const isActive = activeCategory === category.id;
+            return (
+              <button
+                key={category.id}
+                onClick={() => setActiveCategory(category.id)}
+                className={cn(
+                  '-mb-px shrink-0 border-b-2 px-3.5 py-2.5 text-sm font-semibold transition-colors',
+                  isActive
+                    ? 'border-orange-400 text-orange-400'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-300'
+                )}
+              >
+                {category.name}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6 sm:px-7">
-          <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex-1 overflow-y-auto px-6 py-5 sm:px-7">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {filteredStyles.map((style) => {
               const isSelected = selectedStyle === style.id;
 
@@ -209,61 +234,24 @@ export function StyleSelectorModal({
                   onClick={() => handleSelectStyle(style.id)}
                   disabled={disabled}
                   className={cn(
-                    'group relative overflow-hidden rounded-[22px] border p-4 text-left transition-all duration-200',
+                    'group flex flex-col overflow-hidden rounded-2xl border bg-white/[0.02] text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60',
                     isSelected
-                      ? 'border-rose-400/28 bg-gradient-to-br from-rose-500/16 via-orange-500/10 to-transparent shadow-[0_18px_45px_rgba(244,63,94,0.16)]'
-                      : 'border-white/8 bg-white/[0.03] hover:-translate-y-0.5 hover:border-white/14 hover:bg-white/[0.05]',
+                      ? 'border-orange-500 ring-1 ring-orange-500'
+                      : 'border-white/[0.08] hover:-translate-y-0.5 hover:border-white/20',
                     disabled && 'cursor-not-allowed opacity-50'
                   )}
                 >
-                  <div className={cn(
-                    'pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b opacity-0 transition-opacity',
-                    isSelected
-                      ? 'from-rose-500/14 via-orange-500/8 to-transparent opacity-100'
-                      : 'from-white/[0.06] to-transparent group-hover:opacity-100'
-                  )} />
-                  <div className="relative flex h-full flex-col justify-between gap-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            'text-base font-semibold tracking-tight',
-                            isSelected ? 'text-white' : 'text-white/95'
-                          )}>
-                            {style.name}
-                          </span>
-                          {isSelected && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/20 bg-rose-500/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-200">
-                              <Check className="h-3 w-3" />
-                              Active
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm leading-relaxed text-neutral-400">
-                          {style.description}
-                        </p>
-                      </div>
-                      <div className={cn(
-                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border transition-all',
-                        isSelected
-                          ? 'border-rose-400/20 bg-white/[0.08] text-rose-200'
-                          : 'border-white/8 bg-black/15 text-neutral-600 group-hover:text-white/80'
-                      )}>
-                        <ChevronRight className="h-4 w-4" />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-neutral-500">
-                        {activeCategoryData.name}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden">
+                    <StylePreview id={style.id} />
+                    {isSelected && (
+                      <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-orange-500 text-white shadow-md">
+                        <Check className="h-3.5 w-3.5" strokeWidth={3} />
                       </span>
-                      <span className={cn(
-                        'text-[11px] font-medium transition-colors',
-                        isSelected ? 'text-rose-200' : 'text-neutral-500 group-hover:text-neutral-300'
-                      )}>
-                        Use this look
-                      </span>
-                    </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm font-semibold tracking-tight text-white">{style.name}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-neutral-500">{style.description}</p>
                   </div>
                 </button>
               );
@@ -289,16 +277,21 @@ export function StyleSelectorTrigger({ selectedStyle, onClick, disabled }: Style
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'w-full rounded-2xl border border-white/[0.12] bg-white/[0.08] px-4 py-3 text-sm text-white transition-all hover:bg-white/[0.12]',
-        'flex items-center justify-between gap-2 cursor-pointer focus:bg-white/[0.12] focus:border-rose-500/50 focus:outline-none',
+        'flex w-full items-center justify-between gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white transition-all',
+        'cursor-pointer hover:border-white/[0.16] hover:bg-white/[0.06] focus:outline-none focus-visible:border-orange-500/50',
         disabled && 'cursor-not-allowed opacity-50'
       )}
     >
-      <div className="flex items-center gap-2">
-        <Palette className="h-4 w-4 text-neutral-400" />
-        <span className="font-medium">{style.name}</span>
-      </div>
-      <ChevronRight className="h-4 w-4 text-neutral-400" />
+      <span className="flex min-w-0 items-center gap-2.5">
+        <span
+          className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-md border border-white/10"
+          style={{ background: gradientFor(style.id) }}
+        >
+          <Palette className="h-3 w-3 text-white/70" />
+        </span>
+        <span className="truncate font-medium">{style.name}</span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500" />
     </button>
   );
 }

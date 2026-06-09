@@ -3,13 +3,14 @@
 import { memo } from 'react';
 import dynamic from 'next/dynamic';
 import {
+  Check,
   ChevronRight,
-  DollarSign,
   Flame,
   FlaskConical,
   Pencil,
   ShieldCheck,
   Upload,
+  UserRound,
   Users,
   Wand2,
   Zap,
@@ -74,82 +75,97 @@ function HomeHeroColumnInner({
 
   return (
     <div className="space-y-4 text-center lg:-mt-2 lg:text-left">
-      <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] flex items-center justify-center lg:justify-start gap-2 sm:gap-3">
-        <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] shrink-0 fill-white">
+      <div className="flex items-center justify-center lg:justify-start gap-2.5">
+        <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 fill-white">
           <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
         </svg>
-        <span className="gradient-text">{SITE_NAME}</span>
+        <span className="gradient-text text-3xl sm:text-4xl font-extrabold tracking-tight">{SITE_NAME}</span>
+      </div>
+
+      <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-white leading-[1.03]">
+        Turn any X profile<br className="hidden sm:block" /> into <span className="gradient-text">AI artwork.</span>
       </h1>
 
-      <p className="text-base sm:text-lg md:text-xl text-neutral-300 max-w-md mx-auto lg:mx-0 leading-relaxed tracking-tight">
-        Turn any X timeline into bespoke AI artwork.<br />
-        No login. No API keys. Just a username.
-      </p>
+      <div className="space-y-2">
+        <p className="text-base sm:text-lg text-neutral-300 max-w-md mx-auto lg:mx-0 leading-relaxed">
+          Paste a username, choose a style, and generate a profile-inspired image in seconds.
+        </p>
+        <p className="text-sm sm:text-base text-neutral-500 max-w-md mx-auto lg:mx-0">
+          No login. No API keys. Just a username.
+        </p>
+      </div>
 
-      <a
-        href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-base sm:text-lg text-neutral-400 hover:text-emerald-400 transition-colors inline-flex flex-wrap items-center justify-center lg:justify-start gap-x-2 gap-y-1 group w-full lg:w-auto"
-      >
-        <DollarSign className="w-5 h-5 group-hover:text-emerald-400 transition-colors" />
-        Funded by fees from <span className="font-bold text-emerald-400 group-hover:text-emerald-300">$GROKIFY</span>
-      </a>
-
-      <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center lg:justify-start gap-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs font-medium text-amber-400/90 backdrop-blur-sm">
-          <Flame className="w-3 h-3" />
+      <div className="inline-flex flex-col sm:flex-row items-stretch overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02] text-sm">
+        <span className="inline-flex items-center justify-center gap-2 px-4 py-2.5 font-medium text-neutral-300">
+          <Flame className="h-3.5 w-3.5 text-amber-400" />
           Powered by Grok AI
-        </div>
+        </span>
         <a
           href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex max-w-full items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/40 text-sm font-semibold text-emerald-400 backdrop-blur-sm hover:from-emerald-500/25 hover:to-teal-500/25 hover:border-emerald-400/60 transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]"
+          className="inline-flex items-center justify-center border-t border-white/[0.08] px-4 py-2.5 font-mono font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/10 sm:border-l sm:border-t-0"
         >
-          <DollarSign className="w-4 h-4" />
-          <span className="min-w-0 truncate font-mono tracking-wide">8F2Fvu...BAGs</span>
+          $GROKIFY
+        </a>
+        <a
+          href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-1.5 border-t border-white/[0.08] px-4 py-2.5 text-neutral-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-400 sm:border-l sm:border-t-0"
+        >
+          Funded by fees
+          <Check className="h-3.5 w-3.5 text-emerald-400" />
         </a>
       </div>
 
-      <div className="flex justify-center lg:justify-start pt-1">
-        <Link
-          href="/fact-check"
-          className="group block w-[280px] sm:w-auto sm:max-w-sm p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-cyan-500/10 via-sky-500/5 to-blue-500/10 border border-cyan-400/25 backdrop-blur-sm hover:from-cyan-500/18 hover:via-sky-500/8 hover:to-blue-500/18 hover:border-cyan-300/45 transition-all shadow-[0_0_18px_rgba(34,211,238,0.12)] hover:shadow-[0_0_28px_rgba(56,189,248,0.22)]"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 shadow-lg shadow-cyan-500/25">
-                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <span className="text-sm sm:text-lg font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors">Fact Check X Post</span>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400/50 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all" />
-          </div>
-          <p className="hidden sm:block text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors leading-relaxed text-left mt-2">
-            Paste a post URL, run web and X search, and get a clean verdict with optional sources.
-          </p>
-        </Link>
-      </div>
+      <div className="space-y-2.5 pt-1">
+        <p className="text-[11px] font-mono font-medium uppercase tracking-[0.18em] text-neutral-500 text-center lg:text-left">
+          What it does
+        </p>
+        <div className="flex flex-col gap-2.5 max-w-md mx-auto lg:mx-0">
+          <a
+            href="#grokify-generate"
+            className="group flex items-center gap-3.5 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.04]"
+          >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-400">
+              <UserRound className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-white">Generate profile art from an X username</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500">Create unique images inspired by any public profile.</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-neutral-600 transition-all group-hover:translate-x-0.5 group-hover:text-neutral-400" />
+          </a>
 
-      <div className="flex justify-center lg:justify-start">
-        <Link
-          href="/prompt"
-          className="group block w-[280px] sm:w-auto sm:max-w-sm p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-rose-500/10 border border-amber-500/30 backdrop-blur-sm hover:from-amber-500/20 hover:via-orange-500/10 hover:to-rose-500/20 hover:border-amber-500/50 transition-all shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/25">
-                <Wand2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <span className="text-sm sm:text-lg font-bold text-amber-400 group-hover:text-amber-300 transition-colors">Grokify Prompt</span>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500/50 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
-          </div>
-          <p className="hidden sm:block text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors leading-relaxed text-left mt-2">
-            Transform any idea into a polished AI prompt. Just describe what you want and let Grok craft the perfect prompt for you.
-          </p>
-        </Link>
+          <Link
+            href="/fact-check"
+            className="group flex items-center gap-3.5 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.04]"
+          >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-400">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-white">Fact-check a post with sources</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500">Paste a post URL, run web and X search, and get a clean verdict with sources.</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-neutral-600 transition-all group-hover:translate-x-0.5 group-hover:text-neutral-400" />
+          </Link>
+
+          <Link
+            href="/prompt"
+            className="group flex items-center gap-3.5 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.04]"
+          >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-400">
+              <Wand2 className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-white">Turn rough ideas into polished prompts</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500">Transform any idea into a clear, powerful AI prompt.</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-neutral-600 transition-all group-hover:translate-x-0.5 group-hover:text-neutral-400" />
+          </Link>
+        </div>
       </div>
 
       {/* Grok Imagine nav card — temporarily hidden */}
