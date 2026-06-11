@@ -45,7 +45,7 @@ export default function ResultSection({
       <div className="flex justify-center">
         <div className="relative inline-block rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50 bg-[#0a0a0a]">
           {isImageLoading && (
-            <div className="w-80 h-80 flex items-center justify-center bg-white/5">
+            <div className="w-[90vw] max-w-2xl aspect-video flex items-center justify-center bg-white/5">
               <Loader2 className="w-8 h-8 animate-spin text-neutral-500" />
             </div>
           )}

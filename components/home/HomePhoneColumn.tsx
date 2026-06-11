@@ -134,7 +134,8 @@ function HomePhoneColumnInner({
           </div>
 
           <div className="iphone-screen-content justify-center">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-orange-500/15 rounded-full blur-[100px] pointer-events-none" />
+            {/* Pre-softened radial gradient instead of a 100px blur filter: same glow, far cheaper to paint */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] rounded-full bg-[radial-gradient(circle,rgba(249,115,22,0.16)_0%,rgba(249,115,22,0.05)_45%,transparent_70%)] pointer-events-none" />
 
             <div className="space-y-3.5 relative">
               <div className="text-center pb-0.5">

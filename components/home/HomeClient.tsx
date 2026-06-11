@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   ChevronDown,
@@ -40,6 +40,19 @@ const FbiProfileSection = dynamic(() => import('@/components/home/sections/FbiPr
 const OsintSection = dynamic(() => import('@/components/home/sections/OsintSection'), { ssr: false });
 const CaricatureSection = dynamic(() => import('@/components/home/sections/CaricatureSection'), { ssr: false });
 const JointPicSection = dynamic(() => import('@/components/home/sections/JointPicSection'), { ssr: false });
+
+// Preload an image so the loading overlay only lifts once it can render instantly.
+// Returns false on failure so callers fall back to the in-place loading state.
+async function preloadImage(url: string): Promise<boolean> {
+  try {
+    const img = new window.Image();
+    img.src = url;
+    await img.decode();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // History trigger that moves when sidebar opens
 function HistoryTrigger() {
@@ -189,7 +202,10 @@ export default function Home() {
       }
       if (!imageUrl) throw new Error('Failed to generate image');
 
-      setIsImageLoading(true);
+      // Keep the overlay up while the artwork downloads, so it appears instantly on reveal
+      const preloaded = await preloadImage(imageUrl);
+
+      setIsImageLoading(!preloaded);
       setResult({
         imagePrompt: analysisData.imagePrompt,
         imageUrl: imageUrl,
@@ -440,7 +456,7 @@ export default function Home() {
   };
 
   // Caricature feature handlers
-  const handleCaricatureImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCaricatureImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -462,9 +478,9 @@ export default function Home() {
       setCaricaturePreview(dataUrl);
     };
     reader.readAsDataURL(file);
-  };
+  }, []);
 
-  const handleCaricatureGenerate = async () => {
+  const handleCaricatureGenerate = useCallback(async () => {
     if (!caricaturePreview) {
       toast.error('Please select an image first');
       return;
@@ -500,7 +516,7 @@ export default function Home() {
     } finally {
       setIsCaricatureLoading(false);
     }
-  };
+  }, [caricaturePreview]);
 
   const handleCaricatureDownload = async () => {
     if (!caricatureResult?.imageUrl) return;
@@ -523,7 +539,7 @@ export default function Home() {
   };
 
   // Joint Pic handlers
-  const handleJointPicGenerate = async () => {
+  const handleJointPicGenerate = useCallback(async () => {
     const normalized1 = jointPicHandle1.trim().replace('@', '');
     const normalized2 = jointPicHandle2.trim().replace('@', '');
 
@@ -571,7 +587,10 @@ export default function Home() {
       if (!imageResponse.ok) throw new Error(getApiErrorMessage(imageData.error, 'Failed to generate image'));
       if (!imageData?.imageUrl) throw new Error('Failed to generate image');
 
-      setIsJointPicImageLoading(true);
+      // Keep the overlay up while the artwork downloads, so it appears instantly on reveal
+      const preloaded = await preloadImage(imageData.imageUrl);
+
+      setIsJointPicImageLoading(!preloaded);
       setJointPicResult({
         imagePrompt: analysisData.imagePrompt,
         imageUrl: imageData.imageUrl,
@@ -593,7 +612,7 @@ export default function Home() {
       setJointPicStage(null);
       setIsJointPicLoading(false);
     }
-  };
+  }, [jointPicHandle1, jointPicHandle2, selectedStyle]);
 
   const handleJointPicDownload = async () => {
     if (!jointPicResult?.imageUrl) return;
@@ -616,6 +635,20 @@ export default function Home() {
   };
 
   const isBusy = isLoading || isRoasting || isProfiling || isOsintProfiling || isCaricatureLoading || isJointPicLoading || isVideoGenerating;
+
+  // Scroll new results into view; the hero grid fills the viewport, so they land below the fold
+  const resultsAnchorRef = useRef<HTMLDivElement>(null);
+  const hasAnyResult = Boolean(
+    result || roast || fbiProfile || osintReport || caricatureResult || jointPicResult || videoResult
+  );
+  useEffect(() => {
+    if (!hasAnyResult) return;
+    const scroll = () => resultsAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scroll();
+    // Result sections are dynamically imported; re-scroll once the chunk has mounted
+    const timer = setTimeout(scroll, 400);
+    return () => clearTimeout(timer);
+  }, [hasAnyResult, result, roast, fbiProfile, osintReport, caricatureResult, jointPicResult, videoResult]);
 
   const openStyleModal = useCallback(() => setIsStyleModalOpen(true), []);
   const openCaricatureModal = useCallback(() => setIsCaricatureModalOpen(true), []);
@@ -719,6 +752,8 @@ export default function Home() {
               {globalError}
             </div>
           )}
+
+          <div ref={resultsAnchorRef} className="scroll-mt-10" aria-hidden="true" />
 
           {result && (
             <ResultSection
