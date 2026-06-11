@@ -6,6 +6,7 @@ import { GrokResponseSchema, extractGrokContent, GrokResponsesApiSchema, extract
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 import { XAI_REASONING_MODEL, appendHiddenReasoningInstructions } from '@/lib/grok-config';
 import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
+import { encodeSseEvent, readSseStream } from '@/lib/sse';
 import {
   aiUnavailableResponse,
   routeErrorResponse,
@@ -13,6 +14,53 @@ import {
 
 // Feature flag: Set to true to enable caching
 const ENABLE_CACHING = process.env.ENABLE_CACHING === 'true';
+
+// Streaming holds the connection open for the full agentic search (up to 2 minutes)
+export const maxDuration = 180;
+
+const AI_UNAVAILABLE_MESSAGE = 'The AI service is temporarily unavailable. Please try again shortly.';
+
+/** Events forwarded to the browser while Grok analyzes an account. */
+type AnalyzeStreamEvent =
+  | { type: 'search'; query: string }
+  | { type: 'status'; label: 'searching' | 'synthesizing' }
+  | { type: 'result'; imagePrompt: string }
+  | { type: 'error'; message: string };
+
+function sseHeaders(corsHeaders: Record<string, string>): Record<string, string> {
+  return {
+    ...corsHeaders,
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    // Disable proxy buffering so search events reach the client as they happen
+    'X-Accel-Buffering': 'no',
+  };
+}
+
+/** The subset of upstream xAI Responses SSE events this route inspects. */
+interface UpstreamStreamEvent {
+  type?: string;
+  input?: unknown;
+  item?: {
+    type?: string;
+    arguments?: unknown;
+    action?: { query?: unknown };
+  };
+  response?: unknown;
+}
+
+/** Pull the query string out of an x_search tool call's JSON arguments. */
+function extractSearchQuery(input: unknown): string | null {
+  if (typeof input !== 'string' || !input) return null;
+  try {
+    const parsed = JSON.parse(input);
+    if (parsed && typeof parsed.query === 'string' && parsed.query.trim()) {
+      return parsed.query.trim();
+    }
+  } catch {
+    // Partial or non-JSON arguments - skip rather than leak raw payloads
+  }
+  return null;
+}
 
 export async function OPTIONS(req: NextRequest) {
   return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
@@ -123,8 +171,6 @@ Content Guidelines:
 
     const finalSystemPrompt = appendHiddenReasoningInstructions(systemPrompt);
 
-    let imagePrompt: string;
-
     const today = new Date();
 
     // Use cached data if available and caching is enabled
@@ -136,7 +182,7 @@ Content Guidelines:
       const breakerKey = 'xai:analyze';
       if (!canProceed(breakerKey)) {
         return NextResponse.json(
-          { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+          { error: AI_UNAVAILABLE_MESSAGE },
           { status: 503, headers: corsHeaders }
         );
       }
@@ -183,8 +229,27 @@ Content Guidelines:
         );
       }
 
-      imagePrompt = extractGrokContent(validationResult.data);
+      const imagePrompt = extractGrokContent(validationResult.data);
       recordSuccess(breakerKey);
+
+      if (!imagePrompt) {
+        console.error('No prompt generated from Grok');
+        return NextResponse.json(
+          { error: 'Failed to generate image prompt' },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      console.log('Generated prompt:', imagePrompt);
+
+      // Same SSE shape as the streaming branch so the client consumes one format
+      const events: AnalyzeStreamEvent[] = [
+        { type: 'status', label: 'synthesizing' },
+        { type: 'result', imagePrompt },
+      ];
+      return new Response(events.map(encodeSseEvent).join(''), {
+        headers: sseHeaders(corsHeaders),
+      });
     } else {
       // Perform agentic search with tools
       console.log(`Performing agentic search for @${handle}${ENABLE_CACHING ? ' (cache miss)' : ' (caching disabled)'}`);
@@ -192,20 +257,30 @@ Content Guidelines:
       const breakerKey = 'xai:analyze';
       if (!canProceed(breakerKey)) {
         return NextResponse.json(
-          { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+          { error: AI_UNAVAILABLE_MESSAGE },
           { status: 503, headers: corsHeaders }
         );
       }
 
-      const response = await fetchWithTimeout(
-        'https://api.x.ai/v1/responses',
-        {
+      // fetchWithTimeout only guards until headers arrive; with streaming the
+      // deadline must also cover the body, so manage the abort timer directly.
+      const upstreamController = new AbortController();
+      const timeoutId = setTimeout(
+        () => upstreamController.abort(),
+        API_TIMEOUTS.ENHANCED_ACCOUNT_ANALYSIS
+      );
+
+      let response: Response;
+      try {
+        response = await fetch('https://api.x.ai/v1/responses', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${xaiApiKey}`,
             'Content-Type': 'application/json',
           },
+          signal: upstreamController.signal,
           body: JSON.stringify({
+            stream: true,
             model: XAI_REASONING_MODEL,
             input: [
               { role: 'system', content: finalSystemPrompt },
@@ -255,70 +330,162 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
               { type: 'x_search' },
             ],
           }),
-        },
-        API_TIMEOUTS.ENHANCED_ACCOUNT_ANALYSIS
-      );
+        });
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        recordFailure(breakerKey);
+        console.error('xAI API request failed:', fetchError);
+        return aiUnavailableResponse(corsHeaders);
+      }
 
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (!response.ok || !response.body) {
+        clearTimeout(timeoutId);
+        const errorText = await response.text().catch(() => '');
         console.error('xAI API error:', response.status, errorText.length);
         recordFailure(breakerKey);
         return aiUnavailableResponse(corsHeaders);
       }
 
-      const rawData = await response.json();
-      const validationResult = GrokResponsesApiSchema.safeParse(rawData);
+      const upstreamBody = response.body;
+      const encoder = new TextEncoder();
 
-      if (!validationResult.success) {
-        console.error('Invalid Grok API response structure:', validationResult.error);
-        recordFailure(breakerKey);
-        return NextResponse.json(
-          { error: 'Invalid response from Grok API' },
-          { status: 500, headers: corsHeaders }
-        );
-      }
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          let closed = false;
+          const send = (event: AnalyzeStreamEvent) => {
+            if (closed) return;
+            try {
+              controller.enqueue(encoder.encode(encodeSseEvent(event)));
+            } catch {
+              closed = true;
+            }
+          };
 
-      imagePrompt = extractGrokResponsesContent(validationResult.data);
-      recordSuccess(breakerKey);
+          send({ type: 'status', label: 'searching' });
 
-      // Cache the response if caching is enabled
-      if (ENABLE_CACHING) {
-        const db = getDb();
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        try {
-          await db
-            .insert(xAccountCache)
-            .values({
-              xHandle: handle.toLowerCase(),
-              searchResponse: rawData,
-              expiresAt,
-            })
-            .onConflictDoUpdate({
-              target: xAccountCache.xHandle,
-              set: {
-                searchResponse: rawData,
-                expiresAt,
-              },
+          let completedResponse: unknown = null;
+          let upstreamFailed = false;
+          let sentSynthesizing = false;
+
+          try {
+            await readSseStream(upstreamBody, (data) => {
+              if (data === '[DONE]') return;
+              let event: UpstreamStreamEvent;
+              try {
+                event = JSON.parse(data) as UpstreamStreamEvent;
+              } catch {
+                return;
+              }
+
+              switch (event.type) {
+                // x_search tool calls arrive as custom_tool_call items; the
+                // arguments JSON lands in custom_tool_call_input.done
+                case 'response.custom_tool_call_input.done': {
+                  const query = extractSearchQuery(event.input);
+                  if (query) send({ type: 'search', query });
+                  break;
+                }
+                case 'response.output_item.added': {
+                  if (event.item?.type === 'message' && !sentSynthesizing) {
+                    sentSynthesizing = true;
+                    send({ type: 'status', label: 'synthesizing' });
+                  }
+                  break;
+                }
+                case 'response.output_item.done': {
+                  // Fallback for the documented x_search_call item shape
+                  const item = event.item;
+                  if (item?.type === 'x_search_call') {
+                    const query =
+                      extractSearchQuery(item.arguments) ??
+                      (typeof item.action?.query === 'string' ? item.action.query : null);
+                    if (query) send({ type: 'search', query });
+                  }
+                  break;
+                }
+                case 'response.completed': {
+                  completedResponse = event.response;
+                  break;
+                }
+                case 'response.failed':
+                case 'response.incomplete': {
+                  upstreamFailed = true;
+                  break;
+                }
+              }
             });
-          console.log(`Cached search response for @${handle} until ${expiresAt.toISOString()}`);
-        } catch (upsertError) {
-          console.error('Cache upsert error:', upsertError);
-          // Continue anyway - caching failure shouldn't break the flow
-        }
-      }
+          } catch (streamError) {
+            console.error('xAI stream error:', streamError);
+            upstreamFailed = true;
+          } finally {
+            clearTimeout(timeoutId);
+          }
+
+          if (upstreamFailed || !completedResponse) {
+            recordFailure(breakerKey);
+            send({ type: 'error', message: AI_UNAVAILABLE_MESSAGE });
+            if (!closed) controller.close();
+            return;
+          }
+
+          const validationResult = GrokResponsesApiSchema.safeParse(completedResponse);
+          if (!validationResult.success) {
+            console.error('Invalid Grok API response structure:', validationResult.error);
+            recordFailure(breakerKey);
+            send({ type: 'error', message: 'Invalid response from Grok API' });
+            if (!closed) controller.close();
+            return;
+          }
+
+          const imagePrompt = extractGrokResponsesContent(validationResult.data);
+          recordSuccess(breakerKey);
+
+          // Cache the response if caching is enabled
+          if (ENABLE_CACHING) {
+            const db = getDb();
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+            try {
+              await db
+                .insert(xAccountCache)
+                .values({
+                  xHandle: handle.toLowerCase(),
+                  searchResponse: completedResponse,
+                  expiresAt,
+                })
+                .onConflictDoUpdate({
+                  target: xAccountCache.xHandle,
+                  set: {
+                    searchResponse: completedResponse,
+                    expiresAt,
+                  },
+                });
+              console.log(`Cached search response for @${handle} until ${expiresAt.toISOString()}`);
+            } catch (upsertError) {
+              console.error('Cache upsert error:', upsertError);
+              // Continue anyway - caching failure shouldn't break the flow
+            }
+          }
+
+          if (!imagePrompt) {
+            console.error('No prompt generated from Grok');
+            send({ type: 'error', message: 'Failed to generate image prompt' });
+            if (!closed) controller.close();
+            return;
+          }
+
+          console.log('Generated prompt:', imagePrompt);
+          send({ type: 'result', imagePrompt });
+          if (!closed) controller.close();
+        },
+        cancel() {
+          // Browser went away - stop the upstream call too
+          clearTimeout(timeoutId);
+          upstreamController.abort();
+        },
+      });
+
+      return new Response(stream, { headers: sseHeaders(corsHeaders) });
     }
-
-    if (!imagePrompt) {
-      console.error('No prompt generated from Grok');
-      return NextResponse.json(
-        { error: 'Failed to generate image prompt' },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    console.log('Generated prompt:', imagePrompt);
-
-    return NextResponse.json({ imagePrompt }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in analyze-account function:', error);
     return routeErrorResponse(error, corsHeaders);

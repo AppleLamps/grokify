@@ -25,6 +25,7 @@ import {
   isGrokVideoGenerationEnabled,
 } from '@/lib/grok-image-availability';
 import { getApiErrorMessage } from '@/lib/api-error';
+import { readSseStream } from '@/lib/sse';
 
 const PromptHistorySidebar = dynamic(
   () => import('@/components/PromptHistorySidebar').then((mod) => mod.PromptHistorySidebar),
@@ -53,6 +54,12 @@ async function preloadImage(url: string): Promise<boolean> {
     return false;
   }
 }
+
+// Terminal feed lines for the analyze-account stream's coarse status events
+const LIVE_STATUS_LINES: Record<string, string> = {
+  searching: 'UPLINK grok live search feed',
+  synthesizing: 'SYNTHESIZE art direction parameters',
+};
 
 // History trigger that moves when sidebar opens
 function HistoryTrigger() {
@@ -83,6 +90,7 @@ export default function Home() {
   const [globalError, setGlobalError] = useState('');
   const [loadingStage, setLoadingStage] = useState<'analyze' | 'image' | null>(null);
   const [loadingUsername, setLoadingUsername] = useState<string | null>(null);
+  const [liveLog, setLiveLog] = useState<string[]>([]);
   const [result, setResult] = useState<ResultPayload | null>(null);
   const [roast, setRoast] = useState<string | null>(null);
   const [fbiProfile, setFbiProfile] = useState<string | null>(null);
@@ -144,6 +152,7 @@ export default function Home() {
     setOsintReport(null);
     setLoadingStage('analyze');
     setLoadingUsername(normalizedHandle);
+    setLiveLog([]);
 
     try {
       const analysisResponse = await fetch('/api/analyze-account', {
@@ -152,9 +161,44 @@ export default function Home() {
         body: JSON.stringify({ handle: normalizedHandle }),
       });
 
-      const analysisData = await analysisResponse.json();
-      if (!analysisResponse.ok) throw new Error(getApiErrorMessage(analysisData.error, 'Failed to analyze account'));
-      if (!analysisData?.imagePrompt) throw new Error('Failed to generate image prompt');
+      if (!analysisResponse.ok) {
+        const analysisData = await analysisResponse.json().catch(() => null);
+        throw new Error(getApiErrorMessage(analysisData?.error, 'Failed to analyze account'));
+      }
+
+      // The route streams SSE events (live Grok search activity), but keep the
+      // plain-JSON path as a fallback
+      let streamedPrompt: string | null = null;
+      let streamError: string | null = null;
+      const contentType = analysisResponse.headers.get('content-type') ?? '';
+      if (contentType.includes('text/event-stream') && analysisResponse.body) {
+        await readSseStream(analysisResponse.body, (data) => {
+          let event: { type?: string; query?: string; label?: string; imagePrompt?: string; message?: string };
+          try {
+            event = JSON.parse(data);
+          } catch {
+            return;
+          }
+          if (event.type === 'search' && typeof event.query === 'string') {
+            const line = `QUERY ${event.query}`;
+            setLiveLog((prev) => [...prev, line]);
+          } else if (event.type === 'status' && event.label && LIVE_STATUS_LINES[event.label]) {
+            const line = LIVE_STATUS_LINES[event.label];
+            setLiveLog((prev) => [...prev, line]);
+          } else if (event.type === 'result' && typeof event.imagePrompt === 'string') {
+            streamedPrompt = event.imagePrompt;
+          } else if (event.type === 'error') {
+            streamError = getApiErrorMessage(event.message, 'Failed to analyze account');
+          }
+        });
+      } else {
+        const analysisData = await analysisResponse.json();
+        streamedPrompt = analysisData?.imagePrompt ?? null;
+      }
+
+      if (streamError) throw new Error(streamError);
+      const imagePrompt = streamedPrompt;
+      if (!imagePrompt) throw new Error('Failed to generate image prompt');
 
       setLoadingStage('image');
 
@@ -169,7 +213,7 @@ export default function Home() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            prompt: analysisData.imagePrompt,
+            prompt: imagePrompt,
             n: 1,
             aspect_ratio: '16:9',
             response_format: 'url',
@@ -182,7 +226,7 @@ export default function Home() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            prompt: analysisData.imagePrompt,
+            prompt: imagePrompt,
             handle: normalizedHandle,
             style: selectedStyle,
           }),
@@ -207,14 +251,14 @@ export default function Home() {
 
       setIsImageLoading(!preloaded);
       setResult({
-        imagePrompt: analysisData.imagePrompt,
+        imagePrompt,
         imageUrl: imageUrl,
         username: normalizedHandle,
       });
 
       addToHistory({
         username: normalizedHandle,
-        prompt: analysisData.imagePrompt,
+        prompt: imagePrompt,
         imageUrl: imageUrl,
       });
 
@@ -678,6 +722,7 @@ export default function Home() {
           type="photo"
           stage={loadingStage || 'analyze'}
           username={loadingUsername || undefined}
+          liveLog={loadingStage === 'image' ? undefined : liveLog}
         />
       )}
       {isRoasting && (

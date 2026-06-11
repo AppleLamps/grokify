@@ -18,6 +18,8 @@ interface LoadingOverlayProps {
   stage?: LoadingStage;
   username?: string;
   username2?: string;
+  /** Real activity lines streamed from the server; replaces the canned search log when non-empty. */
+  liveLog?: string[];
 }
 
 function formatTimestamp(totalSeconds: number): string {
@@ -36,12 +38,14 @@ function ClassificationBanner({ label }: { label: string }) {
   );
 }
 
-export function LoadingOverlay({ type, stage, username, username2 }: LoadingOverlayProps) {
+export function LoadingOverlay({ type, stage, username, username2, liveLog }: LoadingOverlayProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [stageElapsedSeconds, setStageElapsedSeconds] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
   const [activityIndex, setActivityIndex] = useState(0);
   const [caseId] = useState(() => `GRF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`);
+  // Arrival time per live log line, so timestamps stay stable across re-renders
+  const [liveLogTimes, setLiveLogTimes] = useState<number[]>([]);
 
   const statusMessages = useMemo(() => getStatusMessages(type, stage), [type, stage]);
   const searchLog = useMemo(() => getSearchLog(type, stage), [type, stage]);
@@ -52,6 +56,14 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
   const progress = progressState.progress;
 
   const terminalLines = useMemo(() => {
+    if (liveLog && liveLog.length > 0) {
+      return liveLog.map((text, index) => ({
+        time: formatTimestamp(liveLogTimes[index] ?? elapsedSeconds),
+        text,
+        active: index === liveLog.length - 1,
+      }));
+    }
+
     if (searchLog.length === 0) {
       return statusMessages.slice(0, Math.min(activityIndex + 2, statusMessages.length)).map((line, index) => ({
         time: formatTimestamp(Math.max(0, elapsedSeconds - (statusMessages.length - index) * 2)),
@@ -66,7 +78,16 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
       text: interpolateLogTemplate(entry, username, username2),
       active: index === visibleCount - 1,
     }));
-  }, [activityIndex, elapsedSeconds, searchLog, statusMessages, username, username2]);
+  }, [activityIndex, elapsedSeconds, liveLog, liveLogTimes, searchLog, statusMessages, username, username2]);
+
+  useEffect(() => {
+    if (!liveLog || liveLog.length === 0) return;
+    setLiveLogTimes((prev) =>
+      prev.length >= liveLog.length
+        ? prev
+        : [...prev, ...Array(liveLog.length - prev.length).fill(elapsedSeconds)],
+    );
+  }, [elapsedSeconds, liveLog]);
 
   const signalBars = useMemo(
     () => Array.from({ length: 16 }, (_, index) => 18 + ((index * 17 + progress) % 72)),
@@ -245,9 +266,9 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
 
               <div className="flex-1 overflow-y-auto border border-[#3dffa3]/15 bg-[#030705] p-3 font-mono text-xs leading-6 sm:text-sm">
                 <div className="space-y-1">
-                  {terminalLines.map((line) => (
+                  {terminalLines.map((line, index) => (
                     <p
-                      key={`${line.time}-${line.text}`}
+                      key={`${index}-${line.text}`}
                       className={cn(
                         'truncate',
                         line.active ? 'text-[#d7ffe8]' : 'text-[#3dffa3]/55',
