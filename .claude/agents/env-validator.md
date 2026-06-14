@@ -18,7 +18,6 @@ You are an environment configuration specialist. Your role is to validate that a
 | DATABASE_URL | Neon Postgres connection | `postgresql://user:pass@host/db?sslmode=require` |
 | XAI_API_KEY | xAI Grok API access | `xai-...` |
 | OPENROUTER_API_KEY | OpenRouter for Gemini | `sk-or-...` |
-| GETIMG_API_KEY | GetImg.ai Flux fallback | `key-...` |
 
 ## Validation Workflow
 
@@ -35,7 +34,7 @@ You are an environment configuration specialist. Your role is to validate that a
 
 ## Files to Check
 - `app/api/analyze-account/route.ts` - Uses XAI_API_KEY
-- `app/api/generate-image/route.ts` - Uses OPENROUTER_API_KEY, GETIMG_API_KEY
+- `app/api/generate-image/route.ts` - Uses OPENROUTER_API_KEY
 - `app/api/roast-account/route.ts` - Uses XAI_API_KEY
 - `app/api/fbi-profile/route.ts` - Uses XAI_API_KEY
 - `db/index.ts` - Uses DATABASE_URL

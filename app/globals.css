@@ -624,10 +624,6 @@ input:focus {
   box-shadow: 0 0 8px #22C55E;
 }
 
-/* ========================================
-   Grok Imagine Styles - Moved to app/imagine/*.css
-   ======================================== */
-/* Styles are now modularized in app/imagine/ folder */
 
 /* ========================================
    Intel loading overlay (CIA terminal vibe)

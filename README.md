@@ -138,7 +138,7 @@ Grokify offers **38 unique art styles** organized into 5 categories:
 | **Prompt Generation** | [xAI Grok 4.3](https://openrouter.ai/x-ai/grok-4.3) via [OpenRouter](https://openrouter.ai/) |
 | **Image Generation** | [xAI Grok Imagine](https://x.ai/) + [Google Gemini](https://ai.google.dev/) via [OpenRouter](https://openrouter.ai/) |
 | **Video Generation** | [xAI Grok Imagine Video](https://x.ai/) |
-| **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) + IndexedDB (local) |
+| **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) |
 | **Deployment** | [Vercel](https://vercel.com/) |
 | **Tests** | [Node.js test runner](https://nodejs.org/api/test.html) (`tsx` for TypeScript) |
 
@@ -226,9 +226,6 @@ ALLOWED_ORIGINS="https://www.grokify.com"
 
 # Optional: only logs AI payload metadata outside production
 DEBUG_AI_PAYLOADS="false"
-
-# Optional: GetImg.ai API (Flux fallback)
-GETIMG_API_KEY="key-..."
 ```
 
 ### Rate Limiting
@@ -412,7 +409,6 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   │   ├── HomePhoneColumn.tsx # iPhone-style form; local @username state (memoized)
 │   │   └── sections/           # ResultSection, RoastSection, etc.
 │   ├── fact-check/             # Fact-check UI
-│   ├── imagine/                # Grok Imagine components (used when gallery is re-enabled)
 │   ├── prompt/                 # Grokify Prompt components
 │   ├── ui/                     # shadcn/ui components
 │   ├── LoadingOverlay.tsx      # Animated loading states
@@ -425,7 +421,6 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   └── schema.ts               # Drizzle schema
 ├── hooks/
 │   ├── usePromptHistory.ts     # Prompt history hook
-│   ├── useImagineStore.ts      # Grok Imagine gallery state (IndexedDB)
 │   └── use-mobile.tsx          # Responsive breakpoint helper (sidebar/UI)
 ├── tests/                      # 25+ unit/route tests (tsx + Node test runner)
 └── lib/
@@ -438,7 +433,6 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
     ├── prompt-route-utils.ts   # Grokify Prompt API: retryable status / backoff helpers
     ├── circuit-breaker.ts      # API resilience
     ├── fetchWithTimeout.ts     # API timeout handling
-    ├── imagine-storage.ts      # IndexedDB storage for images
     ├── upload-security.ts      # Upload intent tokens & rate limits
     └── schemas.ts              # Zod validation schemas
 ```

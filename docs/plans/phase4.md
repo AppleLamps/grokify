@@ -18,7 +18,7 @@ Focus the next pass on making the main product surfaces easier to scan and use, 
 
 ## Next Candidates
 
-- Add a clearer active/disabled treatment for unavailable Grok Imagine paths across `/prompt` and `/imagine`.
+- Add a clearer active/disabled treatment for unavailable Grok Imagine actions in the home flow and `/prompt`.
 - Add a mobile-first navigation affordance for the secondary tools instead of stacking large link cards above the phone.
 - Review loading overlays for shorter status copy and less visual blocking on mobile.
 - Add keyboard/focus polish for modal upload and joint-picture flows.

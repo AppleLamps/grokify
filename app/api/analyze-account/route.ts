@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   if (rateLimited) return rateLimited;
 
   try {
-    const { handle, useSafetyGuidelines } = await req.json();
+    const { handle } = await req.json();
 
     // Validate X handle format (1-15 alphanumeric characters + underscores)
     const HANDLE_REGEX = /^[a-zA-Z0-9_]{1,15}$/;
@@ -159,15 +159,6 @@ Examples of masterful cartoon prompts:
 Your final output must be ONLY the image generation prompt. No preamble, no explanation, no analysis. Just the prompt.`;
 
     // Add safety guidelines if requested
-    if (useSafetyGuidelines) {
-      systemPrompt += `
-
-Content Guidelines:
-- **Stay Clever, Not Explicit:** Use visual metaphors, symbolism, and satirical imagery rather than explicit offensive terminology.
-- **No Explicit Slurs or Graphic Violence:** Avoid terms related to sexual misconduct, extreme violence, hate speech slurs, or graphic descriptions of harm.
-- **Controversy Through Imagery:** Capture controversial themes through symbolic representation (e.g., use clashing symbols, opposing forces, visual tension) rather than direct offensive language.
-- **Satirical ≠ Offensive:** Great satire can be biting and edgy through clever visual choices, exaggerated caricature, and absurdist humor without explicit offensive content.`;
-    }
 
     const finalSystemPrompt = appendHiddenReasoningInstructions(systemPrompt);
 

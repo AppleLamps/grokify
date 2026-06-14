@@ -168,29 +168,6 @@ function HomeHeroColumnInner({
         </div>
       </div>
 
-      {/* Grok Imagine nav card — temporarily hidden */}
-      {/* <div className="flex justify-center lg:justify-start">
-        <Link
-          href="/imagine"
-          className="group block w-[280px] sm:w-auto sm:max-w-sm p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-pink-500/10 border border-violet-500/30 backdrop-blur-sm hover:from-violet-500/20 hover:via-fuchsia-500/10 hover:to-pink-500/20 hover:border-violet-500/50 transition-all shadow-[0_0_20px_rgba(139,92,246,0.15)] hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/25">
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <span className="text-sm sm:text-lg font-bold text-violet-400 group-hover:text-violet-300 transition-colors">Grok Imagine</span>
-            </div>
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500/50 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
-          </div>
-          <p className="hidden sm:block text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors leading-relaxed text-left mt-2">
-            {grokImageGenerationEnabled && grokVideoGenerationEnabled
-              ? 'Generate stunning images and videos with xAI\'s latest Grok Imagine model. Just describe what you want!'
-              : `${getImagineImageUnavailableMessage()} ${getImagineVideoUnavailableMessage()}`}
-          </p>
-        </Link>
-      </div> */}
-
       <Dialog
         open={isCaricatureModalOpen}
         onOpenChange={(open) => {

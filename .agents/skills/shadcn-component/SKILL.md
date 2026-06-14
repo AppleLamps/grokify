@@ -19,14 +19,14 @@ This project uses shadcn/ui with the following configuration (from `components.j
    ```bash
    npx shadcn@latest add <component-name>
    ```
-   Common components: button, card, dialog, dropdown-menu, input, label, badge, alert, separator, scroll-area, sheet, skeleton, tooltip, tabs, switch, select, popover, progress, slider, accordion, avatar, checkbox, toast
+   Common currently installed components: button, dialog, input, badge, alert-dialog, separator, scroll-area, sheet, skeleton, tooltip. Add other shadcn components only when needed.
 
 2. **Component will be created at**: `components/ui/<component-name>.tsx`
 
 3. **Import pattern** (follow existing style in `app/page.tsx`):
    ```tsx
    import { Button } from '@/components/ui/button';
-   import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+   import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
    ```
 
 4. **For toast notifications**, this project uses Sonner (not shadcn toast):
@@ -41,7 +41,7 @@ This project uses shadcn/ui with the following configuration (from `components.j
 
 - Glass-morphism: `className="glass-card"` (defined in globals.css)
 - Button interactions: `className="btn-press"` for press animation
-- Card hover: `className="card-hover"` for lift effect
+- Panel hover: `className="card-hover"` for lift effect on custom containers
 - Gradients: `bg-gradient-to-r from-slate-700 to-slate-600`
 - Backdrop blur: `backdrop-blur-xl` or `backdrop-blur`
 

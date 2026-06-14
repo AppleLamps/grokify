@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Upload,
   Trash2,
@@ -30,7 +29,6 @@ import {
   replacePreviewUrl,
 } from '@/lib/prompt-client-utils';
 import { getDroppedFiles, hasFilesInTransfer } from '@/lib/drag-drop-utils';
-import { IMAGINE_HANDOFF_QUERY, saveImagineHandoff } from '@/lib/imagine-handoff';
 
 // Types
 type CopyTarget = 'default' | 'json' | 'scene' | '';
@@ -51,7 +49,6 @@ const RANDOM_IDEAS = [
 const STYLE_PRESET_NAMES = Object.keys(STYLE_PRESETS);
 
 export default function PromptClient() {
-  const router = useRouter();
 
   // Form state
   const [idea, setIdea] = useState('');
@@ -108,17 +105,6 @@ export default function PromptClient() {
     if (base && styleText) return `${base}, ${styleText}`;
     return base || styleText || '';
   }, [directions, activeStyles]);
-
-  const imaginePrompt = useMemo(() => {
-    if (!generatedPrompt) return null;
-    if (typeof generatedPrompt === 'string') {
-      const prompt = generatedPrompt.trim();
-      return prompt || null;
-    }
-
-    const prompt = generatedPrompt.scene.trim();
-    return prompt || null;
-  }, [generatedPrompt]);
 
   const activeConfigCount = useMemo(() => {
     return [
@@ -375,18 +361,6 @@ export default function PromptClient() {
     if (!generatedPrompt || typeof generatedPrompt === 'string') return;
     copyToClipboard(generatedPrompt.scene, 'scene');
   };
-
-  const handleGenerateWithImagine = useCallback(() => {
-    if (!imaginePrompt) return;
-
-    saveImagineHandoff({
-      prompt: imaginePrompt,
-      autogenerate: true,
-      createdAt: Date.now(),
-    });
-
-    router.push(`/imagine?handoff=${IMAGINE_HANDOFF_QUERY}`);
-  }, [imaginePrompt, router]);
 
   const isAnyLoading = isLoading || isSurpriseLoading;
 
@@ -814,9 +788,7 @@ export default function PromptClient() {
               <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
                 06 // OUTPUT_STREAM
               </span>
-              <div className="flex items-center gap-2">
-                {/* GENERATE with Imagine button — temporarily hidden */}
-                {/* {imaginePrompt && (
+              <div className="flex items-center gap-2">                {/* {imaginePrompt && (
                   <button
                     type="button"
                     onClick={handleGenerateWithImagine}
