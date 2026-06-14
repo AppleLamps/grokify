@@ -18,7 +18,6 @@ import { appendHiddenReasoningInstructions } from '@/lib/grok-config';
 import { buildPromptControlBlock, normalizeLightingMode } from '@/lib/prompt-controls';
 import { getRetryDelayMs, shouldRetryPromptRequest } from '@/lib/prompt-route-utils';
 import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
-import { SITE_URL } from '@/lib/site';
 import type { ImageIntent, LightingMode } from '@/lib/prompt-config-shared';
 import { enforceAiRateLimit } from '@/lib/ai-rate-limit';
 
@@ -66,9 +65,6 @@ interface JsonSchemaResponseFormat {
 interface ChatRequestBody {
   model: string;
   messages: ChatMessage[];
-  provider?: {
-    require_parameters: boolean;
-  };
   temperature?: number;
   max_tokens?: number;
   top_p?: number;
@@ -100,19 +96,17 @@ const buildUserContent = (
   return text;
 };
 
-async function makeOpenRouterCall(
+async function makeXaiCall(
   apiKey: string,
   body: ChatRequestBody
 ): Promise<Response> {
   return fetchWithTimeout(
-    'https://openrouter.ai/api/v1/chat/completions',
+    'https://api.x.ai/v1/chat/completions',
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || SITE_URL,
-        'X-Title': 'Grokify Prompt Generator',
       },
       body: JSON.stringify(body),
     },
@@ -122,7 +116,7 @@ async function makeOpenRouterCall(
 
 const RETRY_DELAYS_MS = [250, 750];
 
-async function makeOpenRouterCallWithRetry(
+async function makeXaiCallWithRetry(
   apiKey: string,
   body: ChatRequestBody,
   hasInlineImage: boolean
@@ -130,7 +124,7 @@ async function makeOpenRouterCallWithRetry(
   let lastResponse: Response | null = null;
 
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
-    lastResponse = await makeOpenRouterCall(apiKey, body);
+    lastResponse = await makeXaiCall(apiKey, body);
 
     if (lastResponse.ok || !shouldRetryPromptRequest(lastResponse.status, hasInlineImage)) {
       return lastResponse;
@@ -142,11 +136,11 @@ async function makeOpenRouterCallWithRetry(
     }
   }
 
-  return lastResponse ?? makeOpenRouterCall(apiKey, body);
+  return lastResponse ?? makeXaiCall(apiKey, body);
 }
 
 export async function POST(request: NextRequest) {
-  const breakerKey = 'openrouter:prompt';
+  const breakerKey = 'xai:prompt';
 
   const rateLimited = await enforceAiRateLimit(request, 'prompt-generate', NO_STORE_HEADERS);
   if (rateLimited) return rateLimited;
@@ -190,9 +184,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) {
-      console.error('OPENROUTER_API_KEY environment variable is not set');
+      console.error('XAI_API_KEY environment variable is not set');
       return NextResponse.json(
         { error: 'API key is not configured. Please contact the administrator.' },
         { status: 500, headers: NO_STORE_HEADERS }
@@ -243,9 +237,6 @@ export async function POST(request: NextRequest) {
 
     const requestBody: ChatRequestBody = {
       model: PROMPT_MODELS.PRIMARY,
-      provider: {
-        require_parameters: true,
-      },
       messages: [
         { role: 'system', content: finalSystemPrompt },
         {
@@ -266,14 +257,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const openRouterResponse = await makeOpenRouterCallWithRetry(apiKey, requestBody, Boolean(imageBase64));
+    const xaiResponse = await makeXaiCallWithRetry(apiKey, requestBody, Boolean(imageBase64));
 
-    if (!openRouterResponse.ok) {
-      const errorText = await openRouterResponse.text();
-      console.error('OpenRouter API error:', openRouterResponse.status, errorText);
+    if (!xaiResponse.ok) {
+      const errorText = await xaiResponse.text();
+      console.error('xAI API error:', xaiResponse.status, errorText);
       recordFailure(breakerKey);
 
-      if (openRouterResponse.status === 429) {
+      if (xaiResponse.status === 429) {
         return NextResponse.json(
           { error: 'Too many requests. Please wait a moment before trying again.' },
           { status: 429, headers: NO_STORE_HEADERS }
@@ -286,10 +277,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data: ChatCompletionResponse = await openRouterResponse.json();
+    const data: ChatCompletionResponse = await xaiResponse.json();
 
     if (!data?.choices?.[0]?.message?.content) {
-      console.error('Invalid OpenRouter API response structure:', data);
+      console.error('Invalid xAI API response structure:', data);
       return NextResponse.json(
         { error: 'Received an invalid response from the AI service. Please try again.' },
         { status: 500, headers: NO_STORE_HEADERS }

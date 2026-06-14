@@ -6,7 +6,7 @@ import type {
   StructuredPayload,
 } from './prompt-config-shared';
 import { PROMPT_CONFIG, PROMPT_STYLE_PRESETS } from './prompt-config-shared';
-import { OPENROUTER_REASONING_MODEL } from './grok-config';
+import { XAI_REASONING_MODEL } from './grok-config';
 
 /**
  * Configuration for Grokify Prompt Generator
@@ -23,7 +23,7 @@ export const API_CONFIG = {
 
 export const PROMPT_MODELS = {
   /** Primary model for prompt generation */
-  PRIMARY: OPENROUTER_REASONING_MODEL,
+  PRIMARY: XAI_REASONING_MODEL,
 } as const;
 
 export const PROMPT_MODES = {
@@ -396,7 +396,7 @@ export type {
 // ============================================================================
 
 /**
- * Extracts text content from various OpenRouter response formats.
+ * Extracts text content from various AI response formats.
  */
 export const extractMessageText = (content: unknown): string => {
   if (typeof content === 'string') return content;
@@ -421,7 +421,7 @@ export const extractMessageText = (content: unknown): string => {
 };
 
 /**
- * Parses structured JSON content from an OpenRouter response.
+ * Parses structured JSON content from an AI response.
  */
 export const parseStructuredContent = <T extends StructuredPayload>(content: unknown): T => {
   const raw = extractMessageText(content);

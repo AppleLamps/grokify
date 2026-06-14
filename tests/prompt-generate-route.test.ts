@@ -5,16 +5,16 @@ import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/prompt-generate/route';
 
 const originalFetch = global.fetch;
-const originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY;
+const originalXaiApiKey = process.env.XAI_API_KEY;
 const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
 
 afterEach(() => {
   global.fetch = originalFetch;
 
-  if (originalOpenRouterApiKey === undefined) {
-    delete process.env.OPENROUTER_API_KEY;
+  if (originalXaiApiKey === undefined) {
+    delete process.env.XAI_API_KEY;
   } else {
-    process.env.OPENROUTER_API_KEY = originalOpenRouterApiKey;
+    process.env.XAI_API_KEY = originalXaiApiKey;
   }
 
   if (originalAppUrl === undefined) {
@@ -24,8 +24,8 @@ afterEach(() => {
   }
 });
 
-test('POST /api/prompt-generate requires OPENROUTER_API_KEY', async () => {
-  delete process.env.OPENROUTER_API_KEY;
+test('POST /api/prompt-generate requires XAI_API_KEY', async () => {
+  delete process.env.XAI_API_KEY;
 
   const request = new NextRequest('http://localhost/api/prompt-generate', {
     method: 'POST',
@@ -40,13 +40,12 @@ test('POST /api/prompt-generate requires OPENROUTER_API_KEY', async () => {
   assert.equal(payload.error, 'API key is not configured. Please contact the administrator.');
 });
 
-test('POST /api/prompt-generate sends the Grok 4.3 OpenRouter request shape', async () => {
+test('POST /api/prompt-generate sends the direct xAI Grok 4.3 request shape', async () => {
   let capturedUrl = '';
   let capturedHeaders: Headers | undefined;
   let capturedBody:
     | {
         model?: unknown;
-        provider?: unknown;
         response_format?: {
           type?: unknown;
           json_schema?: {
@@ -57,7 +56,7 @@ test('POST /api/prompt-generate sends the Grok 4.3 OpenRouter request shape', as
       }
     | undefined;
 
-  process.env.OPENROUTER_API_KEY = 'sk-or-test';
+  process.env.XAI_API_KEY = 'xai-test';
   process.env.NEXT_PUBLIC_APP_URL = 'https://www.grokify.com';
 
   global.fetch = async (input, init) => {
@@ -94,13 +93,12 @@ test('POST /api/prompt-generate sends the Grok 4.3 OpenRouter request shape', as
   assert.equal(response.status, 200);
   assert.equal(payload.success, true);
   assert.equal(payload.prompt, 'A polished cinematic prompt with crisp visual intent.');
-  assert.equal(capturedUrl, 'https://openrouter.ai/api/v1/chat/completions');
-  assert.equal(capturedHeaders?.get('authorization'), 'Bearer sk-or-test');
-  assert.equal(capturedHeaders?.get('http-referer'), 'https://www.grokify.com');
-  assert.equal(capturedHeaders?.get('x-title'), 'Grokify Prompt Generator');
+  assert.equal(capturedUrl, 'https://api.x.ai/v1/chat/completions');
+  assert.equal(capturedHeaders?.get('authorization'), 'Bearer xai-test');
+  assert.equal(capturedHeaders?.get('http-referer'), null);
+  assert.equal(capturedHeaders?.get('x-title'), null);
   assert.ok(capturedBody);
-  assert.equal(capturedBody.model, 'x-ai/grok-4.3');
-  assert.deepEqual(capturedBody.provider, { require_parameters: true });
+  assert.equal(capturedBody.model, 'grok-4.3');
   assert.equal(capturedBody.response_format?.type, 'json_schema');
   assert.equal(capturedBody.response_format?.json_schema?.name, 'prompt_response');
   assert.equal(capturedBody.response_format?.json_schema?.strict, true);

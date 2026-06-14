@@ -136,7 +136,7 @@ Grokify offers **44 unique art styles** organized into 5 categories:
 | **Database** | [Neon](https://neon.tech/) (Serverless Postgres) |
 | **ORM** | [Drizzle ORM](https://orm.drizzle.team/) |
 | **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4.3) |
-| **Prompt Generation** | [xAI Grok 4.3](https://openrouter.ai/x-ai/grok-4.3) via [OpenRouter](https://openrouter.ai/) |
+| **Prompt Generation** | [xAI Grok 4.3](https://x.ai/) direct API |
 | **Image Generation** | [xAI Grok Imagine](https://x.ai/) + [Google Gemini](https://ai.google.dev/) via [OpenRouter](https://openrouter.ai/) |
 | **Video Generation** | [xAI Grok Imagine Video](https://x.ai/) |
 | **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) |
@@ -196,7 +196,7 @@ XAI_API_KEY="xai-..."
 NEXT_PUBLIC_GROK_IMAGE_GENERATION_ENABLED="false"
 NEXT_PUBLIC_GROK_VIDEO_GENERATION_ENABLED="false"
 
-# OpenRouter API (Gemini image generation + Grokify Prompt)
+# OpenRouter API (Gemini/Nano Banana image generation)
 OPENROUTER_API_KEY="sk-or-..."
 
 # Vercel Blob (image/video upload storage and abuse controls)
@@ -309,7 +309,7 @@ Content-Type: application/json
 { "idea": "A dragon fighting a robot", "directions": "cinematic lighting" }
 ```
 
-Uses `x-ai/grok-4.3` via OpenRouter with strict structured output parsing.
+Uses `grok-4.3` via the direct xAI API with strict structured output parsing.
 
 ### X Post Fact Checker
 
