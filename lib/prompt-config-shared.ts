@@ -33,8 +33,9 @@ export const IMAGE_INTENTS = [
 
 export type ImageIntent = typeof IMAGE_INTENTS[number];
 
-// Style presets for prompt generation UI.
-export const STYLE_PRESETS: Record<string, string> = {
+// Prompt modifier presets for the standalone Grokify Prompt UI.
+// These are multi-select text modifiers, not artwork style IDs.
+export const PROMPT_STYLE_PRESETS: Record<string, string> = {
   Realistic: 'photorealistic rendering with natural lighting, high detail, and lifelike textures',
   Cartoon: 'vibrant cartoon style with bold colors, simplified forms, and playful character design',
   Anime: 'anime art style with expressive characters, dynamic poses, and detailed backgrounds',

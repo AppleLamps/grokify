@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  STYLE_PRESETS,
+  PROMPT_STYLE_PRESETS,
   PROMPT_CONFIG,
   LIGHTING_MODES,
   IMAGE_INTENTS,
@@ -46,7 +46,7 @@ const RANDOM_IDEAS = [
   'A time traveler in Victorian London meeting their past self',
 ] as const;
 
-const STYLE_PRESET_NAMES = Object.keys(STYLE_PRESETS);
+const PROMPT_STYLE_PRESET_NAMES = Object.keys(PROMPT_STYLE_PRESETS);
 
 export default function PromptClient() {
 
@@ -99,7 +99,7 @@ export default function PromptClient() {
   const directionsWithStyles = useMemo(() => {
     const base = (directions || '').trim();
     const styleText = Array.from(activeStyles)
-      .map((name) => STYLE_PRESETS[name])
+      .map((name) => PROMPT_STYLE_PRESETS[name])
       .filter(Boolean)
       .join(', ');
     if (base && styleText) return `${base}, ${styleText}`;
@@ -120,7 +120,7 @@ export default function PromptClient() {
 
   // Toggle style preset
   const toggleStyle = useCallback((styleName: string) => {
-    if (!STYLE_PRESETS[styleName]) return;
+    if (!PROMPT_STYLE_PRESETS[styleName]) return;
     setActiveStyles((prev) => {
       const next = new Set(prev);
       if (next.has(styleName)) {
@@ -435,7 +435,7 @@ export default function PromptClient() {
                 {showStylePresets && (
                   <div className="mt-3 p-4 border border-amber-500/10 bg-black/30">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                      {STYLE_PRESET_NAMES.map((styleName) => (
+                      {PROMPT_STYLE_PRESET_NAMES.map((styleName) => (
                         <button
                           key={styleName}
                           type="button"

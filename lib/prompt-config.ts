@@ -5,7 +5,7 @@ import type {
   PromptTextPayload,
   StructuredPayload,
 } from './prompt-config-shared';
-import { PROMPT_CONFIG, STYLE_PRESETS } from './prompt-config-shared';
+import { PROMPT_CONFIG, PROMPT_STYLE_PRESETS } from './prompt-config-shared';
 import { OPENROUTER_REASONING_MODEL } from './grok-config';
 
 /**
@@ -36,10 +36,10 @@ export const PROMPT_MODES = {
 export type PromptMode = typeof PROMPT_MODES[keyof typeof PROMPT_MODES];
 
 // ============================================================================
-// Style Presets
+// Prompt Style Presets
 // ============================================================================
 
-export { PROMPT_CONFIG, STYLE_PRESETS };
+export { PROMPT_CONFIG, PROMPT_STYLE_PRESETS };
 
 // ============================================================================
 // System Prompts

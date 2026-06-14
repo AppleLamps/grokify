@@ -8,7 +8,7 @@ import {
   getCorsHeaders,
 } from '@/lib/schemas';
 import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
-import { STYLE_PROMPTS, getStylePrompt } from '@/lib/style-prompts';
+import { getStylePrompt, getValidStyleIds } from '@/lib/style-prompts';
 import { SITE_URL } from '@/lib/site';
 import { canLogAiPayloads, serverLogger } from '@/lib/server-logger';
 import { XAI_REASONING_MODEL } from '@/lib/grok-config';
@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate style (optional, defaults to 'default')
-    const validStyles = Object.keys(STYLE_PROMPTS);
+    const validStyles = getValidStyleIds();
     const selectedStyle = style && validStyles.includes(style) ? style : 'default';
     serverLogger.info('Using art style', { style: selectedStyle });
 

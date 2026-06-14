@@ -43,7 +43,7 @@ No login required. No API keys needed from users. Just enter a username and go..
 | 🧾 **X Post Fact Checker** | Paste an X post URL for a structured fact check with quick/deep research modes and optional sources |
 | ⚡ **Grok Imagine** | Feature-flagged xAI image & video generation from the home page (`/api/imagine`, `/api/imagine-video`, `/api/imagine-video/extend`) |
 | 👥 **Joint Picture** | Generate artwork combining two X accounts together |
-| 🖼️ **38 Art Styles** | 5 categories: Classic, Anime, Modern, Artistic, and Fun (see [full list](#art-styles)) |
+| 🖼️ **44 Art Styles** | 5 categories: Classic, Anime, Modern, Artistic, and Fun (see [full list](#art-styles)) |
 | 📜 **Prompt History** | Local storage-based history with copy/delete functionality |
 | 🔗 **Shareable Links** | Generate shareable URLs for created artwork |
 | 📱 **Responsive Design** | Beautiful mobile-first UI with iPhone-style interface |
@@ -52,7 +52,7 @@ No login required. No API keys needed from users. Just enter a username and go..
 
 ## Art Styles
 
-Grokify offers **38 unique art styles** organized into 5 categories:
+Grokify offers **44 unique art styles** organized into 5 categories:
 
 ### Classic (8 styles)
 
@@ -93,10 +93,11 @@ Grokify offers **38 unique art styles** organized into 5 categories:
 | Synthwave | `synthwave` | Retro-futuristic 80s with neon grids and sunset gradients |
 | Hyperrealistic | `hyperreal` | Ultra-detailed photorealism with perfect textures |
 
-### Artistic (8 styles)
+### Artistic (9 styles)
 
 | Style | ID | Description |
 |-------|-----|-------------|
+| MAD Roast | `mad-roast` | Chaotic MAD Magazine-style parody roast |
 | Comic Book | `comic` | Bold Marvel/DC style with thick outlines, halftone dots, and action lines |
 | Retro Pop Art | `retro` | 80s/90s pop art with neon colors, pixel elements, and synthwave vibes |
 | Impressionist | `impressionist` | Monet/Renoir style with visible brushstrokes and dappled light |
@@ -415,7 +416,7 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 │   ├── OsintReport.tsx         # OSINT dossier renderer
 │   ├── PromptHistorySidebar.tsx
 │   ├── ShareButton.tsx
-│   └── StyleSelectorModal.tsx  # 38 art style selector
+│   └── StyleSelectorModal.tsx  # Art style selector
 ├── db/
 │   ├── index.ts                # Neon connection
 │   └── schema.ts               # Drizzle schema

@@ -1,7 +1,9 @@
 // Shared style prompt templates used by both /api/generate-image and /api/imagine.
 // Each style acts as a visual treatment layer on top of the account-derived scene prompt.
 
-export const STYLE_PROMPTS: Record<string, string> = {
+import { ART_STYLE_IDS, type ArtStyleId } from './art-styles';
+
+export const STYLE_PROMPTS = {
   // Classic / Traditional
   default:
     'Render the scene as a satirical editorial cartoon with bold black outlines, exaggerated facial features, punchy character acting, bright print-style color blocking, dense comedic background details, and lively MAD Magazine energy.',
@@ -139,14 +141,14 @@ export const STYLE_PROMPTS: Record<string, string> = {
 
   fantasy:
     'Render the scene as epic fantasy illustration with heroic staging, magical light effects, ornate costume detail, storybook scale, atmospheric depth, and polished tabletop-RPG adventure energy.',
-};
+} as const satisfies Record<ArtStyleId, string>;
 
 // Get style prompt for a given style ID, falling back to 'default'
 export const getStylePrompt = (style: string = 'default'): string => {
-  return STYLE_PROMPTS[style] || STYLE_PROMPTS.default;
+  return STYLE_PROMPTS[style as ArtStyleId] || STYLE_PROMPTS.default;
 };
 
 // Get all valid style IDs
 export const getValidStyleIds = (): string[] => {
-  return Object.keys(STYLE_PROMPTS);
+  return [...ART_STYLE_IDS];
 };
