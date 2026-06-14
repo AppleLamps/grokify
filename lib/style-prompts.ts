@@ -104,7 +104,7 @@ export const STYLE_PROMPTS: Record<string, string> = {
 
   // Roast / Parody
   'mad-roast':
-    'Render the scene as a chaotic MAD Magazine-style satirical roast spread: grossly exaggerated central caricature embodying the subject\'s public archetype, crowded parody-poster layout, absurd thematic props, explosive dense background gags, satirical speech bubbles and labels, fake magazine-splash-cover energy, political cartoon composition, thick comic-book ink lines, halftone dot shading, vivid color contrast, and savage editorial-cartoon visual humor that frames the figure as a lovingly lampooned internet archetype.',
+    'Render the scene as a chaotic MAD Magazine-style satirical caricature: grossly exaggerated central caricature embodying the subject\'s public archetype in a comically negative and unflattering light, crowded parody-poster layout, absurd mocking props and explosive dense background gags that highlight the figure\'s flaws and absurdities, satirical speech bubbles and labels, fake magazine-splash-cover energy, political cartoon composition, thick comic-book ink lines, halftone dot shading, vivid color contrast, and savage editorial-cartoon visual humor that frames the figure as a ridiculously lampooned internet archetype.',
 
   // Fun / Novelty
   sticker:
