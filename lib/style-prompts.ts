@@ -102,6 +102,10 @@ export const STYLE_PROMPTS: Record<string, string> = {
   psychedelic:
     'Render the scene as psychedelic art with swirling forms, vibrating rainbow contrast, hallucinatory pattern density, fluid transitions, optical distortion, and euphoric mind-bending visual rhythm.',
 
+  // Roast / Parody
+  'mad-roast':
+    'Render the scene as a chaotic MAD Magazine-style satirical roast spread: grossly exaggerated central caricature embodying the subject\'s public archetype, crowded parody-poster layout, absurd thematic props, explosive dense background gags, satirical speech bubbles and labels, fake magazine-splash-cover energy, political cartoon composition, thick comic-book ink lines, halftone dot shading, vivid color contrast, and savage editorial-cartoon visual humor that frames the figure as a lovingly lampooned internet archetype.',
+
   // Fun / Novelty
   sticker:
     'Render the scene as sticker art with bold simplified shapes, clean die-cut silhouette, thick outlines, cheerful flat color, glossy decal finish, and playful merch-ready readability.',
