@@ -130,14 +130,14 @@ REQUIRED X SEARCHES FOR BOTH ACCOUNTS:
 
 **For @${handle1}:**
 - Search "from:${handle1}" - Get their recent posts
-- Search "from:${handle1} min_faves:100" (lower threshold if needed) - Find their best content
+- Search "from:${handle1} min_faves:10000", then 5000, 1000, 500, 100, 10, and 1 as needed - Stop once you find enough of their best content
 - Search "from:${handle1} filter:media" - Analyze their visual content
 - Search "from:${handle1} -filter:replies" - See their original content
 - Search "@${handle1}" - See how others perceive them
 
 **For @${handle2}:**
 - Search "from:${handle2}" - Get their recent posts
-- Search "from:${handle2} min_faves:100" (lower threshold if needed) - Find their best content
+- Search "from:${handle2} min_faves:10000", then 5000, 1000, 500, 100, 10, and 1 as needed - Stop once you find enough of their best content
 - Search "from:${handle2} filter:media" - Analyze their visual content
 - Search "from:${handle2} -filter:replies" - See their original content
 - Search "@${handle2}" - See how others perceive them
