@@ -124,8 +124,8 @@ CRITICAL: You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduc
 Your analysis process:
 1. **Adaptive Data Gathering:** Execute targeted X searches, adapting to the account's activity level:
    - Search recent posts first to gauge their activity level
-   - Find their best content using PROGRESSIVE thresholds - start with high minimums (min_faves:1000) and lower them (500→100→50→25→10→5→none) until you find their relatively best posts
-   - For smaller accounts with low engagement, their "best" post might only have 5-10 likes - that's fine! Adjust your expectations.
+   - Find their best content using PROGRESSIVE thresholds - start with high minimums (min_faves:10000) and lower them (5000→1000→500→100→10→1) until you find enough of their relatively best posts
+   - For smaller accounts with low engagement, their "best" post might only have 1-10 likes - that's fine! Adjust your expectations.
    - Analyze media posts specifically (filter:media) to understand visual aesthetics
    - Review reply patterns (filter:replies) to understand personality and interaction style
    - Check original posts only (-filter:replies) to see their core content
@@ -285,15 +285,15 @@ REQUIRED X SEARCHES - Use an ADAPTIVE approach based on account activity level:
 - Search "from:${handle}" - Get their recent posts first to understand their activity level
 
 **Step 2: Find their best content using PROGRESSIVE thresholds**
-For engagement searches, start high and work down until you find results:
-- Try "from:${handle} min_faves:1000" first
-- If no/few results, try "from:${handle} min_faves:500"
+For engagement searches, start high and work down until you find enough posts:
+- Try "from:${handle} min_faves:10000" first
+- If no/few results, try "from:${handle} min_faves:5000"
+- If still sparse, try "from:${handle} min_faves:1000"
+- If still sparse, try "from:${handle} min_faves:500"
 - If still sparse, try "from:${handle} min_faves:100"
-- If still sparse, try "from:${handle} min_faves:50"
-- If still sparse, try "from:${handle} min_faves:25"
 - If still sparse, try "from:${handle} min_faves:10"
-- If still sparse, try "from:${handle} min_faves:5"
-- As a last resort, use "from:${handle}" without any minimum
+- If still sparse, try "from:${handle} min_faves:1"
+- Stop once you have enough strong posts; only use "from:${handle}" without a minimum as a last resort
 
 Same approach for retweets:
 - Start with "from:${handle} min_retweets:100"

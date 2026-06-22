@@ -138,7 +138,7 @@ Make it feel like a personalized SNL digital short about their X presence.`;
 
 SEARCH THEIR ACCOUNT FOR SATIRICAL MATERIAL:
 - "from:${handle}" - their recent posts and hot takes
-- "from:${handle} min_faves:100" - their most popular/viral content
+- Search "from:${handle} min_faves:10000", then 5000, 1000, 500, 100, 10, and 1 as needed - stop once you find enough of their most popular/viral content
 - "from:${handle} filter:replies" - their replies and interactions
 - "@${handle}" - what others say about them, any drama
 - Look for recurring themes, catchphrases, and things they're known for

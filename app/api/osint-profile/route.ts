@@ -17,24 +17,28 @@ You MUST conduct multiple parallel searches to build a complete picture:
 
 REQUIRED SEARCHES (execute all):
 1. "from:username" - Get their recent posts (aim for 300-500+ posts)
-2. "from:username min_faves:1000" - Find their viral posts (1000+ likes)
-3. "from:username min_faves:500" - Find high-engagement posts
-4. "from:username min_faves:100" - Find notable posts
-5. "from:username min_retweets:100" - Find most shared content
-6. "to:username" - See how others interact with them
-7. "@username" - Find mentions and discussions about them
-8. "from:username filter:replies" - Analyze their reply behavior
-9. "from:username filter:media" - Find their media posts
-10. "from:username -filter:replies" - Original posts only
-11. Web search: "username site:reddit.com" - Reddit discussions
-12. Web search: "username twitter controversy" - Find any drama
-13. Web search: their display name + unique bio phrases
-14. Web search: any linked websites or projects they mention
+2. "from:username min_faves:10000" - Find their biggest viral posts
+3. "from:username min_faves:5000" - Find very high-engagement posts
+4. "from:username min_faves:1000" - Find strong viral posts
+5. "from:username min_faves:500" - Find high-engagement posts
+6. "from:username min_faves:100" - Find notable posts
+7. "from:username min_faves:10" - Find lower-engagement standouts if needed
+8. "from:username min_faves:1" - Last-pass search for smaller accounts
+9. "from:username min_retweets:100" - Find most shared content
+10. "to:username" - See how others interact with them
+11. "@username" - Find mentions and discussions about them
+12. "from:username filter:replies" - Analyze their reply behavior
+13. "from:username filter:media" - Find their media posts
+14. "from:username -filter:replies" - Original posts only
+15. Web search: "username site:reddit.com" - Reddit discussions
+16. Web search: "username twitter controversy" - Find any drama
+17. Web search: their display name + unique bio phrases
+18. Web search: any linked websites or projects they mention
 
-ENGAGEMENT THRESHOLD SEARCHES (adjust based on account size):
-- For large accounts (100k+): search min_faves:5000, min_faves:10000
-- For medium accounts (10k-100k): search min_faves:500, min_faves:1000
-- For smaller accounts: search min_faves:50, min_faves:100
+ENGAGEMENT THRESHOLD SEARCHES:
+- Work downward in this order: min_faves:10000, 5000, 1000, 500, 100, 10, 1
+- Stop once you have enough representative high-signal posts
+- Smaller accounts may require reaching the 10 or 1 like thresholds
 
 DO NOT STOP after one or two searches. The more data you gather, the better the analysis.
 
@@ -281,7 +285,7 @@ export async function POST(req: NextRequest) {
               content: `Execute a COMPREHENSIVE OSINT analysis of @${handle}. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}. Focus on the last ${daysBack} days but also find their all-time viral hits.
 
 CRITICAL REQUIREMENTS:
-1. FIND THEIR VIRAL POSTS - Search "from:${handle} min_faves:1000", "from:${handle} min_faves:500", "from:${handle} min_faves:100" to find their most popular content
+1. FIND THEIR VIRAL POSTS - Search "from:${handle} min_faves:10000", then 5000, 1000, 500, 100, 10, and 1 until you find enough of their most popular content
 2. GATHER EXTENSIVE DATA - Aim for 300-500+ posts, not just recent ones
 3. MAP THEIR NETWORK - Find who they interact with most, who they argue with
 4. FIND CONTROVERSIES - Search for any drama, feuds, ratio'd posts
