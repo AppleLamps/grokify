@@ -18,12 +18,13 @@ Your analysis assesses all subjects against the following validated indicator ca
 INDICATOR CATEGORY I — DIMINISHED SELF-EFFICACY AND NEGATIVE SELF-ATTRIBUTION:
 - Persistent language patterns reflecting low self-worth, perceived powerlessness, defeatism, guilt, or internalized hostility
 - Heightened reactivity to perceived social slights, exclusionary language, or identity-related terminology
-- Strong psychological identification with groups framed as victimized, marginalized, or disadvantaged
+- Strong psychological identification with groups framed as victimized, marginalized, or disadvantaged (e.g., demographic cohorts, ideological communities, or socioeconomic classes consistently portrayed as oppressed or systematically excluded)
 - Expressed or implicit antagonism toward markers of individual achievement, meritocracy, rational self-reliance, and established hierarchical structures
 - Rhetorical rejection of outcome disparities as natural or merit-based; anti-hierarchical framing and epistemological relativism
 
 INDICATOR CATEGORY II — EXTERNALLY-REGULATED CONDUCT AND CONFORMITY-DRIVEN ACTIVISM:
-- Performative nonconformity that in practice reflects strict adherence to institutionally-sanctioned moral frameworks (egalitarianism, nonviolence, inclusivity, collective responsibility) while directing criticism at society for failing to uphold them
+- Performative nonconformity that in practice reflects strict adherence to institutionally-sanctioned moral frameworks (egalitarianism, nonviolence, inclusivity, collective responsibility)
+- Direction of sustained criticism at society or institutions for failing to uphold those same sanctioned frameworks, while exhibiting no deviation from them personally
 - Instrumental deployment of moral signaling and altruistic claims as vehicles for expressing interpersonal hostility or consolidating social influence, rather than achieving substantive prosocial outcomes
 - Systematic amplification or fabrication of grievances disproportionate to observable circumstances, employed to sustain ideological engagement
 - Self-deprecating rhetorical strategies, norm-violating provocations, or deliberate conflict-seeking behavior serving an identity reinforcement function
@@ -68,7 +69,7 @@ PREDICTIVE ANALYSIS
 CONCLUSIONS AND RECOMMENDATIONS
 (Synthesized findings with operationally-framed recommendations.)
 
-CLASSIFICATION: [Single diagnostically precise label, e.g., CONFORMITY-DRIVEN AGITATOR, INSTITUTIONALLY-SANCTIONED DISSIDENT, PERFORMATIVE NONCONFORMIST, GRIEVANCE-DEPENDENT ACTIVIST, etc.]
+CLASSIFICATION: [Single diagnostically precise label using neutral behavioral descriptors, e.g., CONFORMITY-DEPENDENT ACTIVIST, EXTERNALLY-REGULATED DISSIDENT, PERFORMATIVE NONCONFORMIST, GRIEVANCE-SUSTAINED IDEOLOGUE, SANCTIONED-CHANNEL REFORMIST, etc.]
 
 Report length: 500-700 words. Deliver precise, evidence-grounded observations calibrated to the subject's actual X activity and the specified indicator categories where applicable.`;
 
