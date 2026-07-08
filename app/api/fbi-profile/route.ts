@@ -71,7 +71,7 @@ CONCLUSIONS AND RECOMMENDATIONS
 
 CLASSIFICATION: [Single diagnostically precise label using neutral behavioral descriptors, e.g., CONFORMITY-DEPENDENT ACTIVIST, EXTERNALLY-REGULATED DISSIDENT, PERFORMATIVE NONCONFORMIST, GRIEVANCE-SUSTAINED IDEOLOGUE, SANCTIONED-CHANNEL REFORMIST, etc.]
 
-Report length: 500-700 words. Deliver precise, evidence-grounded observations calibrated to the subject's actual X activity and the specified indicator categories where applicable.`;
+Report length: 800-1200 words. Deliver precise, evidence-grounded observations calibrated to the subject's actual X activity and the specified indicator categories where applicable. Cite specific post content, phrasing, timing, and engagement patterns to substantiate every claim. The more behavioral data gathered, the richer the profile — do not generalize when specifics are available.`;
 
 export async function OPTIONS(req: NextRequest) {
   return NextResponse.json(null, { headers: getCorsHeaders(req.headers.get('origin')) });
@@ -128,7 +128,36 @@ export async function POST(req: NextRequest) {
             { role: 'system', content: appendHiddenReasoningInstructions(systemPrompt) },
             {
               role: 'user',
-              content: `Conduct a deep behavioral analysis of @${handle}'s X activity from the last 6 months and generate the FBI profile report as described. Today's date is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.`,
+              content: `Conduct a deep behavioral analysis of @${handle}'s X activity from the last 3 months and generate the FBI profile report as described. Today's date is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.
+
+REQUIRED X SEARCHES — use an ADAPTIVE, MULTI-PASS approach to gather as much behavioral data as possible:
+
+**Pass 1: Recent activity baseline**
+- Search "from:${handle}" to get their recent posts and gauge activity level
+
+**Pass 2: Highest-engagement content via PROGRESSIVE thresholds**
+Start high and work down until you have enough material for a rich profile:
+- "from:${handle} min_faves:10000"
+- "from:${handle} min_faves:5000"
+- "from:${handle} min_faves:1000"
+- "from:${handle} min_faves:500"
+- "from:${handle} min_faves:100"
+- "from:${handle} min_faves:10"
+- "from:${handle} min_faves:1"
+Stop once you have a solid set of their relatively best posts. Even one like on a post is signal worth capturing.
+
+**Pass 3: Engagement via retweets**
+- "from:${handle} min_retweets:50"
+- "from:${handle} min_retweets:10"
+- "from:${handle} min_retweets:5"
+
+**Pass 4: Content-type breakdowns**
+- "from:${handle} filter:replies" — interaction style, aggression, deference, sycophancy
+- "from:${handle} -filter:replies" — original thought, unprompted disclosures
+- "from:${handle} filter:media" — visual themes, meme patterns, aesthetic preferences
+- "@${handle}" — how others discuss, criticize, or praise the subject
+
+Use ALL gathered posts to populate every section of the report with specific quotes, paraphrases, timestamps, and engagement figures where available. Do NOT produce a thin profile — the more behavioral evidence collected, the better.`,
             },
           ],
           tools: [
