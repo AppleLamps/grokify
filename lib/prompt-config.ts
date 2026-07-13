@@ -6,8 +6,6 @@ import type {
   StructuredPayload,
 } from './prompt-config-shared';
 import { PROMPT_CONFIG, PROMPT_STYLE_PRESETS } from './prompt-config-shared';
-import { XAI_REASONING_MODEL } from './grok-config';
-
 /**
  * Configuration for Grokify Prompt Generator
  */
@@ -23,7 +21,7 @@ export const API_CONFIG = {
 
 export const PROMPT_MODELS = {
   /** Primary model for prompt generation */
-  PRIMARY: XAI_REASONING_MODEL,
+  PRIMARY: 'grok-4.5-latest',
 } as const;
 
 export const PROMPT_MODES = {
