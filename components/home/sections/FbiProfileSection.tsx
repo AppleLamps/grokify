@@ -9,6 +9,7 @@ import {
   LockKeyhole,
   Shield,
 } from 'lucide-react';
+import { FBI_PROFILE_SECTION_HEADERS } from '@/lib/fbi-profile-prompt';
 
 interface FbiProfileSectionProps {
   profile: string;
@@ -23,14 +24,7 @@ interface ParsedFbiReport {
   classification: string | null;
 }
 
-const REPORT_SECTIONS = new Set([
-  'EXECUTIVE SUMMARY',
-  'PSYCHOLOGICAL PROFILE',
-  'BEHAVIORAL ANALYSIS',
-  'THREAT ASSESSMENT',
-  'PREDICTIVE ANALYSIS',
-  'CONCLUSIONS AND RECOMMENDATIONS',
-]);
+const REPORT_SECTIONS = new Set<string>(FBI_PROFILE_SECTION_HEADERS);
 
 function splitMetadata(line: string) {
   const delimiterIndex = line.indexOf(':');

@@ -36,7 +36,7 @@ No login required. No API keys needed from users. Just enter a username and go..
 |---------|-------------|
 | 🎨 **AI Artwork** | Generates satirical cartoon illustrations based on posting personality |
 | 🔥 **Roast Letter** | Comedy Central-style therapy notes from the fictional "Dr. Burn Notice" |
-| 🕵️ **FBI Profile** | Satirical FBI behavioral analysis reports with dark humor |
+| 🕵️ **FBI Profile** | Satirical FBI behavioral analysis that diagnoses leftist psychological traits |
 | 🔍 **OSINT Dossier** | Comprehensive intelligence-style analysis with viral content deep dive (`POST /api/osint-profile`; dossier UI in `OsintSection` / `OsintReport`) |
 | ✏️ **Caricature** | Upload a photo and get a Times Square street artist-style caricature |
 | ✨ **Grokify Prompt** | Transform any idea into a polished AI prompt with Grok |
@@ -477,7 +477,7 @@ Grokify uses specialized AI personas powered by Grok:
 |---------|----------|-------------|
 | **Art Director AI** | `/api/analyze-account` | Translates X personalities into satirical cartoon prompts |
 | **Dr. Burn Notice** | `/api/roast-account` | Comedy Central-style therapist delivering affectionate roasts |
-| **FBI Profiler** | `/api/fbi-profile` | Cold, clinical behavioral analyst with dark humor |
+| **FBI Profiler** | `/api/fbi-profile` | Cold, clinical BAU analyst diagnosing leftist psychological traits |
 | **OSINT Analyst** | `/api/osint-profile` | Elite intelligence analyst building comprehensive dossiers |
 | **Street Artist** | `/api/caricature` | NYC Times Square caricature artist with quick wit |
 | **Prompt Alchemist** | `/api/prompt-generate` | Expert prompt engineer transforming ideas into polished AI prompts |
