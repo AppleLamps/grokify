@@ -4,6 +4,9 @@ import { Toaster } from '@/components/ui/sonner';
 import { SITE_NAME, SITE_URL, SITE_DOMAIN } from '@/lib/site';
 import './globals.css';
 
+const googleSiteVerification =
+  process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || 'google-site-verification';
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -27,6 +30,9 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon.svg',
     apple: '/apple-icon.svg',
+  },
+  verification: {
+    google: googleSiteVerification,
   },
   openGraph: {
     type: 'website',
