@@ -46,6 +46,7 @@ test('POST /api/prompt-generate sends the OpenRouter Grok 4.7 request shape', as
   let capturedBody:
     | {
         model?: unknown;
+        max_tokens?: unknown;
         response_format?: {
           type?: unknown;
           json_schema?: {
@@ -99,6 +100,7 @@ test('POST /api/prompt-generate sends the OpenRouter Grok 4.7 request shape', as
   assert.equal(capturedHeaders?.get('x-title'), 'Grokify Prompt Generator');
   assert.ok(capturedBody);
   assert.equal(capturedBody.model, 'x-ai/grok-4.7');
+  assert.equal(capturedBody.max_tokens, 10000);
   assert.equal(capturedBody.response_format?.type, 'json_schema');
   assert.equal(capturedBody.response_format?.json_schema?.name, 'prompt_response');
   assert.equal(capturedBody.response_format?.json_schema?.strict, true);
