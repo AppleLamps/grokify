@@ -309,7 +309,7 @@ Content-Type: application/json
 { "idea": "A dragon fighting a robot", "directions": "cinematic lighting" }
 ```
 
-Uses `grok-4.6-latest` via the direct xAI API with strict structured output parsing.
+Uses `x-ai/grok-4.7` via OpenRouter with strict structured output parsing.
 
 ### X Post Fact Checker
 
