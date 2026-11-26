@@ -8,7 +8,7 @@ import {
 } from '@/lib/grok-config';
 
 test('XAI Grok model is pinned to the direct xAI reasoning model', () => {
-  assert.equal(XAI_REASONING_MODEL, 'grok-4.3');
+  assert.equal(XAI_REASONING_MODEL, 'grok-4.7');
 });
 
 test('appendHiddenReasoningInstructions preserves the base prompt and suppresses reasoning output', () => {
