@@ -135,8 +135,8 @@ Grokify offers **44 unique art styles** organized into 5 categories:
 | **UI Components** | [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) |
 | **Database** | [Neon](https://neon.tech/) (Serverless Postgres) |
 | **ORM** | [Drizzle ORM](https://orm.drizzle.team/) |
-| **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4.3) |
-| **Prompt Generation** | [xAI Grok 4.3](https://x.ai/) direct API |
+| **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4.7) |
+| **Prompt Generation** | [xAI Grok 4.7](https://x.ai/) via [OpenRouter](https://openrouter.ai/) |
 | **Image Generation** | [xAI Grok Imagine](https://x.ai/) + [Google Gemini](https://ai.google.dev/) via [OpenRouter](https://openrouter.ai/) |
 | **Video Generation** | [xAI Grok Imagine Video](https://x.ai/) |
 | **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) |
@@ -320,7 +320,7 @@ Content-Type: application/json
 { "url": "https://x.com/handle/status/1234567890", "mode": "quick" }
 ```
 
-Modes (both use `grok-4.3` via `lib/grok-config.ts`):
+Modes (both use `grok-4.7` via `lib/grok-config.ts`):
 - `quick` — standard timeout
 - `deep` — extended research timeout (240s)
 
@@ -427,7 +427,7 @@ Single **Next.js** application at the repo root. The older nested **`grok-4-prom
 └── lib/
     ├── site.ts                 # SITE_URL / SITE_NAME (grokify.com) for SEO & APIs
     ├── ai-rate-limit.ts        # Anonymous per-IP AI endpoint rate limits
-    ├── grok-config.ts          # Pinned Grok model IDs (grok-4.3)
+    ├── grok-config.ts          # Pinned Grok model IDs (grok-4.7)
     ├── grok-image-availability.ts  # Grok Imagine feature flags
     ├── fact-check-x.ts         # X post fact-check logic
     ├── prompt-client-utils.ts  # Grokify Prompt: image compression & preview URL helpers

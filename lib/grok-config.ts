@@ -1,4 +1,4 @@
-export const XAI_GROK_MODEL = 'grok-4.3';
+export const XAI_GROK_MODEL = 'grok-4.7';
 
 export const XAI_REASONING_MODEL = XAI_GROK_MODEL;
 
